@@ -1,0 +1,65 @@
+{
+ "app": "Wend",
+ "theme": "wend-paper",
+ "lang": "ko",
+ "start": "splash",
+ "tokens": {
+  "primary": "#c23d22",
+  "on-primary": "#ffffff",
+  "primary-container": "#ffdbd1",
+  "secondary": "#875042",
+  "secondary-container": "#ffdbd1",
+  "tertiary": "#00696c",
+  "tertiary-container": "#78f5f9",
+  "surface": "#f6f1e9",
+  "surface-container": "#e9e1d4",
+  "on-surface": "#1f1a16",
+  "on-surface-variant": "#574c42",
+  "outline-variant": "#d6cab9",
+  "font-display": "\"Gowun Batang\",\"IBM Plex Sans KR\",serif",
+  "font-body": "\"IBM Plex Sans KR\",system-ui,sans-serif",
+  "btn-radius": "999px",
+  "card-radius": "20px"
+ },
+ "fonts": [
+  "\"Gowun Batang\"",
+  "\"IBM Plex Sans KR\""
+ ],
+ "screens": [
+  {
+   "id": "splash",
+   "title": "스플래시",
+   "start": true,
+   "tabRoot": false,
+   "controls": 1,
+   "textChars": 25
+  },
+  {
+   "id": "nick",
+   "title": "닉네임 입력",
+   "start": false,
+   "tabRoot": false,
+   "controls": 6,
+   "textChars": 133
+  },
+  {
+   "id": "globe",
+   "title": "여행 찾기 소개",
+   "start": false,
+   "tabRoot": false,
+   "controls": 6,
+   "textChars": 77
+  },
+  {
+   "id": "guide",
+   "title": "정리 규칙 안내",
+   "start": false,
+   "tabRoot": false,
+   "controls": 6,
+   "textChars": 388
+  }
+ ],
+ "overlays": [],
+ "issues": [],
+ "file": "wend-prototype/app.html"
+}

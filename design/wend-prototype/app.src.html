@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ko" data-theme="wend-paper">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=block" rel="stylesheet">
+<link rel="stylesheet" href="file:///Users/jun/.claude/skills/android-prototype/assets/shell.css" data-shell>
+<style id="theme">
+/* @theme:start — generated: proto.py palette --seed #E2553A --style vibrant */
+:root{
+  --primary:#b32a17;--on-primary:#ffffff;--primary-container:#ffdbd1;--on-primary-container:#360f00;
+  --secondary:#875042;--on-secondary:#ffffff;--secondary-container:#ffdbd1;--on-secondary-container:#360f00;
+  --tertiary:#00696c;--on-tertiary:#ffffff;--tertiary-container:#78f5f9;--on-tertiary-container:#002021;
+  --error:#bf0031;--on-error:#ffffff;--error-container:#ffdad8;--on-error-container:#410004;
+  --surface:#fff8f6;--surface-dim:#ead6d1;--surface-bright:#fff8f6;--surface-container-lowest:#ffffff;
+  --surface-container-low:#fff1ed;--surface-container:#fee9e4;--surface-container-high:#f8e4df;--surface-container-highest:#f3ded9;
+  --on-surface:#261815;--on-surface-variant:#5e3f37;--outline:#926f66;--outline-variant:#e5beb4;
+  --inverse-surface:#3c2d29;--inverse-on-surface:#ffede8;--inverse-primary:#ffb4a2;
+}
+/* @theme:end */
+/* @brand:start — "종이 위의 여행 지도": 따뜻한 종이 바탕 · 세리프 제목 · 끈적하게 합쳐지는 색 방울 */
+:root{
+  --font-display:"Gowun Batang","IBM Plex Sans KR",serif;
+  --font-body:"IBM Plex Sans KR",system-ui,sans-serif;
+  --btn-radius:var(--r-full);--card-radius:20px;--sheet-radius:var(--r-xl);--fab-radius:var(--r-lg);
+  /* warm paper neutrals instead of the generated pink tint */
+  --surface:#f6f1e9;--surface-bright:#fbf8f3;--surface-container-lowest:#fffdf9;
+  --surface-container-low:#efe8dd;--surface-container:#e9e1d4;--surface-container-high:#e2d9cb;--surface-container-highest:#dbd1c1;
+  --on-surface:#1f1a16;--on-surface-variant:#574c42;--outline:#8a7d70;--outline-variant:#d6cab9;
+  --primary:#c23d22;
+  /* orb pigments */
+  --o-coral:#e2553a;--o-sun:#f2b33d;--o-sea:#2f7fd8;--o-mint:#2bae8e;
+}
+/* @brand:end */
+</style>
+<style id="app">
+.screen{--screen-bg:var(--surface)}
+.serif{font-family:var(--font-display)}
+.goo{filter:url(#goo)}
+
+/* ── splash ───────────────────────────────── */
+#splash .content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;cursor:pointer}
+.sp-blobs{position:relative;width:180px;height:180px}
+.sp-blobs i{position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%}
+.sp-blobs i:nth-child(1){background:var(--o-coral);animation:sp1 2.4s cubic-bezier(.6,0,.3,1) both}
+.sp-blobs i:nth-child(2){background:var(--o-sun);animation:sp2 2.4s cubic-bezier(.6,0,.3,1) both}
+.sp-blobs i:nth-child(3){background:var(--o-sea);animation:sp3 2.4s cubic-bezier(.6,0,.3,1) both}
+.sp-blobs i:nth-child(4){background:var(--o-mint);width:30px;height:30px;margin:-15px 0 0 -15px;animation:sp4 2.4s cubic-bezier(.6,0,.3,1) both}
+@keyframes sp1{0%{transform:translate(-62px,30px) scale(.5)}55%{transform:translate(-14px,6px) scale(1)}100%{transform:translate(-30px,12px) scale(.86)}}
+@keyframes sp2{0%{transform:translate(58px,40px) scale(.5)}55%{transform:translate(18px,4px) scale(.9)}100%{transform:translate(30px,16px) scale(.74)}}
+@keyframes sp3{0%{transform:translate(0,-70px) scale(.5)}55%{transform:translate(2px,-18px) scale(.95)}100%{transform:translate(4px,-30px) scale(.8)}}
+@keyframes sp4{0%{transform:translate(0,0) scale(0)}60%{transform:translate(0,0) scale(0)}100%{transform:translate(52px,-46px) scale(1)}}
+.sp-word{text-align:center;animation:fadeUp .8s 1.3s both}
+.sp-word .wm{font:700 44px/1 var(--font-display);letter-spacing:-.5px}
+.sp-word p{margin-top:10px;color:var(--on-surface-variant);font:var(--body-l)}
+.sp-foot{position:absolute;bottom:calc(var(--gesture-h) + 24px);left:0;right:0;text-align:center;color:var(--on-surface-variant);font:var(--label-m);animation:fadeUp .6s 1.8s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── nickname ─────────────────────────────── */
+#nick .content{padding:8px 24px 24px;display:flex;flex-direction:column}
+.nk-mark{display:flex;align-items:center;gap:8px;margin:24px 0 40px;font:700 20px/1 var(--font-display)}
+.nk-mark .dot{width:18px;height:18px;border-radius:50%;background:var(--o-coral);box-shadow:8px -6px 0 -3px var(--o-sun)}
+.nk-h{font:700 32px/1.3 var(--font-display);letter-spacing:-.4px}
+.nk-sub{margin-top:12px;color:var(--on-surface-variant);font:var(--body-l)}
+.goo-field{position:relative;height:64px;margin-top:40px}
+.goo-layer{position:absolute;inset:-20px;pointer-events:none}
+.goo-layer i{position:absolute;top:20px;height:64px;background:var(--on-surface);border-radius:32px;transition:all .55s cubic-bezier(.5,0,.2,1.25)}
+.goo-layer .g-pill{left:20px;right:20px}
+.goo-layer .g-dot{right:20px;width:64px;transform:scale(.6)}
+.goo-field.ready .goo-layer .g-pill{right:96px}
+.goo-field.ready .goo-layer .g-dot{transform:none;background:var(--primary)}
+.goo-field input{position:absolute;left:0;right:0;top:0;height:64px;padding:0 24px;border:0;outline:0;background:transparent;color:#fbf8f3;font:500 18px/1 var(--font-body);transition:right .55s}
+.goo-field.ready input{right:76px}
+.goo-field input::placeholder{color:#b9ad9f}
+.goo-field .g-btn{position:absolute;right:0;top:0;width:64px;height:64px;border-radius:50%;border:0;background:transparent;color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.4);transition:all .4s .2s;cursor:pointer}
+.goo-field.ready .g-btn{opacity:1;transform:none}
+.nk-help{display:flex;justify-content:space-between;margin:12px 8px 0;font:var(--body-s);color:var(--on-surface-variant)}
+.nk-help.err{color:var(--error)}
+.nk-sugg{margin-top:28px}
+.nk-sugg .t{font:var(--label-l);color:var(--on-surface-variant);margin-bottom:10px}
+.nk-note{margin-top:auto;display:flex;gap:8px;align-items:flex-start;padding-top:24px;color:var(--on-surface-variant);font:var(--body-s)}
+.nk-note .ms{--ms-size:18px}
+
+/* ── globe ────────────────────────────────── */
+#globe .content{display:flex;flex-direction:column;padding:0 24px}
+.gl-h{font:700 28px/1.32 var(--font-display);letter-spacing:-.3px;margin-top:4px}
+.gl-h em{font-style:normal;color:var(--primary)}
+.gl-stage{position:relative;flex:1;min-height:340px;display:grid;place-items:center;margin:0 -24px}
+.gl-stage::before{content:"";position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;border:1.5px dashed var(--outline-variant)}
+.gl-stage::after{content:"";position:absolute;left:50%;top:50%;width:300px;height:96px;margin:-48px 0 0 -150px;border-radius:50%;border:1.5px dashed var(--outline-variant);opacity:.7}
+.gl-stage canvas{position:relative;z-index:1;width:360px;height:360px;cursor:pointer;touch-action:manipulation}
+.gl-hint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font:var(--label-m);color:var(--on-surface-variant)}
+.gl-steps{display:flex;gap:8px;margin-bottom:8px}
+.gl-step{flex:1;padding:12px 12px 14px;border-radius:16px;background:var(--surface-container-low);color:var(--on-surface-variant);transition:background .4s,color .4s;cursor:pointer;border:0;text-align:left;font:inherit;min-height:48px}
+.gl-step b{display:block;font:600 11px/1 var(--font-body);letter-spacing:.6px;margin-bottom:8px;opacity:.7}
+.gl-step span{font:600 14px/1.3 var(--font-body)}
+.gl-step.on{background:var(--on-surface);color:var(--surface)}
+.gl-step.on b{opacity:.75}
+
+/* ── guide chat ───────────────────────────── */
+#guide .top-app-bar .title{display:flex;align-items:center;gap:8px}
+.cast{display:flex;margin-right:2px}
+.cast svg{width:28px;height:28px}
+.cast svg+svg{margin-left:-8px}
+#chat{padding:8px 16px 24px;display:flex;flex-direction:column;gap:6px}
+.day{align-self:center;font:var(--label-s);color:var(--on-surface-variant);background:var(--surface-container-low);padding:6px 12px;border-radius:12px;margin:4px 0 10px}
+.msg{display:flex;gap:10px;align-items:flex-end;max-width:100%;animation:pop .45s cubic-bezier(.3,1.4,.5,1) both}
+.msg .av{width:44px;height:44px;flex:none;align-self:flex-start}
+.msg .av.ghost{visibility:hidden;height:0}
+.msg .col{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:290px}
+.msg .who{font:600 12px/1 var(--font-body);color:var(--on-surface-variant);margin:6px 0 4px 4px}
+.bub{padding:12px 16px;border-radius:6px 22px 22px 22px;background:var(--surface-container-lowest);font:var(--body-l);line-height:1.5;box-shadow:0 1px 0 var(--outline-variant)}
+.bub b{font-weight:700;white-space:nowrap}
+.bub.key{background:var(--on-surface);color:var(--surface);box-shadow:none}
+.bub.key .ms{--ms-size:20px;vertical-align:-4px;margin-right:4px;color:var(--o-sun)}
+.msg.me{justify-content:flex-end}
+.msg.me .bub{background:var(--primary);color:var(--on-primary);border-radius:22px 6px 22px 22px;box-shadow:none}
+.msg.first{margin-top:10px}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
+/* typing — tiny gooey orb trio */
+.typing{display:inline-flex;gap:0;padding:14px 18px;border-radius:6px 22px 22px 22px;background:var(--surface-container-lowest);box-shadow:0 1px 0 var(--outline-variant)}
+.typing .goo{display:flex;gap:2px;padding:4px}
+.typing i{width:10px;height:10px;border-radius:50%;background:var(--on-surface-variant);animation:tdot 1s ease-in-out infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tdot{0%,100%{transform:translate(0,0)}50%{transform:translate(0,-6px) scale(1.15)}}
+/* example card */
+.ex{background:var(--surface-container-lowest);border-radius:6px 22px 22px 22px;padding:14px;box-shadow:0 1px 0 var(--outline-variant);width:290px}
+.ex-row{display:flex;gap:10px}
+.ex-row+.ex-row{margin-top:14px;padding-top:14px;border-top:1px dashed var(--outline-variant)}
+.ex-lab{font:600 12px/1 var(--font-body);display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.ex-lab .ms{--ms-size:16px}
+.ex-lab.in{color:#1d7a62}.ex-lab.out{color:var(--error)}
+.ph{width:78px;height:78px;border-radius:14px;flex:none;position:relative;overflow:hidden}
+.ph.sea{background:linear-gradient(180deg,#f7c58a 0 38%,#ef8a5b 38% 46%,#2f7fd8 46% 100%)}
+.ph.sea::after{content:"";position:absolute;left:44px;top:18px;width:16px;height:16px;border-radius:50%;background:#fff3d6}
+.ph.shot{background:var(--surface-container);display:flex;flex-direction:column;gap:6px;padding:12px 10px}
+.ph.shot i{display:block;height:6px;border-radius:3px;background:var(--outline-variant)}
+.ph.shot i:nth-child(2){width:70%}.ph.shot i:nth-child(3){width:85%}.ph.shot i:nth-child(4){width:50%;background:var(--o-sun)}
+.ph.recv{background:linear-gradient(135deg,#9bc7a7,#e9d6a8);filter:saturate(.7)}
+.ph.recv::after{content:"";position:absolute;inset:8px 8px auto auto;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.85)}
+.ph .tag{position:absolute;left:5px;bottom:5px;font:600 11px/1 var(--font-body);background:rgba(31,26,22,.72);color:#fff;padding:4px 6px;border-radius:6px}
+.meta{display:flex;flex-direction:column;gap:6px;min-width:0;justify-content:center}
+.meta>span{display:flex;align-items:center;gap:6px;font:500 13px/1.25 var(--font-body)}
+.meta .ms{--ms-size:16px;flex:none}
+.meta .ok{color:#1d7a62}.meta .no{color:var(--error)}
+.meta .no-t{color:var(--on-surface-variant);text-decoration:line-through}
+.outs{display:flex;gap:8px}
+.outs .ph{width:64px;height:64px}
+/* quick replies */
+.qr{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:10px;animation:pop .45s both}
+.qr .chip{background:var(--surface-container-lowest);min-height:40px}
+#guide .bottom-bar{background:var(--surface)}
+
+/* bot avatar internals */
+.bot .eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.6s infinite, look 7s ease-in-out infinite}
+.bot.b2 .eyes{animation-delay:1.7s,2.4s}
+@keyframes blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.1)}}
+@keyframes look{0%,30%{translate:0 0}38%,55%{translate:3px -1px}63%,80%{translate:-3px 0}88%,100%{translate:0 0}}
+.bot .body{animation:breathe 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+.bot.b2 .body{animation-delay:-1.4s}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
+html.shot *{animation-delay:0s!important;animation-duration:0s!important}
+html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!important}
+</style>
+</head>
+<body>
+<!-- gooey filters: blur + alpha threshold, so touching shapes merge like liquid -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="goo" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/>
+    </filter>
+    <filter id="goo-c" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="g"/>
+      <feComposite in="SourceGraphic" in2="g" operator="atop"/>
+    </filter>
+    <filter id="goo-s" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"/>
+    </filter>
+    <filter id="fur" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"/>
+    </filter>
+    <radialGradient id="g-tick" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#ffe29a"/><stop offset=".55" stop-color="#f2b33d"/><stop offset="1" stop-color="#c9841c"/></radialGradient>
+    <radialGradient id="g-pin" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ffab93"/><stop offset=".55" stop-color="#e2553a"/><stop offset="1" stop-color="#a8301b"/></radialGradient>
+    <!-- 틱: clover body (reads photo time) -->
+    <symbol id="bot-tick" viewBox="0 0 100 100">
+      <g class="body" filter="url(#fur)">
+        <g fill="url(#g-tick)">
+          <circle cx="50" cy="28" r="22"/><circle cx="28" cy="52" r="22"/><circle cx="72" cy="52" r="22"/><circle cx="50" cy="72" r="22"/><circle cx="50" cy="50" r="24"/>
+        </g>
+      </g>
+      <g class="eyes"><ellipse cx="40" cy="50" rx="4.6" ry="6.4" fill="#2a1d10"/><ellipse cx="60" cy="50" rx="4.6" ry="6.4" fill="#2a1d10"/>
+        <circle cx="41.6" cy="47.6" r="1.6" fill="#fff"/><circle cx="61.6" cy="47.6" r="1.6" fill="#fff"/></g>
+    </symbol>
+    <!-- 핀: drop body (reads photo place) -->
+    <symbol id="bot-pin" viewBox="0 0 100 100">
+      <g class="body" filter="url(#fur)">
+        <path fill="url(#g-pin)" d="M50 6C58 20 86 42 86 62a36 36 0 0 1-72 0C14 42 42 20 50 6Z"/>
+      </g>
+      <g class="eyes"><ellipse cx="40" cy="60" rx="4.6" ry="6.4" fill="#2b0e07"/><ellipse cx="60" cy="60" rx="4.6" ry="6.4" fill="#2b0e07"/>
+        <circle cx="41.6" cy="57.6" r="1.6" fill="#fff"/><circle cx="61.6" cy="57.6" r="1.6" fill="#fff"/>
+        <path d="M45 71q5 4 10 0" stroke="#2b0e07" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="stage">
+<div class="device" data-time="9:30">
+  <div class="screens">
+
+    <!-- 1 · 스플래시 -->
+    <section class="screen" id="splash" data-start data-title="스플래시">
+      <div class="content" data-go="nick" role="button" aria-label="시작하기">
+        <div class="sp-blobs" style="filter:url(#goo-c)" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="sp-word"><div class="wm">Wend</div><p>사진 속 여행을 다시 펼쳐요</p></div>
+        <div class="sp-foot">화면을 누르면 시작해요</div>
+      </div>
+    </section>
+
+    <!-- 2 · 닉네임 -->
+    <section class="screen" id="nick" data-title="닉네임 입력" data-no-up>
+      <div class="content">
+        <div class="nk-mark"><span class="dot"></span>Wend</div>
+        <h1 class="nk-h">처음 뵙네요.<br>어떻게 불러드릴까요?</h1>
+        <p class="nk-sub">여행을 정리해 드릴 때 이 이름으로 불러드려요.</p>
+        <form id="nick-form" data-action="saveNick" data-go="globe" novalidate>
+          <div class="goo-field" id="nick-field">
+            <div class="goo-layer goo" aria-hidden="true"><i class="g-pill"></i><i class="g-dot"></i></div>
+            <input id="nick-input" name="nick" maxlength="10" autocomplete="off" placeholder="닉네임 입력" aria-label="닉네임" data-js>
+            <button class="g-btn" type="submit" aria-label="다음"><span class="ms">arrow_forward</span></button>
+          </div>
+          <div class="nk-help" id="nick-help"><span id="nick-msg">2~10자, 한글·영문·숫자</span><span class="num" id="nick-count">0/10</span></div>
+        </form>
+        <div class="nk-sugg">
+          <div class="t">이런 이름은 어때요?</div>
+          <div class="chip-wrap">
+            <button class="chip" data-action="suggest">주말 산책러</button>
+            <button class="chip" data-action="suggest">길치 탐험가</button>
+            <button class="chip" data-action="suggest">바다파 지은</button>
+            <button class="chip" data-action="suggest">캐리어 요정</button>
+          </div>
+        </div>
+        <div class="nk-note"><span class="ms">lock</span><span>닉네임과 사진은 이 기기 안에서만 쓰여요. 어디에도 올리지 않아요.</span></div>
+      </div>
+    </section>
+
+    <!-- 3 · 오브 지구본 -->
+    <section class="screen" id="globe" data-title="여행 찾기 소개">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title"></h1>
+      </header>
+      <div class="content">
+        <h1 class="gl-h"><span id="gl-name">여행자</span>님의 흩어진 사진을<br><em>여행 단위</em>로 모아 드릴게요</h1>
+        <div class="gl-stage">
+          <canvas id="globe-cv" style="filter:url(#goo-c)" width="720" height="720" aria-label="사진을 뜻하는 색 방울들이 지구본 모양으로 떠다니는 애니메이션" data-js></canvas>
+          <div class="gl-hint">지구본을 톡 건드려 보세요</div>
+        </div>
+        <div class="gl-steps" id="gl-steps">
+          <button class="gl-step on" data-action="setStep" data-v="0"><b>01</b><span>언제 찍었나</span></button>
+          <button class="gl-step" data-action="setStep" data-v="1"><b>02</b><span>어디서 찍었나</span></button>
+          <button class="gl-step" data-action="setStep" data-v="2"><b>03</b><span>여행으로 묶기</span></button>
+        </div>
+      </div>
+      <div class="bottom-bar"><button class="btn block lg" data-go="guide">어떻게 묶는지 들어볼게요</button></div>
+    </section>
+
+    <!-- 4 · 봇 안내 대화 -->
+    <section class="screen" id="guide" data-title="정리 규칙 안내">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title"><span class="cast"><svg class="bot"><use href="#bot-tick"/></svg><svg class="bot b2"><use href="#bot-pin"/></svg></span>틱 & 핀</h1>
+        <div class="actions"><button class="icon-btn" data-action="replay" aria-label="처음부터 다시 듣기"><span class="ms">replay</span></button></div>
+      </header>
+      <div class="content"><div id="chat"></div></div>
+      <div class="bottom-bar"><button class="btn block lg" id="guide-cta" data-action="finish" disabled>알겠어요, 시작할게요</button></div>
+    </section>
+  </div>
+  <div class="overlays"></div>
+</div>
+</div>
+
+<script src="file:///Users/jun/.claude/skills/android-prototype/assets/shell.js" data-shell></script>
+<script id="app-js">
+var SHOT = document.documentElement.classList.contains('shot');
+App.state.nick = '';
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function nick() { return esc(App.state.nick || '여행자'); }
+
+/* ── splash: auto-advance once the blobs have merged ── */
+App.onEnter('splash', function () {
+  if (SHOT) return;
+  clearTimeout(App.state.spT);
+  App.state.spT = setTimeout(function () { if (App.current() === 'splash') App.go('nick'); }, 3200);
+});
+
+/* ── nickname ── */
+var NICK_RE = /^[가-힣a-zA-Z0-9 ]{2,10}$/;
+function nickCheck(showErr) {
+  var v = document.getElementById('nick-input').value, t = v.trim(), ok = NICK_RE.test(t) && t.length >= 2;
+  document.getElementById('nick-field').classList.toggle('ready', ok);
+  document.getElementById('nick-count').textContent = v.length + '/10';
+  var help = document.getElementById('nick-help'), msg = document.getElementById('nick-msg');
+  var bad = t && !/^[가-힣a-zA-Z0-9 ]*$/.test(t);
+  help.classList.toggle('err', !!(bad || (showErr && !ok)));
+  msg.textContent = bad ? '한글·영문·숫자만 쓸 수 있어요' : (showErr && !ok) ? '두 글자 이상 입력해 주세요' : '2~10자, 한글·영문·숫자';
+  return ok;
+}
+document.getElementById('nick-input').addEventListener('input', function () { nickCheck(false); });
+App.actions.suggest = function (el) { var i = document.getElementById('nick-input'); i.value = el.textContent; nickCheck(false); i.focus(); };
+App.actions.saveNick = function () {
+  if (!nickCheck(true)) { document.getElementById('nick-input').focus(); return false; }
+  App.state.nick = document.getElementById('nick-input').value.trim();
+};
+
+/* ── thinking-orb globe: dots on a sphere under a goo filter ── */
+var Globe = (function () {
+  var cv = document.getElementById('globe-cv'), ctx = cv.getContext('2d');
+  var S = 720, C = S / 2, R = 292;
+  var COL = ['#e2553a', '#f2b33d', '#2f7fd8', '#2bae8e', '#e2553a', '#2f7fd8'];
+  var PAPER = [246, 241, 233], INK = [58, 50, 43], SUN = [242, 179, 61];
+  function hex(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function norm(v) { var l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
+  // six "trip" clusters on the sphere
+  var centers = [[.8, .3, .5], [-.6, .5, .6], [.1, -.7, .7], [-.5, -.4, -.75], [.6, .55, -.6], [-.9, .1, -.1]].map(norm);
+  var N = 210, ga = Math.PI * (3 - Math.sqrt(5)), pts = [];
+  for (var i = 0; i < N; i++) {
+    var y = 1 - 2 * (i + .5) / N, r = Math.sqrt(1 - y * y), th = ga * i, v = [Math.cos(th) * r, y, Math.sin(th) * r];
+    var best = 0, bd = -2;
+    centers.forEach(function (c, k) { var d = c[0] * v[0] + c[1] * v[1] + c[2] * v[2]; if (d > bd) { bd = d; best = k; } });
+    pts.push({ v: v, c: best, rgb: hex(COL[best]), ph: Math.random() * 6.28, s: .75 + Math.random() * .5, sc: .4 + Math.random() });
+  }
+  var sats = [0, 1, 2, 3].map(function (k) { return { a: k * 1.6, sp: .5 + k * .12, tilt: -.6 + k * .4, r: 1.12 + (k % 2) * .08, rgb: hex(COL[k]) }; });
+  var step = 0, k = 0, km = 0, scatter = 0, rot = 0, t = 0, last = 0, auto = 0;
+  function mix(a, f) { return 'rgb(' + a.map(function (x, i) { return Math.round(x + (PAPER[i] - x) * f); }).join(',') + ')'; }
+  function frame(now) {
+    var dt = Math.min(.05, (now - last) / 1000 || .016); last = now; t += dt;
+    if (!SHOT && App.current() === 'globe') { auto += dt; if (auto > 3.4) { auto = 0; setStep((step + 1) % 3); } }
+    rot += dt * (step === 2 ? .22 : .34);
+    k += ((step >= 1 ? 1 : 0) - k) * Math.min(1, dt * 2.2);
+    km += ((step === 2 ? 1 : 0) - km) * Math.min(1, dt * 2.2);
+    scatter *= Math.pow(.12, dt);
+    ctx.clearRect(0, 0, S, S);
+    var cr = Math.cos(rot), sr = Math.sin(rot), ca = Math.cos(.38), sa = Math.sin(.38), list = [];
+    pts.forEach(function (p) {
+      var c = centers[p.c], m = k * .42 + km * .42;
+      var v = norm([p.v[0] + (c[0] - p.v[0]) * m, p.v[1] + (c[1] - p.v[1]) * m, p.v[2] + (c[2] - p.v[2]) * m]);
+      var rr = 1 + .035 * Math.sin(t * 1.4 + p.ph) + scatter * p.sc * .55;
+      var x = v[0] * cr - v[2] * sr, z = v[0] * sr + v[2] * cr, y = v[1] * ca - z * sa; z = v[1] * sa + z * ca;
+      var depth = (z + 1) / 2;
+      var wave = step === 0 ? Math.max(0, Math.sin(t * 2.6 - p.v[1] * 4.5)) : 0;
+      var size = 11.5 * p.s * (.45 + .7 * depth) * (1 + wave * .35) * (step === 2 ? 1.35 : 1);
+      // step 0: ink dots with a sun-coloured "time" sweep · step 1–2: dots take their trip colour
+      var rgb = step === 0 ? INK.map(function (q, i) { return q + (SUN[i] - q) * wave; }) : p.rgb;
+      var fade = (1 - depth) * .62;
+      list.push({ x: C + x * R * rr, y: C + y * R * rr, z: z, size: size, col: mix(rgb.map(Math.round), Math.max(0, Math.min(.8, fade))) });
+    });
+    sats.forEach(function (s) {
+      s.a += dt * s.sp;
+      var x = Math.cos(s.a) * s.r, z0 = Math.sin(s.a) * s.r, y = z0 * Math.sin(s.tilt), z = z0 * Math.cos(s.tilt);
+      list.push({ x: C + x * R, y: C + y * R, z: z, size: 9 + 4 * (z + 1), col: mix(s.rgb, z < 0 ? .45 : 0) });
+    });
+    list.sort(function (a, b) { return a.z - b.z; });
+    list.forEach(function (o) { ctx.beginPath(); ctx.fillStyle = o.col; ctx.arc(o.x, o.y, o.size, 0, 6.2832); ctx.fill(); });
+    requestAnimationFrame(frame);
+  }
+  function setStep(n) {
+    step = n; auto = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('.gl-step'), function (b, i) { b.classList.toggle('on', i === n); });
+  }
+  cv.addEventListener('click', function () { scatter = 1.2; });
+  if (SHOT) { k = 1; setStep(1); }
+  requestAnimationFrame(frame);
+  return { setStep: setStep };
+})();
+App.actions.setStep = function (el) { Globe.setStep(+el.getAttribute('data-v')); };
+App.onEnter('globe', function () { document.getElementById('gl-name').textContent = App.state.nick || '여행자'; });
+
+/* ── guide chat: two bot avatars explain the inclusion rule ── */
+var BOTS = { tick: { name: '틱 · 시간 담당', sym: 'bot-tick', cls: '' }, pin: { name: '핀 · 장소 담당', sym: 'bot-pin', cls: 'b2' } };
+function SCRIPT() {
+  return [
+    { b: 'tick', h: nick() + '님, 반가워요! 저는 사진이 <b>언제</b> 찍혔는지 읽는 틱이에요.' },
+    { b: 'pin', h: '저는 <b>어디서</b> 찍혔는지 읽는 핀이고요. 둘이 힘을 합쳐서 사진을 여행별로 묶어 드려요.' },
+    { b: 'tick', h: '시작하기 전에 꼭 알려 드릴 게 하나 있어요.' },
+    { b: 'pin', h: '사진과 영상 안에는 보통 <b>촬영 시간</b>과 <b>위치</b>가 같이 저장돼요. 저희는 그걸 보고 여행을 찾아요.' },
+    { b: 'tick', key: true, h: '<span class="ms fill">info</span>그래서 시간이나 위치 정보가 없는 사진·영상은 <b>여행에 포함되지 않아요.</b>' },
+    { b: 'pin', h: '예를 들면 이렇게요.', card: true },
+  ];
+}
+var REPLIES = [
+  { q: '빠진 사진은 지워지나요?', b: 'tick', a: '아니요! 기기에 있는 사진은 하나도 지우거나 옮기지 않아요. 여행 정리에서만 빠지는 거예요.' },
+  { q: '위치는 어떻게 남겨요?', b: 'pin', a: '카메라 앱 설정에서 <b>위치 태그</b>를 켜 두세요. 그다음부터 찍는 사진은 자동으로 여행에 담겨요.' },
+  { q: '영상도 똑같아요?', b: 'tick', a: '네, 영상도 같아요. 촬영 시간과 위치가 함께 저장된 영상만 여행에 들어가요.' },
+];
+var CARD = '<div class="ex">' +
+  '<div class="ex-lab in"><span class="ms fill">check_circle</span>여행에 담겨요</div>' +
+  '<div class="ex-row"><div class="ph sea"><span class="tag">카메라</span></div><div class="meta">' +
+    '<span class="ok"><span class="ms">schedule</span>2026. 7. 14 오후 6:32</span>' +
+    '<span class="ok"><span class="ms">location_on</span>제주 애월읍</span></div></div>' +
+  '<div class="ex-row" style="flex-direction:column;gap:0"><div class="ex-lab out"><span class="ms fill">cancel</span>여행에 담기지 않아요</div>' +
+    '<div class="row" style="--gap:10px"><div class="outs"><div class="ph shot"><i></i><i></i><i></i><i></i><span class="tag">캡처</span></div>' +
+    '<div class="ph recv"><span class="tag">받은 사진</span></div></div><div class="meta">' +
+    '<span class="no"><span class="ms">location_off</span><span class="no-t">위치 없음</span></span>' +
+    '<span class="no"><span class="ms">history_toggle_off</span><span class="no-t">시간 불분명</span></span></div></div></div>' +
+  '</div>';
+
+var chatRun = 0, lastBot = null;
+function avatar(b, ghost) { return '<svg class="av bot ' + BOTS[b].cls + (ghost ? ' ghost' : '') + '" aria-hidden="true"><use href="#' + BOTS[b].sym + '"/></svg>'; }
+function botRow(m) {
+  var same = lastBot === m.b; lastBot = m.b;
+  var inner = m.card ? '<div class="bub">' + m.h + '</div>' + CARD : '<div class="bub' + (m.key ? ' key' : '') + '">' + m.h + '</div>';
+  return '<div class="msg' + (same ? '' : ' first') + '">' + avatar(m.b, same) + '<div class="col">' + (same ? '' : '<div class="who">' + BOTS[m.b].name + '</div>') + inner + '</div></div>';
+}
+function scrollChat() { var c = document.querySelector('#guide .content'); c.scrollTo({ top: c.scrollHeight, behavior: SHOT ? 'auto' : 'smooth' }); }
+function typingRow(b) {
+  var same = lastBot === b;
+  return '<div class="msg' + (same ? '' : ' first') + '" id="typing">' + avatar(b, same) + '<div class="col">' + (same ? '' : '<div class="who">' + BOTS[b].name + '</div>') +
+    '<div class="typing"><div class="goo" style="filter:url(#goo-s)"><i></i><i></i><i></i></div></div></div></div>';
+}
+function say(m, run, done) {
+  var chat = document.getElementById('chat');
+  if (SHOT) { chat.insertAdjacentHTML('beforeend', botRow(m)); return done(); }
+  chat.insertAdjacentHTML('beforeend', typingRow(m.b)); scrollChat();
+  var wait = 650 + Math.min(1300, m.h.replace(/<[^>]+>/g, '').length * 22);
+  setTimeout(function () {
+    if (run !== chatRun) return;
+    var ty = document.getElementById('typing'); if (ty) ty.remove();
+    chat.insertAdjacentHTML('beforeend', botRow(m)); scrollChat();
+    setTimeout(done, m.card ? 900 : 420);
+  }, wait);
+}
+function renderReplies() {
+  var old = document.getElementById('qr'); if (old) old.remove();
+  var left = REPLIES.filter(function (r) { return !r.used; });
+  if (!left.length) return;
+  document.getElementById('chat').insertAdjacentHTML('beforeend', '<div class="qr" id="qr">' + left.map(function (r) {
+    return '<button class="chip" data-action="ask" data-q="' + REPLIES.indexOf(r) + '">' + r.q + '</button>';
+  }).join('') + '</div>');
+  scrollChat();
+}
+function playChat() {
+  var run = ++chatRun, list = SCRIPT(), i = 0;
+  lastBot = null; REPLIES.forEach(function (r) { r.used = false; });
+  document.getElementById('guide-cta').disabled = true;
+  document.getElementById('chat').innerHTML = '<div class="day">오늘 · 처음 만나는 날</div>';
+  (function next() {
+    if (run !== chatRun) return;
+    if (i >= list.length) { document.getElementById('guide-cta').disabled = false; renderReplies(); return; }
+    say(list[i++], run, next);
+  })();
+}
+App.actions.ask = function (el) {
+  var r = REPLIES[+el.getAttribute('data-q')]; r.used = true;
+  document.getElementById('qr').remove();
+  document.getElementById('chat').insertAdjacentHTML('beforeend', '<div class="msg me"><div class="bub">' + r.q + '</div></div>');
+  lastBot = null; scrollChat();
+  var run = chatRun;
+  say({ b: r.b, h: r.a }, run, renderReplies);
+};
+App.actions.replay = function () { playChat(); };
+App.actions.finish = function () {
+  App.snack(nick() + '님, 좋아요! 다음 단계(사진 접근 권한)는 시안 승인 후 이어서 만들어요');
+};
+App.onEnter('guide', function () {
+  var who = App.state.nick || '여행자';
+  if (App.state.chatFor !== who || SHOT) { App.state.chatFor = who; playChat(); }
+});
+</script>
+</body>
+</html>
