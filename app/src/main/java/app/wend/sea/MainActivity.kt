@@ -2,46 +2,28 @@ package app.wend.sea
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import app.wend.sea.ui.theme.WendTheme
+import androidx.compose.ui.graphics.toArgb
+import app.wend.sea.core.designsystem.theme.Surface
+import app.wend.sea.core.designsystem.theme.WendTheme
+import app.wend.sea.navigation.WendNavHost
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        val paper = Surface.toArgb()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(paper, paper),
+            navigationBarStyle = SystemBarStyle.light(paper, paper),
+        )
         setContent {
             WendTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                WendNavHost()
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WendTheme {
-        Greeting("Android")
     }
 }
