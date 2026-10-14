@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.paperCard
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.feature.analysis.rememberStartWithNotificationPermission
 
 private val PinTint = Color(0xFFA8301B)
 private val StripOff = Color(0xFFE2D9CB)
@@ -53,8 +54,14 @@ private val StripPicked = setOf(1, 5, 8)
 @Composable
 fun PartialScreen(
     onResult: (MediaAccess) -> Unit,
+    onAnalysisStarted: () -> Unit,
     viewModel: PartialViewModel = hiltViewModel(),
 ) {
+    val currentOnStarted by rememberUpdatedState(onAnalysisStarted)
+    val start = rememberStartWithNotificationPermission {
+        viewModel.startAnalysis()
+        currentOnStarted()
+    }
     val picked by viewModel.picked.collectAsStateWithLifecycle()
     val currentOnResult by rememberUpdatedState(onResult)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -76,6 +83,7 @@ fun PartialScreen(
                     currentOnResult(event.access)
                 }
                 is PartialEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                PartialEvent.ReadyToStart -> start()
             }
         }
     }

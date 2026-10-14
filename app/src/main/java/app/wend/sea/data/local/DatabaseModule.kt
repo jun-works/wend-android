@@ -15,8 +15,13 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun database(@ApplicationContext context: Context): WendDatabase =
-        Room.databaseBuilder(context, WendDatabase::class.java, "wend.db").build()
+        Room.databaseBuilder(context, WendDatabase::class.java, "wend.db")
+            .addMigrations(WendDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun mediaLocationDao(database: WendDatabase): MediaLocationDao = database.mediaLocationDao()
+
+    @Provides
+    fun tripDao(database: WendDatabase): TripDao = database.tripDao()
 }

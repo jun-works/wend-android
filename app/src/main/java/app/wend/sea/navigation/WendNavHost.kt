@@ -6,6 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.feature.analysis.AnalyzeScreen
+import app.wend.sea.feature.analysis.FoundScreen
+import app.wend.sea.feature.analysis.NoFoundScreen
 import app.wend.sea.feature.globe.GlobeScreen
 import app.wend.sea.feature.guide.GuideScreen
 import app.wend.sea.feature.nickname.NicknameScreen
@@ -25,6 +28,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object GrantedRoute
 @Serializable data object PartialRoute
 @Serializable data object DeniedRoute
+@Serializable data object AnalyzeRoute
+@Serializable data object FoundRoute
+@Serializable data object NoFoundRoute
 
 @Composable
 fun WendNavHost() {
@@ -40,6 +46,9 @@ fun WendNavHost() {
                         SplashDestination.Permission -> PermRoute
                         SplashDestination.Granted -> GrantedRoute
                         SplashDestination.Partial -> PartialRoute
+                        SplashDestination.Analyzing -> AnalyzeRoute
+                        SplashDestination.Found -> FoundRoute
+                        SplashDestination.NoFound -> NoFoundRoute
                     }
                     navController.navigate(first) {
                         popUpTo(SplashRoute) { inclusive = true }
@@ -86,9 +95,39 @@ fun WendNavHost() {
                 onResult = navController::showMediaResult,
             )
         }
-        composable<GrantedRoute> { GrantedScreen(onResult = navController::showMediaResult) }
-        composable<PartialRoute> { PartialScreen(onResult = navController::showMediaResult) }
+        composable<GrantedRoute> {
+            GrantedScreen(
+                onResult = navController::showMediaResult,
+                onAnalysisStarted = { navController.navigate(AnalyzeRoute) },
+            )
+        }
+        composable<PartialRoute> {
+            PartialScreen(
+                onResult = navController::showMediaResult,
+                onAnalysisStarted = { navController.navigate(AnalyzeRoute) },
+            )
+        }
+        composable<AnalyzeRoute> {
+            AnalyzeScreen(
+                // 결과 화면에서 뒤로 가면 분석 화면은 건너뛴다
+                onFinished = { foundAny ->
+                    navController.navigate(if (foundAny) FoundRoute else NoFoundRoute) {
+                        popUpTo(AnalyzeRoute) { inclusive = true }
+                    }
+                },
+                onFailed = navController::showMediaResult,
+            )
+        }
+        composable<FoundRoute> { FoundScreen(onReanalyze = { navController.reanalyze(FoundRoute) }) }
+        composable<NoFoundRoute> { NoFoundScreen(onReanalyze = { navController.reanalyze(NoFoundRoute) }) }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
+    }
+}
+
+/** 모든 사진을 허용해서 처음부터 다시 찾는다: 결과 화면을 분석 화면으로 바꿔 끼운다 */
+private fun NavController.reanalyze(from: Any) {
+    navigate(AnalyzeRoute) {
+        popUpTo(from) { inclusive = true }
     }
 }
 

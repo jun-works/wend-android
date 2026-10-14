@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
+import app.wend.sea.data.analysis.AnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,12 +20,16 @@ const val PARTIAL_LIT_DOTS = 14
 sealed interface PartialEvent {
     data class ShowResult(val access: MediaAccess) : PartialEvent
     data class ShowMessage(val message: String) : PartialEvent
+
+    /** 권한 확인을 통과 — 알림 권한을 물은 뒤 [PartialViewModel.startAnalysis] */
+    data object ReadyToStart : PartialEvent
 }
 
 @HiltViewModel
 class PartialViewModel @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val resultHandler: PermissionResultHandler,
+    private val analysisRepository: AnalysisRepository,
 ) : ViewModel() {
 
     /** 사용자가 고른 사진·영상 수 */
@@ -60,11 +65,13 @@ class PartialViewModel @Inject constructor(
         _events.send(PartialEvent.ShowResult(access))
     }
 
+    fun startAnalysis() = analysisRepository.start()
+
     /** 시작 직전에 권한을 다시 본다 — 화면을 띄운 뒤 설정에서 권한을 바꾸거나 거둘 수 있다 */
     fun onStartWithPicked() {
         viewModelScope.launch {
             when (val access = mediaRepository.currentAccess()) {
-                MediaAccess.Partial -> _events.send(PartialEvent.ShowMessage("다음 단계(여행 찾기)는 곧 이어서 만들어요"))
+                MediaAccess.Partial -> _events.send(PartialEvent.ReadyToStart)
                 else -> leave(access)
             }
         }

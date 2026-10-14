@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.UserRepository
+import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.feature.globe.DEFAULT_NICKNAME
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -30,12 +31,16 @@ sealed interface GrantedEvent {
 
     /** 그사이 설정에서 권한이 바뀌어 다른 결과 화면으로 */
     data class ShowResult(val access: MediaAccess) : GrantedEvent
+
+    /** 권한 확인을 통과 — 알림 권한을 물은 뒤 [GrantedViewModel.startAnalysis] */
+    data object ReadyToStart : GrantedEvent
 }
 
 @HiltViewModel
 class GrantedViewModel @Inject constructor(
     userRepository: UserRepository,
     private val mediaRepository: MediaRepository,
+    private val analysisRepository: AnalysisRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GrantedUiState())
@@ -69,10 +74,12 @@ class GrantedViewModel @Inject constructor(
         _events.trySend(GrantedEvent.ShowResult(access))
     }
 
+    fun startAnalysis() = analysisRepository.start()
+
     /** 시작 직전에 권한을 다시 본다 — 화면을 띄운 뒤 설정에서 권한을 거둘 수 있다 */
     fun onStartAnalysis() {
         when (val access = mediaRepository.currentAccess()) {
-            MediaAccess.All -> _events.trySend(GrantedEvent.ShowMessage("다음 단계(여행 찾기)는 곧 이어서 만들어요"))
+            MediaAccess.All -> _events.trySend(GrantedEvent.ReadyToStart)
             else -> leave(access)
         }
     }

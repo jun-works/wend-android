@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.feature.analysis.rememberStartWithNotificationPermission
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,8 +69,14 @@ private val CountStyle = TextStyle(
 @Composable
 fun GrantedScreen(
     onResult: (MediaAccess) -> Unit,
+    onAnalysisStarted: () -> Unit,
     viewModel: GrantedViewModel = hiltViewModel(),
 ) {
+    val currentOnStarted by rememberUpdatedState(onAnalysisStarted)
+    val start = rememberStartWithNotificationPermission {
+        viewModel.startAnalysis()
+        currentOnStarted()
+    }
     val currentOnResult by rememberUpdatedState(onResult)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -92,6 +99,10 @@ fun GrantedScreen(
                 is GrantedEvent.ShowMessage -> {
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     snackbarHostState.showSnackbar(event.message)
+                }
+                GrantedEvent.ReadyToStart -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    start()
                 }
                 is GrantedEvent.ShowResult -> {
                     haptic.performResultFeedback(event.access)

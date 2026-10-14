@@ -36,7 +36,7 @@ private val Ghost = floatArrayOf(214f, 202f, 185f)
 private val Ink = floatArrayOf(58f, 50f, 43f)
 
 /** 시안과 같은 난수열(Park–Miller)로 점마다 같은 크기·위상·선택 순서를 만든다 */
-private class Seeded(seed: Long) {
+internal class Seeded(seed: Long) {
     private var s = seed
     fun next(): Float {
         s = (s * 16807) % 2147483647

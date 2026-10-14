@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** 분석 결과 요약: 볼 수 있던 사진·영상 [total] 개 중 [included] 개가 여행 [tripCount] 개에 담김 */
+data class AnalysisSummary(val total: Int, val included: Int, val tripCount: Int, val partial: Boolean)
+
 private val Context.userDataStore: DataStore<Preferences> by preferencesDataStore(name = "user")
 
 /** 닉네임 등 사용자 정보. 기기 안(DataStore)에만 저장한다. */
@@ -34,6 +37,26 @@ class UserRepository @Inject constructor(
 
     suspend fun setOnboardingDone() {
         dataStore.edit { it[KEY_ONBOARDING_DONE] = true }
+    }
+
+    /** 마지막 분석 결과 요약. 분석을 한 번도 끝내지 않았으면 null */
+    val analysisSummary: Flow<AnalysisSummary?> = dataStore.data.map {
+        val total = it[KEY_ANALYSIS_TOTAL] ?: return@map null
+        AnalysisSummary(
+            total = total,
+            included = it[KEY_ANALYSIS_INCLUDED] ?: 0,
+            tripCount = it[KEY_ANALYSIS_TRIPS] ?: 0,
+            partial = it[KEY_ANALYSIS_PARTIAL] ?: false,
+        )
+    }
+
+    suspend fun saveAnalysisSummary(summary: AnalysisSummary) {
+        dataStore.edit {
+            it[KEY_ANALYSIS_TOTAL] = summary.total
+            it[KEY_ANALYSIS_INCLUDED] = summary.included
+            it[KEY_ANALYSIS_TRIPS] = summary.tripCount
+            it[KEY_ANALYSIS_PARTIAL] = summary.partial
+        }
     }
 
     /** 사진 접근 권한을 거절한 횟수 */
@@ -61,5 +84,9 @@ class UserRepository @Inject constructor(
         val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val KEY_MEDIA_DENIALS = intPreferencesKey("media_denials")
         val KEY_MEDIA_SETTINGS_ONLY = booleanPreferencesKey("media_settings_only")
+        val KEY_ANALYSIS_TOTAL = intPreferencesKey("analysis_total")
+        val KEY_ANALYSIS_INCLUDED = intPreferencesKey("analysis_included")
+        val KEY_ANALYSIS_TRIPS = intPreferencesKey("analysis_trips")
+        val KEY_ANALYSIS_PARTIAL = booleanPreferencesKey("analysis_partial")
     }
 }

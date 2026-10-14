@@ -6,14 +6,16 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
+import app.wend.sea.data.analysis.MediaPoint
 import app.wend.sea.data.local.MediaLocationDao
 import app.wend.sea.data.local.MediaLocationEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,91 +23,152 @@ import kotlin.coroutines.coroutineContext
 
 data class MediaCounts(val photos: Int, val videos: Int)
 
+/** 위치 읽기 진행: [done] / [total] 개를 봤고 그중 [withLocation] 개에 위치가 있다 */
+data class LocationSyncProgress(val done: Int, val total: Int, val withLocation: Int)
+
 /** 기기의 사진·영상을 MediaStore 로 읽는다. 앱이 볼 수 있는 범위(전체/고른 것)만 보인다. */
 @Singleton
 class MediaRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val locationDao: MediaLocationDao,
+    private val thermal: ThermalGuard,
 ) {
+    /** 앨범 열림 화면과 분석이 동시에 위치를 읽지 않게 — 뒤에 온 쪽은 앞쪽이 채운 저장값을 쓴다 */
+    private val syncLock = Mutex()
+
     fun currentAccess(): MediaAccess = MediaPermissions.currentAccess(context)
 
     suspend fun counts(): MediaCounts = withContext(Dispatchers.IO) {
         MediaCounts(
-            photos = count(MediaStore.Images.Media.EXTERNAL_CONTENT_URI),
-            videos = count(MediaStore.Video.Media.EXTERNAL_CONTENT_URI),
+            photos = items(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, video = false).size,
+            videos = items(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, video = true).size,
         )
     }
 
+    /** 위치가 남아 있는 사진·영상 수. 읽는 동안 늘어나는 수를 계속 내보낸다. */
+    fun locationCount(): Flow<Int> = channelFlow {
+        syncLocations(allItems()) { send(it.withLocation) }
+    }
+
+    /** 분석할 사진·영상 수(캡처 제외) */
+    suspend fun analysisItemCount(): Int = withContext(Dispatchers.IO) { allItems().count { !it.screenshot } }
+
+    /** 볼 수 있는 사진·영상 전체 수(캡처 포함) — "N개 중 M개가 여행에 담겼어요" 의 N */
+    suspend fun visibleCount(): Int = withContext(Dispatchers.IO) { allItems().size }
+
     /**
-     * 위치(GPS)가 남아 있는 사진·영상 수. MediaStore 에는 위치가 없어서 파일을 열어 읽어야 하므로,
-     * 읽은 결과를 DB 에 저장해 두고 새로 생기거나 바뀐 파일만 읽는다.
-     * 저장된 결과로 센 수를 먼저 내보내고, 새로 읽는 동안 늘어나는 수를 계속 내보낸다.
+     * 분석에 쓸 사진·영상. 캡처는 처음부터 뺀다. 위치는 저장된 값을 쓰고, 새로 생기거나 바뀐 파일만 열어 읽는다.
      */
-    fun locationCount(): Flow<Int> = flow {
-        if (!MediaPermissions.canReadLocation(context)) {
-            emit(0)
-            return@flow
+    suspend fun analysisPoints(onProgress: suspend (LocationSyncProgress) -> Unit): List<MediaPoint> {
+        val items = withContext(Dispatchers.IO) { allItems() }.filterNot { it.screenshot }
+        val locations = syncLocations(items, onProgress)
+        return items.map { item ->
+            val location = locations[item.video to item.id]
+            MediaPoint(item.id, item.video, item.takenAt, location?.first, location?.second)
         }
-        val visible = items(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, video = false) +
+    }
+
+    /**
+     * [items] 의 위치를 채운다. 저장값이 있으면 그대로, 없거나 파일이 바뀌었으면 열어서 읽고 저장한다.
+     * 파일은 한 번에 하나씩 읽고, 기기가 뜨거우면 쉬어 간다.
+     */
+    private suspend fun syncLocations(
+        items: List<MediaItem>,
+        onProgress: suspend (LocationSyncProgress) -> Unit,
+    ): Map<Pair<Boolean, Long>, Pair<Double, Double>> = syncLock.withLock {
+        withContext(Dispatchers.IO) {
+            val result = HashMap<Pair<Boolean, Long>, Pair<Double, Double>>()
+            if (!MediaPermissions.canReadLocation(context)) {
+                onProgress(LocationSyncProgress(items.size, items.size, 0))
+                return@withContext result
+            }
+            val cached = locationDao.getAll().associateBy { it.video to it.mediaId }
+            val toRead = mutableListOf<MediaItem>()
+            for (item in items) {
+                val hit = cached[item.video to item.id]
+                if (hit != null && hit.modified == item.modified) {
+                    if (hit.latitude != null && hit.longitude != null) result[item.video to item.id] = hit.latitude to hit.longitude
+                } else {
+                    toRead += item
+                }
+            }
+            var done = items.size - toRead.size
+            onProgress(LocationSyncProgress(done, items.size, result.size))
+
+            val batch = mutableListOf<MediaLocationEntity>()
+            toRead.forEachIndexed { index, item ->
+                coroutineContext.ensureActive()
+                thermal.pace()
+                val location = if (item.video) videoLocation(item.uri) else photoLocation(item.uri)
+                if (location != null) result[item.video to item.id] = location
+                batch += MediaLocationEntity(item.id, item.video, item.modified, location?.first, location?.second)
+                done++
+                if (batch.size == 25 || index == toRead.lastIndex) {
+                    locationDao.upsert(batch.toList())
+                    batch.clear()
+                    onProgress(LocationSyncProgress(done, items.size, result.size))
+                }
+            }
+
+            // 모두 볼 수 있을 때만 지워진 파일을 정리한다(일부 허용이면 안 보이는 것과 지워진 것을 구분할 수 없음)
+            if (currentAccess() == MediaAccess.All) {
+                val visibleKeys = allItems().mapTo(HashSet()) { it.video to it.id }
+                cached.keys.filterNot { it in visibleKeys }.groupBy({ it.first }, { it.second })
+                    .forEach { (video, ids) -> ids.chunked(500).forEach { locationDao.delete(video, it) } }
+            }
+            result
+        }
+    }
+
+    private class MediaItem(
+        val id: Long,
+        val video: Boolean,
+        val modified: Long,
+        val takenAt: Long?,
+        val screenshot: Boolean,
+        val uri: Uri,
+    )
+
+    private fun allItems(): List<MediaItem> =
+        items(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, video = false) +
             items(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, video = true)
-        val cached = locationDao.getAll().associateBy { it.video to it.mediaId }
-
-        var found = 0
-        val toRead = mutableListOf<MediaItem>()
-        for (item in visible) {
-            val hit = cached[item.video to item.id]
-            if (hit != null && hit.modified == item.modified) {
-                if (hit.latitude != null) found++
-            } else {
-                toRead += item
-            }
-        }
-        emit(found)
-
-        val batch = mutableListOf<MediaLocationEntity>()
-        toRead.forEachIndexed { index, item ->
-            coroutineContext.ensureActive()
-            val location = if (item.video) videoLocation(item.uri) else photoLocation(item.uri)
-            if (location != null) found++
-            batch += MediaLocationEntity(item.id, item.video, item.modified, location?.first, location?.second)
-            if (batch.size == 25 || index == toRead.lastIndex) {
-                locationDao.upsert(batch.toList())
-                batch.clear()
-                emit(found)
-            }
-        }
-
-        // 모두 볼 수 있을 때만 지워진 파일을 정리한다(일부 허용이면 안 보이는 것과 지워진 것을 구분할 수 없음)
-        if (currentAccess() == MediaAccess.All) {
-            val visibleKeys = visible.mapTo(HashSet()) { it.video to it.id }
-            cached.keys.filterNot { it in visibleKeys }.groupBy({ it.first }, { it.second })
-                .forEach { (video, ids) -> ids.chunked(500).forEach { locationDao.delete(video, it) } }
-        }
-    }.flowOn(Dispatchers.IO)
-
-    private data class MediaItem(val id: Long, val video: Boolean, val modified: Long, val uri: Uri)
 
     private fun items(collection: Uri, video: Boolean): List<MediaItem> =
         context.contentResolver.query(
             collection,
-            arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATE_MODIFIED),
+            arrayOf(
+                MediaStore.MediaColumns._ID,
+                MediaStore.MediaColumns.DATE_MODIFIED,
+                MediaStore.MediaColumns.DATE_TAKEN,
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                MediaStore.MediaColumns.DISPLAY_NAME,
+            ),
             null,
             null,
             null,
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
             val modifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED)
+            val takenColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_TAKEN)
+            val pathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             buildList {
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
-                    add(MediaItem(id, video, cursor.getLong(modifiedColumn), ContentUris.withAppendedId(collection, id)))
+                    add(
+                        MediaItem(
+                            id = id,
+                            video = video,
+                            modified = cursor.getLong(modifiedColumn),
+                            // 촬영 시각만 쓴다. 기기에 등록된 시각(DATE_ADDED)으로 대신하지 않는다.
+                            takenAt = if (cursor.isNull(takenColumn)) null else cursor.getLong(takenColumn).takeIf { it > 0 },
+                            screenshot = isScreenshot(cursor.getString(pathColumn), cursor.getString(nameColumn)),
+                            uri = ContentUris.withAppendedId(collection, id),
+                        ),
+                    )
                 }
             }
         } ?: emptyList()
-
-    private fun count(collection: Uri): Int =
-        context.contentResolver.query(collection, arrayOf(MediaStore.MediaColumns._ID), null, null, null)
-            ?.use { it.count } ?: 0
 
     // setRequireOriginal 없이 열면 Android 10+ 가 GPS 를 지운 채로 준다
     private fun photoLocation(uri: Uri): Pair<Double, Double>? = runCatching {
@@ -132,6 +195,14 @@ class MediaRepository @Inject constructor(
         fun parseIso6709(value: String?): Pair<Double, Double>? {
             val match = ISO_6709.find(value ?: return null) ?: return null
             return match.groupValues[1].toDouble() to match.groupValues[2].toDouble()
+        }
+
+        /** 캡처는 저장 폴더와 파일 이름으로만 판단한다(카메라 정보·화면 크기는 받은 사진도 해당될 수 있어 쓰지 않음) */
+        fun isScreenshot(relativePath: String?, displayName: String?): Boolean {
+            val path = relativePath.orEmpty().lowercase()
+            val name = displayName.orEmpty()
+            return path.startsWith("pictures/screenshots") || path.startsWith("dcim/screenshots") ||
+                name.startsWith("Screenshot_") || name.startsWith("Screen_Recording_")
         }
     }
 }

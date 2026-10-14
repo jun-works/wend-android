@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.UserRepository
+import app.wend.sea.data.analysis.AnalysisRepository
+import app.wend.sea.data.analysis.AnalysisState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,25 +27,39 @@ enum class SplashDestination {
 
     /** 온보딩을 마쳤고 고른 사진만 볼 수 있음 → 일부 허용 */
     Partial,
+
+    /** 여행을 찾는 중(앱을 닫았다 다시 열었을 때) */
+    Analyzing,
+
+    /** 여행 찾기를 마쳤음 → 찾기 완료 / 여행 없음 */
+    Found,
+    NoFound,
 }
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     userRepository: UserRepository,
     mediaRepository: MediaRepository,
+    analysisRepository: AnalysisRepository,
 ) : ViewModel() {
 
     /** 저장소를 읽기 전에는 null */
     val destination: StateFlow<SplashDestination?> =
-        combine(userRepository.nickname, userRepository.onboardingDone) { nickname, onboarded ->
+        combine(
+            userRepository.nickname,
+            userRepository.onboardingDone,
+            analysisRepository.state,
+            analysisRepository.summary,
+        ) { nickname, onboarded, analysis, summary ->
+            val access = mediaRepository.currentAccess()
             when {
                 nickname.isNullOrBlank() -> SplashDestination.Nickname
                 !onboarded -> SplashDestination.Globe
-                else -> when (mediaRepository.currentAccess()) {
-                    MediaAccess.All -> SplashDestination.Granted
-                    MediaAccess.Partial -> SplashDestination.Partial
-                    MediaAccess.None -> SplashDestination.Permission
-                }
+                access == MediaAccess.None -> SplashDestination.Permission
+                analysis is AnalysisState.Running -> SplashDestination.Analyzing
+                summary != null -> if (summary.tripCount > 0) SplashDestination.Found else SplashDestination.NoFound
+                access == MediaAccess.All -> SplashDestination.Granted
+                else -> SplashDestination.Partial
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }
