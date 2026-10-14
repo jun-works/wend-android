@@ -2,6 +2,7 @@ package app.wend.sea.feature.guide
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.core.designsystem.component.Bot
 import app.wend.sea.data.UserRepository
 import app.wend.sea.feature.globe.DEFAULT_NICKNAME
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,12 +17,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-/** 판단 기준이 정확히 2개(시간, 위치)라서 캐릭터도 2개 — 캐릭터 = 기준 */
-enum class Bot(val title: String) {
-    Tick("틱 · 시간 담당"),
-    Pin("핀 · 장소 담당"),
-}
 
 /** 말풍선 텍스트의 `**굵게**` 표시는 화면에서 굵은 글씨로 바뀐다. */
 sealed interface ChatItem {
@@ -52,7 +47,8 @@ data class GuideUiState(
 )
 
 sealed interface GuideEvent {
-    data class ShowMessage(val message: String) : GuideEvent
+    /** 안내를 다 듣고 다음(사진 접근)으로 */
+    data object Finished : GuideEvent
 }
 
 private data class Line(
@@ -108,7 +104,10 @@ class GuideViewModel @Inject constructor(
     }
 
     fun onFinish() {
-        _events.trySend(GuideEvent.ShowMessage("${nickname}님, 좋아요! 다음 단계(사진 접근 권한)는 곧 이어서 만들어요"))
+        viewModelScope.launch {
+            userRepository.setOnboardingDone()
+            _events.send(GuideEvent.Finished)
+        }
     }
 
     private fun play() {

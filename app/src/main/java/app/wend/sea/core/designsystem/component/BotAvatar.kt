@@ -1,4 +1,4 @@
-package app.wend.sea.feature.guide
+package app.wend.sea.core.designsystem.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -18,6 +18,12 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import kotlin.math.PI
 import kotlin.math.cos
+
+/** 판단 기준이 정확히 2개(시간, 위치)라서 캐릭터도 2개 — 캐릭터 = 기준 */
+enum class Bot(val title: String) {
+    Tick("틱 · 시간 담당"),
+    Pin("핀 · 장소 담당"),
+}
 
 private class BotLook(
     val stops: Array<Pair<Float, Color>>,

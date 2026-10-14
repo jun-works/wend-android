@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -27,7 +26,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.rounded.Replay
@@ -44,31 +42,33 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.core.designsystem.component.Bot
+import app.wend.sea.core.designsystem.component.BotAvatar
+import app.wend.sea.core.designsystem.component.BotBubble
+import app.wend.sea.core.designsystem.component.BotBubbleShape
+import app.wend.sea.core.designsystem.component.BubbleMaxWidth
+import app.wend.sea.core.designsystem.component.paperCard
+import app.wend.sea.core.designsystem.component.easeLoop
 import app.wend.sea.core.designsystem.component.WendChip
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.WendTopAppBar
@@ -77,25 +77,21 @@ import app.wend.sea.core.designsystem.component.rememberAmbientClock
 import app.wend.sea.core.designsystem.component.spread
 import app.wend.sea.core.designsystem.theme.IncludedGreen
 import app.wend.sea.core.designsystem.theme.OrbColors
-import app.wend.sea.core.designsystem.theme.OutlineVariant
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.foundation.text.appendInlineContent
 
-private val BotBubbleShape = RoundedCornerShape(topStart = 6.dp, topEnd = 22.dp, bottomEnd = 22.dp, bottomStart = 22.dp)
 private val MyBubbleShape = RoundedCornerShape(topStart = 22.dp, topEnd = 6.dp, bottomEnd = 22.dp, bottomStart = 22.dp)
 private val AvatarSize = 44.dp
-private val BubbleMaxWidth = 290.dp
 private val PopEasing = CubicBezierEasing(0.3f, 1.4f, 0.5f, 1f)
 
 @Composable
 fun GuideScreen(
     onBack: () -> Unit,
+    onFinished: () -> Unit,
     viewModel: GuideViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
+    val currentOnFinished by rememberUpdatedState(onFinished)
 
     // 봇 말풍선이 도착할 때마다 톡 — 규칙 핵심 문장(검은 말풍선)은 한 단계 또렷하게
     val lastBotMessage = uiState.items.lastOrNull() as? ChatItem.BotMessage
@@ -109,7 +105,7 @@ fun GuideScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is GuideEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                GuideEvent.Finished -> currentOnFinished()
             }
         }
     }
@@ -199,7 +195,7 @@ private fun GuideContent(
                     when (item) {
                         is ChatItem.Day -> DayDivider()
                         is ChatItem.BotMessage -> BotRow(item.bot, item.showHeader, clock) {
-                            Bubble(item.text, isKey = item.isKey)
+                            BotBubble(item.text, isKey = item.isKey)
                             if (item.withExampleCard) ExampleCard()
                         }
                         is ChatItem.Typing -> BotRow(item.bot, item.showHeader, clock) { TypingBubble(clock) }
@@ -254,35 +250,6 @@ private fun BotRow(bot: Bot, showHeader: Boolean, clock: State<Float>, content: 
         }
     }
 }
-
-@Composable
-private fun Bubble(text: String, isKey: Boolean) {
-    val colors = MaterialTheme.colorScheme
-    val background = if (isKey) colors.onSurface else colors.surfaceContainerLowest
-    val content = if (isKey) colors.surface else colors.onSurface
-    Box(Modifier.paperCard(BotBubbleShape, background, underline = !isKey).padding(horizontal = 16.dp, vertical = 12.dp)) {
-        Text(
-            text = buildAnnotatedString {
-                if (isKey) {
-                    appendInlineContent(INFO_ID, "ⓘ")
-                }
-                append(text.withBold())
-            },
-            inlineContent = if (isKey) InfoInline else emptyMap(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = content,
-        )
-    }
-}
-
-private const val INFO_ID = "info"
-private val InfoInline = mapOf(
-    INFO_ID to androidx.compose.foundation.text.InlineTextContent(
-        androidx.compose.ui.text.Placeholder(24.sp, 20.sp, androidx.compose.ui.text.PlaceholderVerticalAlign.Center),
-    ) {
-        Icon(Icons.Rounded.Info, contentDescription = null, tint = OrbColors.Sun, modifier = Modifier.padding(end = 4.dp))
-    },
-)
 
 @Composable
 private fun MyBubble(text: String) {
@@ -465,16 +432,6 @@ private fun QuickReplies(replies: List<QuickReply>, onClick: (QuickReply) -> Uni
     }
 }
 
-/** 종이 카드: 배경 + 아래쪽 1dp 그림자 선 */
-private fun Modifier.paperCard(shape: Shape, color: Color, underline: Boolean = true) = this
-    .drawBehind {
-        if (underline) {
-            val outline = shape.createOutline(size, layoutDirection, this)
-            translate(top = 1.dp.toPx()) { drawOutline(outline, OutlineVariant) }
-        }
-    }
-    .background(color, shape)
-
 /** 말풍선이 톡 튀어 오르며 나타난다. */
 @Composable
 private fun Modifier.popIn(): Modifier {
@@ -487,16 +444,5 @@ private fun Modifier.popIn(): Modifier {
         val s = .94f + .06f * p
         scaleX = s
         scaleY = s
-    }
-}
-
-// 굵은 구간은 시안(.bub b{white-space:nowrap})처럼 중간에서 줄바꿈하지 않는다
-private fun String.withBold(): AnnotatedString = buildAnnotatedString {
-    split("**").forEachIndexed { i, part ->
-        if (i % 2 == 1) {
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(part.replace(' ', '\u00A0')) }
-        } else {
-            append(part)
-        }
     }
 }
