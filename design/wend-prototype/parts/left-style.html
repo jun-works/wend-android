@@ -1,0 +1,47 @@
+<style id="left-style">
+/* ═══ Flow 6 · 빠진 사진 ═══════════════════════════════════════════════ */
+#left .content{padding:0 0 24px}
+#left .top-app-bar .sub{display:block;font:var(--body-s);color:var(--on-surface-variant);margin-top:2px}
+#left .top-app-bar .title{line-height:1.25}
+#left.selecting .top-app-bar{background:var(--surface-container)}
+.lf-intro{padding:4px 20px 6px;font:var(--body-m);color:var(--on-surface-variant)}
+.lf-day{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:10px 8px 8px 20px;background:var(--surface)}
+.lf-day b{font:700 16px/1.3 var(--font-display)}
+.lf-day span{flex:1;font:var(--body-s);color:var(--on-surface-variant)}
+.lf-day .btn{min-height:40px;padding:0 12px;font:var(--label-l)}
+#left:not(.selecting) .lf-day .btn{display:none}
+.lf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 3px 10px}
+.lf-grid button{position:relative;aspect-ratio:1;border:0;padding:0;cursor:pointer;overflow:hidden;transition:transform .2s}
+.lf-grid button .ck{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.18);display:none;place-items:center;color:var(--on-primary)}
+.lf-grid button .ck .ms{--ms-size:15px;opacity:0}
+#left.selecting .lf-grid button .ck{display:grid}
+.lf-grid button.on{transform:scale(.88);border-radius:10px}
+.lf-grid button.on .ck{background:var(--primary);border-color:var(--primary)}
+.lf-grid button.on .ck .ms{opacity:1}
+.lf-grid button .pin{position:absolute;left:5px;bottom:5px;color:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.lf-grid button .pin .ms{--ms-size:15px}
+.lf-more{padding:16px 20px;text-align:center;font:var(--body-m);color:var(--on-surface-variant)}
+#left .bottom-bar{background:var(--surface);gap:8px}
+#left .bottom-bar .btn{flex:1}
+#left:not(.selecting) .bottom-bar{display:none}
+
+/* photos joining a trip: they shrink into the trip's colour and merge like drops */
+.fly-layer{position:absolute;inset:0;z-index:30;pointer-events:none;filter:url(#goo)}
+.fly-layer i{position:absolute;left:0;top:0;border-radius:6px;transition:transform .75s cubic-bezier(.6,0,.3,1),border-radius .75s,background-color .5s .15s}
+
+/* add-to-trip sheet */
+.at-list{display:flex;flex-direction:column;gap:4px}
+.at-item{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:8px 12px;border:0;border-radius:16px;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.at-item:hover{background:var(--surface-container-low)}
+.at-item .tk-dot{flex:none}
+.at-item .body{flex:1;min-width:0}
+.at-item .body b{display:block;font:700 16px/1.3 var(--font-display)}
+.at-item .body span{display:block;font:var(--body-s);color:var(--on-surface-variant)}
+.at-item .gap{font:var(--label-m);color:var(--on-surface-variant);white-space:nowrap}
+.at-item.near{background:var(--surface-container-low)}
+.at-item.near .gap{color:#9a2a14;font-weight:600}
+.nt-when{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font:var(--body-m);color:var(--on-surface-variant)}
+.nt-when .ms{--ms-size:18px}
+#new-trip .field{margin-bottom:4px}
+#add-sheet .btn.text,#new-trip .btn.text{color:#9a2a14}
+</style>

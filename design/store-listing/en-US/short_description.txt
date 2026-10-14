@@ -1,0 +1,1 @@
+Finds the trips in your camera roll, sorted by when and where you shot them.

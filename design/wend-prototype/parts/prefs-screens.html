@@ -1,0 +1,97 @@
+    <!-- ═══ Flow 7 · 설정 ═══ -->
+
+    <!-- 20 · 설정 -->
+    <section class="screen" id="prefs" data-title="설정">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">설정</h1>
+      </header>
+      <div class="content">
+        <div class="pf-me">
+          <canvas id="ag-prefs" style="filter:url(#goo-c)" width="128" height="128" aria-label="앨범 지구본. 볼 수 있는 사진만큼 진하게 채워져 있어요" data-js></canvas>
+          <div class="body"><b><span class="nk-slot">여행자</span>님</b><span id="pf-count">사진·영상 2,554개 · 여행 7개</span></div>
+          <button class="icon-btn" data-action="askName" data-dialog="prefs-name" aria-label="닉네임 바꾸기"><span class="ms">edit</span></button>
+        </div>
+
+        <div class="pf-sec">사진 접근</div>
+        <button class="pf-row" data-action="toSysSettings" data-links="settings"><span class="ms">photo_library</span>
+          <span class="body"><b>사진 및 동영상</b><span>Android 설정에서 바꿀 수 있어요</span></span><span class="state" id="pf-access"><span class="ms fill">check_circle</span>모두 허용</span></button>
+        <div class="pf-div"></div>
+        <div class="pf-row" style="cursor:default"><span class="ms">location_on</span>
+          <span class="body"><b>사진 속 위치 읽기</b><span>사진 권한과 함께 허용돼요</span></span><span class="state" id="pf-loc"><span class="ms fill">check_circle</span>허용</span></div>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-sheet="tag-sheet"><span class="ms">photo_camera</span>
+          <span class="body"><b>카메라 위치 태그 켜는 법</b><span>켜 두면 여행을 더 정확하게 찾아요</span></span><span class="ms">chevron_right</span></button>
+
+        <div class="pf-sec">여행 찾기</div>
+        <label class="pf-row"><span class="ms">autorenew</span>
+          <span class="body"><b>새 사진으로 자동 찾기</b><span>새로 찍은 사진이 생기면 여행을 이어서 찾아요</span></span>
+          <span class="switch"><input type="checkbox" id="pf-auto" checked><span class="track"></span></span></label>
+        <div class="pf-div"></div>
+        <label class="pf-row"><span class="ms">notifications</span>
+          <span class="body"><b>새 여행 알림</b><span>새 여행을 찾으면 알려 드려요</span></span>
+          <span class="switch"><input type="checkbox" id="pf-noti" data-js data-links="sys-noti"><span class="track"></span></span></label>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-dialog="prefs-rescan"><span class="ms">travel_explore</span>
+          <span class="body"><b>처음부터 다시 찾기</b><span>직접 넣고 뺀 사진은 그대로 둬요</span></span><span class="ms">chevron_right</span></button>
+
+        <div class="pf-sec">데이터</div>
+        <button class="pf-row danger" data-dialog="prefs-wipe"><span class="ms">delete_forever</span>
+          <span class="body"><b>Wend 데이터 지우기</b><span>찾은 여행과 정리한 기록을 지워요. 사진은 그대로 있어요</span></span></button>
+
+        <div class="pf-sec">정보</div>
+        <button class="pf-row" data-action="pfInfo" data-v="개인정보 처리방침"><span class="ms">shield_person</span><span class="body"><b>개인정보 처리방침</b><span>사진은 이 휴대폰 밖으로 나가지 않아요</span></span><span class="ms">open_in_new</span></button>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-action="pfInfo" data-v="오픈소스 라이선스"><span class="ms">description</span><span class="body"><b>오픈소스 라이선스</b></span><span class="ms">chevron_right</span></button>
+        <div class="pf-ver">Wend 1.0.0</div>
+      </div>
+    </section>
+
+    <!-- nickname -->
+    <div class="dialog" id="prefs-name" aria-label="닉네임 바꾸기">
+      <div class="d-title">닉네임 바꾸기</div>
+      <label class="field"><input id="pf-name" maxlength="10" placeholder=" " data-js><span class="label">닉네임</span><span class="support" id="pf-name-help">2~10자, 한글·영문·숫자</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-action="saveName">저장</button></div>
+    </div>
+
+    <!-- camera location tag how-to -->
+    <div class="sheet" id="tag-sheet" aria-label="카메라 위치 태그 켜는 법">
+      <div class="sheet-title">카메라 위치 태그 켜는 법</div>
+      <div class="sheet-body">
+        <div class="pf-steps">
+          <div><i>1</i><span>카메라 앱을 열어요</span></div>
+          <div><i>2</i><span>왼쪽 위 <span class="ms" style="--ms-size:18px;vertical-align:-4px">settings</span> 설정을 눌러요</span></div>
+          <div><i>3</i><span><b>위치 태그</b>를 켜요</span></div>
+        </div>
+        <div class="pf-say"><svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="bub">켜 둔 뒤에 찍은 사진부터 장소가 남아요. 기기마다 메뉴 이름이 조금 다를 수 있어요.</div></div>
+      </div>
+      <div class="sheet-actions"><span class="grow"></span><button class="btn text" data-close>알겠어요</button></div>
+    </div>
+
+    <!-- rescan -->
+    <div class="dialog" id="prefs-rescan" aria-label="처음부터 다시 찾기">
+      <span class="ms d-icon">travel_explore</span>
+      <div class="d-title">처음부터 다시 찾을까요?</div>
+      <p class="d-text">모든 사진을 다시 읽어서 여행을 찾아요. 직접 넣고 뺀 사진, 만든 여행, 베스트샷은 그대로 둬요.</p>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-close data-action="rescan" data-links="analyze">다시 찾기</button></div>
+    </div>
+
+    <!-- wipe -->
+    <div class="dialog" id="prefs-wipe" aria-label="Wend 데이터 지우기">
+      <span class="ms d-icon">delete_forever</span>
+      <div class="d-title">Wend 데이터를 지울까요?</div>
+      <p class="d-text">찾은 여행, 베스트샷, 직접 넣고 뺀 기록, 닉네임이 지워지고 처음 화면으로 돌아가요. <b>기기의 사진은 하나도 지워지지 않아요.</b></p>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text del" data-close data-action="wipe" data-links="splash">지우기</button></div>
+    </div>
+
+    <!-- system notification permission (Android 13+) -->
+    <div class="dialog sys sysui" id="sys-noti" role="dialog" aria-label="알림 권한 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">notifications</span>
+      <div class="d-title"><b>Wend</b>에서 알림을 보내도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="notiOk">허용</button>
+        <button data-close data-action="notiNo">허용 안함</button>
+      </div>
+    </div>

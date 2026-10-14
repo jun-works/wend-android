@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <filter id="goo" filterUnits="userSpaceOnUse" x="-140" y="-140" width="280" height="280" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/>
+      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="g"/>
+      <feComposite in="SourceGraphic" in2="g" operator="atop"/>
+    </filter>
+  </defs>
+  <g transform="translate(256 256) scale(1.85) translate(-2.2 8.2)">
+    <g filter="url(#goo)">
+      <circle cx="-30" cy="12" r="32.68" fill="#e2553a"/>
+      <circle cx="30" cy="16" r="28.12" fill="#f2b33d"/>
+      <circle cx="4" cy="-30" r="30.4" fill="#2f7fd8"/>
+      <circle cx="52" cy="-46" r="15" fill="#2bae8e"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,110 @@
+<script id="viewer-js">
+/* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════
+   One viewer for every photo grid. It pages through the set it was opened from (swipe sideways); the header shows
+   when and where; only the bottom actions change with the place it was opened from:
+   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
+var TRIP_DATES = ['2026-05-03', '2026-05-04', '2026-05-05'];
+function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
+  var am = t.indexOf('오전') === 0, hm = t.split(' ')[1].split(':'), h = +hm[0] % 12 + (am ? 0 : 12), min = h * 60 + +hm[1] + m;
+  h = Math.floor(min / 60) % 24; var mm = min % 60;
+  return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + ':' + (mm < 10 ? '0' : '') + mm;
+}
+function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '월 ' + +p[2] + '일'; }
+
+/* open from a trip stop (s = stop, k = photo) or from the left-out list (id) */
+function openViewer(ctx, a, b) {
+  var items, i = 0;
+  if (ctx === 'trip') {
+    var st = BUSAN.stops[a], start = st.when.split(' – ')[0];
+    items = st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin(start, k * 7), place: st.place, col: DAYC[st.d], s: a, k: k }; });
+    i = b;
+  } else {
+    items = []; LEFT.forEach(function (g) { g.items.forEach(function (it) { items.push({ c: it.c, d: it.d, t: it.t, place: it.place, id: it.id }); }); });
+    items.forEach(function (it, n) { if (it.id === a) i = n; });
+  }
+  App.state.vw = { ctx: ctx, items: items, i: i };
+  App.go('viewer');
+}
+App.actions.viewTrip = function (el) { openViewer('trip', +el.getAttribute('data-s'), +el.getAttribute('data-k')); return false; };
+
+function vwCur() { var v = App.state.vw; return v.items[v.i]; }
+function vwHeader() {
+  var v = App.state.vw, it = vwCur();
+  v.id = it.id;
+  document.getElementById('vw-title').innerHTML = longDate(it.d) + ' ' + it.t +
+    (it.place ? '<span id="vw-place" style="--c:' + (it.col || '#8a7d70') + '"><i></i>' + it.place + '</span>' : '');
+  document.getElementById('vw-count').textContent = (v.i + 1) + ' / ' + v.items.length;
+  vwActions();
+}
+function act(icon, label, action, extra) {
+  return '<button class="vw-act' + (extra || '') + '" data-action="' + action + '"><span class="ms' + (extra === ' on' ? ' fill' : '') + '">' + icon + '</span>' + label + '</button>';
+}
+function vwActions() {
+  var v = App.state.vw, it = vwCur(), html;
+  if (v.ctx === 'trip') {
+    var isBest = App.state.bestDone && App.state.best[it.s] === it.k;
+    html = act('star', isBest ? '베스트샷' : '베스트샷으로', 'vwBest', isBest ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
+      act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
+  } else {
+    html = act('library_add', '여행에 넣기', 'vwAdd') + act('add_location_alt', '새 여행', 'vwNew') + act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
+  }
+  document.getElementById('vw-acts').innerHTML = html;
+}
+function vwSlides() {
+  var v = App.state.vw;
+  document.getElementById('vw-track').innerHTML = v.items.map(function (it) {
+    var star = v.ctx === 'trip' && App.state.bestDone && App.state.best[it.s] === it.k ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
+    return '<div class="vw-slide"><i class="' + it.c + '">' + star + '</i></div>';
+  }).join('');
+}
+App.onEnter('viewer', function () {
+  if (!App.state.vw) openViewerState();
+  vwSlides(); vwHeader();
+  var tr = document.getElementById('vw-track');
+  App.after(0, function () { tr.scrollLeft = App.state.vw.i * tr.clientWidth; });
+});
+function openViewerState() { var st = BUSAN.stops[1]; App.state.vw = { ctx: 'trip', i: 0, items: st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin('오후 1:40', k * 7), place: st.place, col: DAYC[st.d], s: 1, k: k }; }) }; }
+document.getElementById('vw-track').addEventListener('scroll', function () {
+  var v = App.state.vw; if (!v) return;
+  var i = Math.round(this.scrollLeft / this.clientWidth);
+  if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
+}, { passive: true });
+
+/* ── trip actions ── */
+App.actions.vwBest = function () {
+  var it = vwCur();
+  App.state.best[it.s] = it.k; App.state.bestDone = true;
+  vwSlides(); vwActions();
+  var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
+  App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
+};
+App.actions.vwOut = function () {
+  var it = vwCur();
+  App.state.removed[it.s]++;
+  TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; });
+  leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
+  App.back();
+  App.after(320, function () { App.snack('여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요'); });
+};
+App.actions.vwShare = function () { App.snack('Android 공유 시트가 열려요'); };
+App.actions.vwTrash = function () {
+  App.state.trashCtx = 'viewer';
+  document.getElementById('tr-n').textContent = '1개';
+  App.dialog('sys-trash');
+};
+/* ── left-out actions: same sheet / dialog as the list, for this one photo ── */
+App.actions.vwAdd = function () { App.state.pickFrom = 'viewer'; App.actions.askAdd(); App.sheet('add-sheet'); };
+App.actions.vwNew = function () { App.state.pickFrom = 'viewer'; App.actions.askNew(); App.dialog('new-trip'); };
+
+/* the trash dialog serves the clean-up screen and the viewer */
+var _trashOk = App.actions.trashOk;
+App.actions.trashOk = function (el) {
+  if (App.state.trashCtx !== 'viewer') { App.state.trashCtx = null; return _trashOk(el); }
+  App.state.trashCtx = null;
+  var it = vwCur();
+  TOTAL_ALL--;
+  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; }); }
+  else leftRemove([it.id]);
+  App.after(320, function () { App.snack('1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
+};
+</script>

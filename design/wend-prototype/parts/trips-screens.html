@@ -1,0 +1,21 @@
+    <!-- ═══ Flow 4 · 여행 목록 (메인) ═══ -->
+
+    <!-- 14 · 여행 목록 -->
+    <section class="screen" id="trips" data-title="여행 목록" data-no-up>
+      <header class="top-app-bar">
+        <h1 class="title">Wend</h1>
+        <div class="actions">
+          <span class="tr-dock" id="tr-dock" aria-hidden="true"></span>
+          <button class="icon-btn" data-action="openSettings" data-links="prefs" aria-label="설정"><span class="ms">settings</span></button>
+        </div>
+      </header>
+      <canvas class="tr-globe" id="tg-list" style="filter:url(#goo-c)" width="400" height="400" aria-label="여행마다 다른 색 덩어리로 뭉친 지구본. 덩어리를 누르면 그 여행으로 이동해요" data-js></canvas>
+      <div class="content" id="tr-scroll">
+        <div class="tr-hero" data-links="left">
+          <div class="tr-slot" id="tr-slot"></div>
+          <div class="tr-sum" id="tr-sum"></div>
+          <div class="tr-hint" id="tr-hint">색 덩어리를 누르면 그 여행으로 가요</div>
+        </div>
+        <div id="tr-list" data-links="trip"></div>
+      </div>
+    </section>

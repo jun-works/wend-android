@@ -1,0 +1,76 @@
+<style id="trip-style">
+/* ═══ Flow 5 · 여행 상세 ═══════════════════════════════════════════════ */
+/* ── map: paper map, the whole route in faint day colours, the travelled part solid, 핀 walking it ── */
+#trip .content{padding:0 0 32px}
+.tp-map{position:sticky;top:0;z-index:4;height:220px;background:#e4ece9;border-bottom:1px solid var(--outline-variant)}
+.tp-map svg{display:block;width:100%;height:220px}
+.tp-map .land{fill:#efe8dd;stroke:#cdbfa9;stroke-width:1.2}
+.tp-map .road{fill:none;stroke:#e0d5c4;stroke-width:2}
+.tp-map .r-all{fill:none;stroke-width:3.5;stroke-linecap:round;opacity:.3}
+.tp-map .r-night{fill:none;stroke:#8a7d70;stroke-width:1.6;stroke-dasharray:2 5;stroke-linecap:round;opacity:.7}
+.tp-map .r-go{fill:none;stroke-width:4;stroke-linecap:round}
+.tp-map .stop circle{stroke:#fffdf9;stroke-width:2}
+.tp-map svg.tp-here{position:absolute;left:0;top:0;width:32px;height:32px;margin:-36px 0 0 -16px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.tp-nums{position:absolute;inset:0;pointer-events:none}
+.tp-nums span{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;display:grid;place-items:center;font:700 11px/1 var(--font-body);color:#fff;border-radius:50%;box-shadow:0 0 0 2px #fffdf9}
+.tp-map .here{transition:none}
+.tp-legend{position:absolute;right:12px;bottom:10px;display:flex;gap:10px;font:600 11px/1 var(--font-body);color:var(--on-surface-variant);background:rgba(251,248,243,.85);padding:6px 10px;border-radius:10px}
+.tp-legend span{display:inline-flex;align-items:center;gap:4px}
+.tp-legend i{width:8px;height:8px;border-radius:50%}
+
+.tp-sum{padding:16px 20px 4px}
+.tp-sum h2{font:700 26px/1.25 var(--font-display)}
+.tp-sum p{margin-top:6px;font:var(--body-m);color:var(--on-surface-variant)}
+.tp-acts{display:flex;gap:8px;padding:12px 16px 4px}
+.tp-acts .btn{flex:1;min-height:48px;gap:6px}
+.tp-acts .ms{--ms-size:20px}
+
+/* ── days & stops on a time rail ── */
+.tp-day{position:sticky;top:220px;z-index:3;display:flex;align-items:baseline;gap:8px;padding:14px 20px 10px;background:var(--surface);border-bottom:1px solid var(--outline-variant)}
+.tp-day b{font:700 19px/1.2 var(--font-display);color:var(--d)}
+.tp-day span{font:var(--body-s);color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-stop{position:relative;padding:14px 16px 6px 56px}
+.tp-stop::before{content:"";position:absolute;left:27px;top:0;bottom:0;width:2px;background:var(--outline-variant)}
+.tp-stop .no{position:absolute;left:16px;top:14px;width:24px;height:24px;border-radius:50%;background:var(--d);color:#fff;display:grid;place-items:center;font:700 12px/1 var(--font-body);box-shadow:0 0 0 3px var(--surface)}
+.tp-stop h3{font:700 17px/1.3 var(--font-display)}
+.tp-stop .when{margin-top:2px;font:var(--body-s);color:var(--on-surface-variant)}
+.tp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:10px;border-radius:14px;overflow:hidden}
+.tp-grid>*{position:relative;display:block;width:100%;aspect-ratio:1;border:0;padding:0;cursor:pointer}
+.tp-grid>* b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,26,22,.45);color:#fff;font:600 14px/1 var(--font-body)}
+.tp-grid>* .star{position:absolute;left:5px;top:5px;width:24px;height:24px;border-radius:50%;background:#fffdf9;color:#d18a0c;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tp-grid>* .star .ms{--ms-size:16px}
+.tp-end{padding:18px 20px 0 56px;font:var(--body-s);color:var(--on-surface-variant)}
+
+/* ── best shots ── */
+#best .content,#clean .content{padding:4px 0 24px}
+.bs-intro{padding:4px 20px 8px;font:var(--body-m);color:var(--on-surface-variant)}
+.bs-grp{padding:14px 0 6px}
+.bs-grp h3{padding:0 20px;font:700 16px/1.3 var(--font-display)}
+.bs-grp h3 span{font:var(--body-s);color:var(--on-surface-variant);margin-left:6px}
+.bs-row{display:flex;gap:10px;overflow-x:auto;padding:12px 20px 8px;scrollbar-width:none}
+.bs-row button{position:relative;flex:none;width:104px;height:104px;border:0;border-radius:16px;padding:0;cursor:pointer;transition:transform .35s cubic-bezier(.3,1.5,.5,1),box-shadow .3s;filter:saturate(.75) brightness(.97)}
+.bs-row button.on{transform:translateY(-4px) scale(1.04);box-shadow:0 0 0 3px #f2b33d,0 8px 16px -8px rgba(31,26,22,.5);filter:none}
+.bs-row .rec{position:absolute;left:6px;bottom:6px;font:600 11px/1 var(--font-body);background:rgba(31,26,22,.72);color:#fff;padding:4px 6px;border-radius:6px}
+.bs-row .star{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:#f2b33d;color:#3a2a06;display:grid;place-items:center;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.bs-row .on .star{transform:none}
+.bs-row .star .ms{--ms-size:17px}
+
+/* ── clean up ── */
+.cl-cat{padding:14px 20px 4px;display:flex;align-items:baseline;gap:8px}
+.cl-cat b{font:700 16px/1.3 var(--font-display)}
+.cl-cat span{font:var(--body-s);color:var(--on-surface-variant)}
+.cl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 20px 6px}
+.cl-grid button{position:relative;aspect-ratio:1;border:0;border-radius:12px;padding:0;cursor:pointer;overflow:hidden}
+.cl-grid button i{position:absolute;inset:0}
+.cl-grid .blur i{filter:blur(4px);transform:scale(1.2)}
+.cl-grid .dark i{filter:brightness(.32)}
+.cl-grid .ck{position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.18);display:grid;place-items:center;color:#fff}
+.cl-grid .ck .ms{--ms-size:15px;opacity:0}
+.cl-grid button.on .ck{background:var(--error);border-color:var(--error)}
+.cl-grid button.on .ck .ms{opacity:1}
+.cl-grid button:not(.on){opacity:.55}
+.cl-note{display:flex;gap:8px;align-items:center;padding:8px 4px 10px;font:var(--body-s);color:var(--on-surface-variant)}
+.cl-note .ms{--ms-size:18px}
+#clean .bottom-bar,#best .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:0}
+.btn.danger{background:var(--error);color:var(--on-error)}
+</style>

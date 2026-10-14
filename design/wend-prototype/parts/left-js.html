@@ -1,0 +1,186 @@
+<script id="left-js">
+/* ═══ Flow 6 · 빠진 사진 ═══════════════════════════════════════════════
+   No reasons are shown — only the photos, by date, newest first. Pick some and either put them into a trip
+   (nearest in time first) or make a new trip. Signature: the picked photos shrink into the trip's colour and run
+   together like drops before they leave the list. */
+function mkItems(d, rows) { return rows.map(function (r, k) { return { id: d + '-' + k, d: d, c: r[0], t: r[1], place: r[2] || '' }; }); }
+var LEFT = [
+  { d: '2026-08-15', label: '8월 15일 토요일', items: mkItems('2026-08-15', [['p-sky', '오후 4:12', '망원한강공원'], ['p-food', '오후 5:03', '망원한강공원'], ['p-city', '오후 6:40'], ['p-cafe', '오후 7:15'], ['p-sky', '오후 7:52', '망원한강공원']]) },
+  { d: '2026-07-09', label: '7월 9일 목요일', items: mkItems('2026-07-09', [['p-cafe', '오후 12:31'], ['p-doc', '오후 2:10'], ['p-food', '오후 7:44']]) },
+  { d: '2026-06-20', label: '6월 20일 토요일', items: mkItems('2026-06-20', [['p-forest', '오전 10:05', '양평 두물머리'], ['p-forest', '오전 10:12', '양평 두물머리'], ['p-sky', '오전 10:40', '양평 두물머리'], ['p-sea', '오전 11:20', '양평 두물머리'], ['p-food', '오후 12:50', '양평'], ['p-forest', '오후 2:35', '양평 세미원'], ['p-dusk', '오후 6:10']]) },
+  { d: '2026-05-06', label: '5월 6일 수요일', items: mkItems('2026-05-06', [['p-sea', '오전 9:12'], ['p-food', '오전 9:40'], ['p-city', '오전 10:05']]) },
+  { d: '2026-04-12', label: '4월 12일 일요일', items: mkItems('2026-04-12', [['p-food', '오후 12:20', '성수동'], ['p-cafe', '오후 1:45', '성수동'], ['p-city', '오후 3:02'], ['p-sky', '오후 4:30'], ['p-cafe', '오후 5:10', '성수동'], ['p-food', '오후 7:25']]) },
+  { d: '2026-03-02', label: '3월 2일 월요일', items: mkItems('2026-03-02', [['p-doc', '오전 9:30'], ['p-cafe', '오후 12:05'], ['p-city', '오후 6:20'], ['p-sky', '오후 6:45']]) },
+];
+var DOW = ['일', '월', '화', '수', '목', '금', '토'];
+function dayLabel(d) { var x = new Date(d + 'T12:00:00'); return (x.getMonth() + 1) + '월 ' + x.getDate() + '일 ' + DOW[x.getDay()] + '요일'; }
+function leftItem(id) { for (var g = 0; g < LEFT.length; g++) for (var i = 0; i < LEFT[g].items.length; i++) if (LEFT[g].items[i].id === id) return LEFT[g].items[i]; return null; }
+function leftAdd(item) {   // a photo taken out of a trip comes back here, at its date
+  var g = LEFT.filter(function (x) { return x.d === item.d; })[0];
+  if (!g) { g = { d: item.d, label: dayLabel(item.d), items: [] }; LEFT.push(g); LEFT.sort(function (a, b) { return a.d < b.d ? 1 : -1; }); }
+  g.items.push(item);
+}
+function leftRemove(ids) {
+  LEFT.forEach(function (g) { g.items = g.items.filter(function (it) { return ids.indexOf(it.id) < 0; }); });
+  for (var i = LEFT.length - 1; i >= 0; i--) if (!LEFT[i].items.length) LEFT.splice(i, 1);
+}
+function leftTotal() { var data = analysisData(); return data.total - data.trips.reduce(function (a, t) { return a + t.n; }, 0); }
+
+App.state.lsel = {};
+App.state.selecting = false;
+function selIds() { return Object.keys(App.state.lsel).filter(function (k) { return App.state.lsel[k]; }); }
+function renderLeft() {
+  var sample = 0, html = '';
+  LEFT.forEach(function (g) {
+    sample += g.items.length;
+    html += '<div class="lf-day"><b>' + g.label + '</b><span>' + g.d.slice(0, 4) + ' · ' + g.items.length + '장</span>' +
+      '<button class="btn text" data-action="selectDay" data-d="' + g.d + '">모두 선택</button></div><div class="lf-grid">' +
+      g.items.map(function (it) {
+        return '<button class="' + it.c + (App.state.lsel[it.id] ? ' on' : '') + '" data-action="leftTap" data-id="' + it.id + '" aria-label="' + g.label + ' ' + it.t + ' 사진"><span class="ck"><span class="ms">check</span></span></button>';
+      }).join('') + '</div>';
+  });
+  var total = leftTotal(), older = Math.max(0, total - sample);
+  if (older) html += '<div class="lf-more">이전 사진 ' + fmt(older) + '장이 더 있어요</div>';
+  if (!total) html = '<div class="tr-empty"><b>모든 사진이 여행에 담겼어요</b>새로 찍은 사진 중 여행에 담기지 않은 사진이 생기면 여기에 모여요.</div>';
+  document.getElementById('lf-list').innerHTML = html;
+  selectUI();
+}
+function selectUI() {
+  var n = selIds().length, scr = document.getElementById('left');
+  scr.classList.toggle('selecting', App.state.selecting);
+  document.getElementById('lf-title').innerHTML = App.state.selecting
+    ? (n ? n + '장 선택됨' : '사진을 골라 주세요')
+    : '여행에 담기지 않은 사진<span class="sub" id="lf-sub">' + fmt(leftTotal()) + '장 · 최신순</span>';
+  document.getElementById('lf-back-ic').textContent = App.state.selecting ? 'close' : 'arrow_back';
+  document.getElementById('lf-sel-btn').hidden = App.state.selecting;
+  document.getElementById('lf-add').disabled = !n;
+  document.getElementById('lf-new').disabled = !n;
+}
+function setSelecting(on) {
+  App.state.selecting = on;
+  if (!on) App.state.lsel = {};
+  document.querySelectorAll('#lf-list .lf-grid button').forEach(function (b) { b.classList.toggle('on', !!App.state.lsel[b.getAttribute('data-id')]); });
+  selectUI();
+}
+/* in selection mode, back (app bar ✕ or system back) leaves selection first */
+var _appBack = App.back;
+App.back = function () {
+  if (App.current() === 'left' && App.state.selecting) { setSelecting(false); return true; }
+  return _appBack.apply(App, arguments);
+};
+App.onEnter('left', function () {
+  App.state.selecting = false; App.state.lsel = {};
+  if (App.shot) {   // still: show the picking state (one day picked) and fill the sheet / dialog that follow
+    LEFT[2].items.forEach(function (it) { App.state.lsel[it.id] = true; });
+    App.state.selecting = true; App.state.pickFrom = 'left';
+    renderLeft(); App.actions.askAdd(); App.actions.askNew(); return;
+  }
+  renderLeft();
+});
+App.actions.selectMode = function () { setSelecting(true); };
+App.actions.selectDay = function (el) {
+  var d = el.getAttribute('data-d'), g = LEFT.filter(function (x) { return x.d === d; })[0];
+  var all = g.items.every(function (it) { return App.state.lsel[it.id]; });
+  g.items.forEach(function (it) { App.state.lsel[it.id] = !all; });
+  setSelecting(true);
+};
+App.actions.leftTap = function (el) {
+  var id = el.getAttribute('data-id');
+  if (!App.state.selecting) { openViewer('left', id); return false; }
+  App.state.lsel[id] = !App.state.lsel[id];
+  el.classList.toggle('on', App.state.lsel[id]);
+  selectUI();
+};
+
+/* ── dates of trips and picks, for "nearest trip" and new trip ranges ── */
+function parseTripRange(t) {
+  var p = t.date.split(' – '), a = p[0].split('. ').map(Number), b = p[1] ? p[1].split('. ').map(Number) : null;
+  var s = new Date(a[0], a[1] - 1, a[2]), e = b ? (b.length === 3 ? new Date(b[0], b[1] - 1, b[2]) : new Date(a[0], b[0] - 1, b[1])) : s;
+  return [s, e];
+}
+function pickIds() { return App.state.pickFrom === 'viewer' ? [App.state.vw.id] : selIds(); }
+function pickDates() { return pickIds().map(function (id) { return leftItem(id).d; }).sort(); }
+App.actions.askAdd = function (el) {
+  if (el && el.closest && el.closest('#left')) App.state.pickFrom = 'left';
+  var ds = pickDates(), first = new Date(ds[0] + 'T00:00:00'), last = new Date(ds[ds.length - 1] + 'T00:00:00'), trips = analysisData().trips;
+  var rows = trips.map(function (t, k) {
+    var r = parseTripRange(t), gap = last < r[0] ? (r[0] - last) : first > r[1] ? (first - r[1]) : 0;
+    return { k: k, t: t, gap: Math.round(gap / 864e5) };
+  }).sort(function (a, b) { return a.gap - b.gap; });
+  document.getElementById('at-title').textContent = ds.length + '장을 어느 여행에 넣을까요?';
+  document.getElementById('at-list').innerHTML = rows.map(function (r, i) {
+    var g = r.gap === 0 ? '같은 기간' : r.gap === 1 ? '하루 차이' : r.gap < 60 ? r.gap + '일 차이' : Math.round(r.gap / 30) + '달 차이';
+    return '<button class="at-item' + (i === 0 ? ' near' : '') + '" data-close data-action="addTo" data-k="' + r.k + '">' +
+      '<i class="tk-dot" style="--c:' + r.t.c + '"></i><span class="body"><b>' + r.t.place + '</b><span>' + r.t.date + ' · ' + fmt(r.t.n) + '장</span></span>' +
+      '<span class="gap">' + (i === 0 ? '가장 가까워요 · ' : '') + g + '</span></button>';
+  }).join('');
+};
+App.actions.askNew = function (el) {
+  if (el && el.closest && el.closest('#left')) App.state.pickFrom = 'left';
+  var ids = pickIds(), ds = pickDates(), places = {};
+  ids.forEach(function (id) { var p = leftItem(id).place.split(' ')[0]; if (p) places[p] = (places[p] || 0) + 1; });
+  var top = Object.keys(places).sort(function (a, b) { return places[b] - places[a]; })[0];
+  var f = new Date(ds[0] + 'T12:00:00');
+  document.getElementById('nt-name').value = top || ((f.getMonth() + 1) + '월 ' + f.getDate() + '일 여행');
+  document.getElementById('nt-when').textContent = rangeText(ds) + ' · ' + ids.length + '장';
+};
+function dotDate(d) { var p = d.split('-'); return +p[0] + '. ' + +p[1] + '. ' + +p[2]; }
+function rangeText(ds) {
+  var a = ds[0], b = ds[ds.length - 1];
+  if (a === b) return dotDate(a);
+  return dotDate(a) + ' – ' + (a.slice(0, 4) === b.slice(0, 4) ? dotDate(b).split('. ').slice(1).join('. ') : dotDate(b));
+}
+
+/* ── apply: animate (from the list), then move the photos ── */
+var NEW_COLS = ['#2bae8e', '#f2b33d', '#e2553a', '#2f7fd8'];
+function flyInto(ids, color, done) {
+  var scr = document.getElementById('left');
+  if (App.current() !== 'left' || App.reducedMotion || App.shot) return done();
+  var sr = scr.getBoundingClientRect(), k = scr.offsetWidth / sr.width, layer = document.createElement('div');
+  layer.className = 'fly-layer'; scr.appendChild(layer);
+  var tx = scr.offsetWidth / 2, ty = 120, drops = [];
+  ids.forEach(function (id, i) {
+    var b = document.querySelector('#lf-list [data-id="' + id + '"]'); if (!b) return;
+    var r = b.getBoundingClientRect(), w = r.width * k, x = (r.left - sr.left) * k, y = (r.top - sr.top) * k;
+    var d = document.createElement('i'); d.className = b.className.replace(' on', '');
+    d.style.cssText = 'width:' + w + 'px;height:' + w + 'px;transform-origin:50% 50%;transform:translate(' + x + 'px,' + y + 'px)';
+    layer.appendChild(d); drops.push([d, w, i]);
+    b.style.visibility = 'hidden';
+  });
+  requestAnimationFrame(function () { requestAnimationFrame(function () {
+    drops.forEach(function (o) {
+      var d = o[0], w = o[1];
+      d.style.transitionDelay = (o[2] * 45) + 'ms';
+      d.style.backgroundImage = 'none'; d.style.backgroundColor = color; d.style.borderRadius = '50%';
+      d.style.transform = 'translate(' + (tx - w / 2) + 'px,' + (ty - w / 2) + 'px) scale(' + (34 / w).toFixed(3) + ')';
+    });
+  }); });
+  setTimeout(function () { layer.style.transition = 'opacity .3s'; layer.style.opacity = '0'; }, 900 + drops.length * 45);
+  setTimeout(function () { layer.remove(); done(); }, 1250 + drops.length * 45);
+}
+function finishPick(msg) {
+  App.state.lsel = {}; App.state.selecting = false;
+  if (App.state.pickFrom === 'viewer') { App.state.pickFrom = null; App.back(); App.after(320, function () { App.snack(msg); }); return; }
+  renderLeft(); App.snack(msg);
+}
+App.actions.addTo = function (el) {
+  var k = +el.getAttribute('data-k'), t = analysisData().trips[k], ids = pickIds();
+  flyInto(ids, t.c, function () {
+    leftRemove(ids); t.n += ids.length;
+    finishPick(ids.length + '장을 ' + t.place + ' 여행에 넣었어요');
+  });
+};
+App.actions.makeTrip = function () {
+  var ids = pickIds(), ds = pickDates(), name = document.getElementById('nt-name').value.trim() || '새 여행';
+  var a = new Date(ds[0] + 'T12:00:00'), b = new Date(ds[ds.length - 1] + 'T12:00:00'), days = Math.round((b - a) / 864e5) + 1;
+  var color = NEW_COLS[(TRIPS_ALL.length) % NEW_COLS.length];
+  var trip = { place: esc(name), date: rangeText(ds), days: days === 1 ? '당일' : days + '일', n: ids.length, c: color };
+  TRIP_PHOTOS[trip.place] = ids.slice(0, 3).map(function (id) { return leftItem(id).c; });
+  flyInto(ids, color, function () {
+    leftRemove(ids);
+    var at = TRIPS_ALL.length; while (at > 0 && parseTripRange(TRIPS_ALL[at - 1])[0] > a) at--;
+    TRIPS_ALL.splice(at, 0, trip);
+    finishPick('‘' + trip.place + '’ 여행을 만들었어요. 여행 목록에서 볼 수 있어요');
+  });
+};
+</script>

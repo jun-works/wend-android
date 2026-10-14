@@ -88,7 +88,10 @@ html.shot body{background:var(--surface)}
 html.shot .stage{padding:0;display:block;min-height:0}
 html.shot .device{border-radius:0;box-shadow:none}
 html.shot .review{display:none}
-html.shot *,html.shot *::before,html.shot *::after{animation:none!important;transition:none!important;caret-color:transparent}
+/* still frames (shot/audit): every animation jumps to its end state, so screenshots show the finished scene */
+html.still *,html.still *::before,html.still *::after{animation-duration:0s!important;animation-delay:0s!important;animation-iteration-count:1!important;
+  transition-duration:0s!important;transition-delay:0s!important;caret-color:transparent}
+html.still .ripple{display:none}
 
 /* ---------- Screens ---------- */
 .screens{position:absolute;inset:0}
@@ -465,8 +468,6 @@ label.check-row,.check-row{display:flex;align-items:center;gap:16px;min-height:5
 .ph.shot{background:var(--surface-container);display:flex;flex-direction:column;gap:6px;padding:12px 10px}
 .ph.shot i{display:block;height:6px;border-radius:3px;background:var(--outline-variant)}
 .ph.shot i:nth-child(2){width:70%}.ph.shot i:nth-child(3){width:85%}.ph.shot i:nth-child(4){width:50%;background:var(--o-sun)}
-.ph.recv{background:linear-gradient(135deg,#9bc7a7,#e9d6a8);filter:saturate(.7)}
-.ph.recv::after{content:"";position:absolute;inset:8px 8px auto auto;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.85)}
 .ph .tag{position:absolute;left:5px;bottom:5px;font:600 11px/1 var(--font-body);background:rgba(31,26,22,.72);color:#fff;padding:4px 6px;border-radius:6px}
 .meta{display:flex;flex-direction:column;gap:6px;min-width:0;justify-content:center}
 .meta>span{display:flex;align-items:center;gap:6px;font:500 13px/1.25 var(--font-body)}
@@ -488,9 +489,406 @@ label.check-row,.check-row{display:flex;align-items:center;gap:16px;min-height:5
 .bot .body{animation:breathe 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
 .bot.b2 .body{animation-delay:-1.4s}
 @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
-html.shot *{animation-delay:0s!important;animation-duration:0s!important}
-html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!important}
+html.still .bot .eyes,html.still .bot .body,html.still .typing i{animation:none!important}
 </style>
+<style id="perm-style">
+/* ═══ Flow 2 · 사진 접근 권한 ═══════════════════════════════════════════ */
+/* ── shared: the album globe (pale = photos Wend can't see yet, ink = photos it can) ── */
+.ag-stage{position:relative;display:grid;place-items:center;height:268px;margin:0 -24px}
+.ag-stage canvas{width:260px;height:260px;cursor:pointer;touch-action:manipulation}
+.ag-stage::before{content:"";position:absolute;left:50%;top:50%;width:236px;height:236px;margin:-118px 0 0 -118px;border-radius:50%;border:1.5px dashed var(--outline-variant)}
+.ag-cap{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:16px;font:var(--label-m);color:var(--on-surface-variant)}
+.ag-cap span{display:inline-flex;align-items:center;gap:6px}
+.ag-cap i{width:10px;height:10px;border-radius:50%;background:#d6cab9}
+.ag-cap i.ink{background:#3a322b}
+.pm-h{font:700 28px/1.32 var(--font-display);letter-spacing:-.3px;margin-top:4px}
+.pm-h em{font-style:normal;color:var(--primary)}
+.pm-sub{margin-top:10px;color:var(--on-surface-variant);font:var(--body-l)}
+
+/* ── perm: rationale ── */
+#perm .content{padding:0 24px 16px;display:flex;flex-direction:column}
+.why{margin-top:8px}
+.why-row{display:flex;gap:16px;align-items:flex-start;padding:12px 0}
+.why-row+.why-row{border-top:1px solid var(--outline-variant)}
+.why-row .ic{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--surface-container-low);color:var(--on-surface)}
+.why-row .ic .ms{--ms-size:22px}
+.why-row .ic.pin{background:#fbe1d9;color:#a8301b}
+.why-row b{display:block;font:600 15px/1.35 var(--font-body)}
+.why-row span.d{display:block;margin-top:2px;font:var(--body-m);color:var(--on-surface-variant)}
+.pm-pick{display:flex;align-items:center;gap:8px;padding:0 4px 12px;font:var(--body-m);color:var(--on-surface-variant)}
+.pm-pick .ms{--ms-size:18px;color:var(--primary)}
+.pm-pick b{color:var(--on-surface)}
+#perm .bottom-bar,#granted .bottom-bar,#partial .bottom-bar,#denied .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:4px}
+
+/* ── system UI (Android permission dialog / photo picker / settings) — deliberately NOT Wend's type & colour ── */
+.sysui{font-family:system-ui,"Apple SD Gothic Neo",sans-serif}
+.sys-tag{display:inline-flex;align-items:center;gap:4px;font:500 11px/1 system-ui,sans-serif;color:#5f6368;background:#eceff1;padding:4px 8px;border-radius:6px}
+.sys-tag .ms{--ms-size:14px}
+.dialog.sys{background:#f3f3f6;color:#1b1b1f;border-radius:28px;padding:24px;max-width:340px}
+.dialog.sys .sys-tag{display:flex;width:max-content;margin:0 auto 14px}
+.dialog.sys .d-icon{color:#4659a8;margin-bottom:14px}
+.dialog.sys .d-title{font:400 20px/1.4 system-ui,"Apple SD Gothic Neo",sans-serif;text-align:center;margin-bottom:20px;color:#1b1b1f}
+.dialog.sys .d-title b{font-weight:700}
+.sys-btns{display:flex;flex-direction:column;gap:4px}
+.sys-btns button{min-height:48px;border:0;border-radius:24px;background:#dfe1f2;color:#2b3a7a;font:500 15px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif;text-align:center;cursor:pointer}
+.sys-btns button:first-child{border-radius:24px 24px 6px 6px}
+.sys-btns button:last-child{border-radius:6px 6px 24px 24px}
+.sys-btns button:not(:first-child):not(:last-child){border-radius:6px}
+
+#picker{--screen-bg:#fbfbfe}
+#picker .top-app-bar{background:#fbfbfe;color:#1b1b1f}
+#picker .top-app-bar .title{font:400 20px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif}
+#picker .content{padding:0 0 16px}
+.pk-tabs{display:flex;gap:8px;padding:4px 16px 12px}
+.pk-tabs span{padding:8px 16px;border-radius:18px;font:500 14px/1 system-ui,sans-serif;color:#44464f;background:#eceef6}
+.pk-tabs span.on{background:#dfe1f2;color:#2b3a7a}
+.pk-sec{font:500 14px/1 system-ui,sans-serif;color:#44464f;padding:16px 16px 10px}
+.pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px}
+.pk-grid button{position:relative;aspect-ratio:1;border:0;padding:0;cursor:pointer;overflow:hidden;border-radius:2px;transition:border-radius .2s,transform .2s}
+.pk-grid button .ck{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);display:grid;place-items:center;color:#fff}
+.pk-grid button .ck .ms{--ms-size:18px;opacity:0}
+.pk-grid button.sel{transform:scale(.88);border-radius:14px}
+.pk-grid button.sel .ck{background:#4659a8;border-color:#4659a8}
+.pk-grid button.sel .ck .ms{opacity:1}
+.pk-grid button .vid{position:absolute;right:6px;bottom:6px;font:600 11px/1 system-ui,sans-serif;color:#fff;display:flex;align-items:center;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.pk-grid button .vid .ms{--ms-size:14px}
+#picker .bottom-bar{background:#fbfbfe;justify-content:space-between;align-items:center}
+#picker .pk-count{font:500 14px/1 system-ui,sans-serif;color:#44464f}
+#picker .pk-allow{min-height:40px;padding:0 24px;border:0;border-radius:20px;background:#4659a8;color:#fff;font:500 14px/1 system-ui,sans-serif;cursor:pointer}
+#picker .pk-allow:disabled{background:#e3e3e8;color:#76777f;cursor:default}
+
+/* photo tiles: one consistent flat "scene" treatment, no stock photos */
+.p-sea{background:linear-gradient(180deg,#f7c58a 0 36%,#ef8a5b 36% 44%,#2f7fd8 44%)}
+.p-dusk{background:linear-gradient(180deg,#3b3a6b,#c96f6a 70%,#f1b37d)}
+.p-forest{background:linear-gradient(180deg,#cfe3d6 0 30%,#2bae8e 30% 62%,#1f6f5a 62%)}
+.p-city{background:linear-gradient(180deg,#24305e 0 55%,#f2b33d 55% 58%,#3d4a7a 58%)}
+.p-food{background:radial-gradient(circle at 50% 55%,#f6efe2 0 30%,#e2553a 31% 36%,#efe3cf 37%)}
+.p-sky{background:linear-gradient(180deg,#9fd0f2,#e9f4fb 70%,#b9d7a1 70%)}
+.p-snow{background:linear-gradient(180deg,#dfe8f2 0 50%,#ffffff 50%)}
+.p-cafe{background:linear-gradient(135deg,#8a5a3c,#d9b38c)}
+.p-shot{background:#eef0f4;background-image:linear-gradient(#c9ced8,#c9ced8),linear-gradient(#c9ced8,#c9ced8),linear-gradient(#f2b33d,#f2b33d);background-size:70% 7px,50% 7px,40% 7px;background-position:16% 30%,16% 48%,16% 66%;background-repeat:no-repeat}
+.p-doc{background:linear-gradient(135deg,#e9d6a8,#9bc7a7)}
+
+/* ── result screens ── */
+#granted .content,#partial .content,#denied .content{padding:8px 24px 16px;display:flex;flex-direction:column}
+.res-rows{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.res-row{display:flex;align-items:center;gap:12px;padding:10px 0;font:var(--body-l)}
+.res-row .ms{--ms-size:22px;color:var(--on-surface-variant)}
+.res-row .n{margin-left:auto;font:600 17px/1 var(--font-body)}
+.res-row.pin .ms{color:#a8301b}
+.res-row+.res-row{border-top:1px solid var(--outline-variant)}
+
+/* partial: a cut trip, shown as a strip of 12 days of photos with only 3 visible */
+.cut{margin-top:12px;padding:16px;border-radius:var(--card-radius);background:var(--surface-container-lowest);box-shadow:0 1px 0 var(--outline-variant)}
+.cut-t{font:600 14px/1.3 var(--font-body);display:flex;align-items:center;gap:6px}
+.cut-t .ms{--ms-size:18px;color:#a8301b}
+.cut-strip{display:flex;gap:4px;margin:14px 0 8px}
+.cut-strip i{flex:1;height:28px;border-radius:6px;background:#e2d9cb}
+.cut-strip i.on{background:#3a322b}
+.cut-legend{display:flex;justify-content:space-between;font:var(--body-s);color:var(--on-surface-variant)}
+.cut p{margin-top:10px;font:var(--body-m);color:var(--on-surface-variant)}
+.cut p b{color:var(--on-surface)}
+
+/* denied: Pin speaks for the rule, same chat look as the guide */
+.dn-say{display:flex;gap:10px;align-items:flex-start;margin-top:12px}
+.dn-say svg{width:44px;height:44px;flex:none}
+.dn-say .bub{max-width:290px}
+.dn-steps{margin-top:16px;padding:14px 16px;border-radius:16px;background:var(--surface-container-low);font:var(--body-m);color:var(--on-surface-variant)}
+.dn-steps b{color:var(--on-surface)}
+.dn-steps .ms{--ms-size:16px;vertical-align:-3px}
+
+/* settings (system) */
+#settings{--screen-bg:#fbfbfe}
+#settings .top-app-bar{background:#fbfbfe;color:#1b1b1f}
+#settings .top-app-bar .title{font:400 22px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif}
+#settings .content{padding:0 0 24px;font-family:system-ui,"Apple SD Gothic Neo",sans-serif;color:#1b1b1f}
+.st-app{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 0 20px}
+.st-app .logo{width:56px;height:56px;border-radius:16px;background:#f6f1e9;display:grid;place-items:center;box-shadow:0 0 0 1px #e3e3e8}
+.st-app .logo svg{width:40px;height:40px}
+.st-app b{font:400 20px/1 system-ui,sans-serif}
+.st-sec{padding:16px 24px 8px;font:500 14px/1 system-ui,sans-serif;color:#4659a8}
+.st-row{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 24px;border:0;background:none;text-align:left;cursor:pointer;font:400 16px/1.3 system-ui,"Apple SD Gothic Neo",sans-serif;color:#1b1b1f}
+.st-row .rd{width:20px;height:20px;border-radius:50%;border:2px solid #44464f;flex:none;display:grid;place-items:center}
+.st-row.on .rd{border-color:#4659a8}
+.st-row.on .rd::after{content:"";width:10px;height:10px;border-radius:50%;background:#4659a8}
+.st-row small{display:block;font:400 13px/1.35 system-ui,sans-serif;color:#44464f;margin-top:2px}
+.st-foot{padding:16px 24px;font:400 14px/1.45 system-ui,sans-serif;color:#44464f;display:flex;gap:12px}
+.st-foot .ms{--ms-size:20px;flex:none}
+</style>
+
+<style id="analyze-style">
+/* ═══ Flow 3 · 분석 중 ═══════════════════════════════════════════════ */
+/* ── analyze: the ink globe sorts itself; every trip that solidifies drops out as a ticket ── */
+#analyze .content,#found .content,#nofound .content{padding:0 24px 16px;display:flex;flex-direction:column}
+.an-status{display:flex;align-items:center;gap:10px;margin-top:14px;min-height:36px;font:var(--body-m);color:var(--on-surface-variant)}
+.an-status svg{width:34px;height:34px;flex:none}
+.an-status span{animation:fadeUp .4s both}
+.an-read{display:flex;align-items:center;gap:10px;margin:2px 0 18px;font:var(--label-m);color:var(--on-surface-variant)}
+.an-read .bar{flex:1;height:4px;border-radius:2px;background:var(--surface-container-high);overflow:hidden}
+.an-read .bar i{display:block;height:100%;width:0;background:var(--on-surface);border-radius:2px}
+.an-read .num{min-width:92px;text-align:right}
+.an-found-t{display:flex;align-items:baseline;gap:6px;font:600 14px/1 var(--font-body);margin-bottom:10px}
+.an-found-t b{font:700 20px/1 var(--font-display);color:var(--primary)}
+.an-empty{font:var(--body-m);color:var(--on-surface-variant);padding:14px 0}
+.an-note{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:16px;color:var(--on-surface-variant);font:var(--body-s)}
+.an-note .ms{--ms-size:18px}
+
+/* trip ticket: colour blob = the cluster it came from · perforated edge before the count */
+.tks{display:flex;flex-direction:column;gap:8px}
+.tk{position:relative;display:flex;align-items:center;gap:14px;min-height:62px;padding:0 0 0 14px;border-radius:16px;background:var(--surface-container-lowest);box-shadow:0 1px 0 var(--outline-variant)}
+.tk.drop{animation:tkDrop .6s cubic-bezier(.3,1.35,.5,1) both}
+@keyframes tkDrop{from{opacity:0;transform:translateY(-34px) scale(.9)}to{opacity:1;transform:none}}
+.tk-dot{position:relative;width:22px;height:22px;border-radius:50%;background:var(--c);flex:none;margin:0 2px}
+.tk-dot::after{content:"";position:absolute;right:-7px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tk-main{flex:1;min-width:0;padding:10px 0;text-align:left}
+button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
+.tk-main b{display:block;color:var(--on-surface);font:700 17px/1.2 var(--font-display)}
+.tk-main span{display:block;margin-top:3px;font:var(--body-s);color:var(--on-surface-variant)}
+.tk-n{position:relative;align-self:stretch;display:flex;align-items:center;padding:0 16px 0 14px;border-left:1.5px dashed var(--outline-variant);font:600 14px/1 var(--font-body)}
+.tk-n::before,.tk-n::after{content:"";position:absolute;left:-7px;width:12px;height:12px;border-radius:50%;background:var(--surface)}
+.tk-n::before{top:-6px}.tk-n::after{bottom:-6px}
+.tk-more{padding:12px 4px 0;font:var(--body-m);color:var(--on-surface-variant)}
+
+/* ── found ── */
+#found .ag-stage{height:224px}
+#nofound .ag-stage::before{width:194px;height:194px;margin:-97px 0 0 -97px}
+#found .ag-stage canvas{width:212px;height:212px}
+#found .ag-stage::before{width:194px;height:194px;margin:-97px 0 0 -97px}
+.fd-sub{margin-top:10px;color:var(--on-surface-variant);font:var(--body-l)}
+.fd-sub b{color:var(--on-surface);font-weight:600}
+.fd-cut{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--surface-container-low);font:var(--body-m)}
+.fd-cut .ms{--ms-size:20px;color:var(--primary);flex:none}
+#found .bottom-bar,#nofound .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:4px}
+</style>
+
+<style id="trips-style">
+/* ═══ Flow 4 · 여행 목록 (메인) ═══════════════════════════════════════ */
+#trips .top-app-bar .title{font:700 22px/1.35 var(--font-display);letter-spacing:-.3px}
+#trips .content{padding:0 16px 24px}
+.tr-dock{width:40px;height:40px;flex:none}
+/* the trip globe floats above the list: big in the header, docked in the app bar once you scroll */
+.tr-globe{position:absolute;left:0;top:0;width:200px;height:200px;z-index:3;transform-origin:0 0;cursor:pointer;touch-action:manipulation}
+.tr-hero{display:flex;flex-direction:column;align-items:center;padding:4px 0 14px}
+.tr-slot{position:relative;width:200px;height:200px}
+.tr-slot::before{content:"";position:absolute;inset:6px;border-radius:50%;border:1.5px dashed var(--outline-variant)}
+.tr-sum{margin-top:10px;font:var(--body-l);color:var(--on-surface-variant)}
+.tr-sum b{font:700 20px/1 var(--font-display);color:var(--on-surface);margin:0 1px 0 0}
+.tr-hint{margin-top:4px;font:var(--label-m);color:var(--on-surface-variant);opacity:.85}
+
+.tr-year{display:flex;align-items:baseline;gap:8px;margin:18px 4px 10px}
+.tr-year b{font:700 22px/1 var(--font-display)}
+.tr-year span{font:var(--label-m);color:var(--on-surface-variant)}
+
+/* trip card = a ticket: photos on top, perforation, then where · when · how many */
+.tc{display:block;width:100%;border:0;padding:0;margin:0 0 12px;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  background:var(--surface-container-lowest);border-radius:20px;box-shadow:0 1px 0 var(--outline-variant);overflow:hidden;transition:box-shadow .35s}
+.tc.on{box-shadow:0 0 0 2px var(--c),0 6px 18px -10px rgba(31,26,22,.35)}
+.tc-ph{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;height:124px}
+.tc-ph i{display:block}
+.tc-ph i:first-child{grid-row:1/3}
+.tc-ph .more{position:relative}
+.tc-ph .more b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,26,22,.45);color:#fff;font:600 14px/1 var(--font-body)}
+.tc-row{display:flex;align-items:center;gap:14px;padding:12px 16px 14px 18px}
+.tc-row .tk-dot{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.tc.on .tk-dot{transform:scale(1.18)}
+.tc-main{flex:1;min-width:0}
+.tc-main b{display:block;font:700 19px/1.2 var(--font-display)}
+.tc-main span{display:block;margin-top:3px;font:var(--body-s);color:var(--on-surface-variant)}
+.tc-n{font:600 15px/1 var(--font-body)}
+
+.tr-part{display:flex;gap:12px;align-items:center;margin:4px 0 6px;padding:12px 12px 12px 16px;border-radius:16px;background:var(--surface-container-low);font:var(--body-m)}
+.tr-part .ms{--ms-size:20px;color:var(--primary)}
+.tr-part span{flex:1}
+.tr-part .btn{min-height:40px;padding:0 14px}
+.tr-empty{text-align:center;padding:28px 20px;color:var(--on-surface-variant);font:var(--body-m)}
+.tr-empty b{display:block;margin-bottom:6px;font:700 19px/1.3 var(--font-display);color:var(--on-surface)}
+.tr-left{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:8px;padding:0 8px 0 16px;border:0;border-radius:16px;background:transparent;
+  font:var(--body-m);color:var(--on-surface-variant);text-align:left;cursor:pointer;border:1.5px dashed var(--outline-variant)}
+.tr-left .ms{--ms-size:20px}
+.tr-left span{flex:1}
+</style>
+
+<style id="trip-style">
+/* ═══ Flow 5 · 여행 상세 ═══════════════════════════════════════════════ */
+/* ── map: paper map, the whole route in faint day colours, the travelled part solid, 핀 walking it ── */
+#trip .content{padding:0 0 32px}
+.tp-map{position:sticky;top:0;z-index:4;height:220px;background:#e4ece9;border-bottom:1px solid var(--outline-variant)}
+.tp-map svg{display:block;width:100%;height:220px}
+.tp-map .land{fill:#efe8dd;stroke:#cdbfa9;stroke-width:1.2}
+.tp-map .road{fill:none;stroke:#e0d5c4;stroke-width:2}
+.tp-map .r-all{fill:none;stroke-width:3.5;stroke-linecap:round;opacity:.3}
+.tp-map .r-night{fill:none;stroke:#8a7d70;stroke-width:1.6;stroke-dasharray:2 5;stroke-linecap:round;opacity:.7}
+.tp-map .r-go{fill:none;stroke-width:4;stroke-linecap:round}
+.tp-map .stop circle{stroke:#fffdf9;stroke-width:2}
+.tp-map svg.tp-here{position:absolute;left:0;top:0;width:32px;height:32px;margin:-36px 0 0 -16px;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.tp-nums{position:absolute;inset:0;pointer-events:none}
+.tp-nums span{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;display:grid;place-items:center;font:700 11px/1 var(--font-body);color:#fff;border-radius:50%;box-shadow:0 0 0 2px #fffdf9}
+.tp-map .here{transition:none}
+.tp-legend{position:absolute;right:12px;bottom:10px;display:flex;gap:10px;font:600 11px/1 var(--font-body);color:var(--on-surface-variant);background:rgba(251,248,243,.85);padding:6px 10px;border-radius:10px}
+.tp-legend span{display:inline-flex;align-items:center;gap:4px}
+.tp-legend i{width:8px;height:8px;border-radius:50%}
+
+.tp-sum{padding:16px 20px 4px}
+.tp-sum h2{font:700 26px/1.25 var(--font-display)}
+.tp-sum p{margin-top:6px;font:var(--body-m);color:var(--on-surface-variant)}
+.tp-acts{display:flex;gap:8px;padding:12px 16px 4px}
+.tp-acts .btn{flex:1;min-height:48px;gap:6px}
+.tp-acts .ms{--ms-size:20px}
+
+/* ── days & stops on a time rail ── */
+.tp-day{position:sticky;top:220px;z-index:3;display:flex;align-items:baseline;gap:8px;padding:14px 20px 10px;background:var(--surface);border-bottom:1px solid var(--outline-variant)}
+.tp-day b{font:700 19px/1.2 var(--font-display);color:var(--d)}
+.tp-day span{font:var(--body-s);color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-stop{position:relative;padding:14px 16px 6px 56px}
+.tp-stop::before{content:"";position:absolute;left:27px;top:0;bottom:0;width:2px;background:var(--outline-variant)}
+.tp-stop .no{position:absolute;left:16px;top:14px;width:24px;height:24px;border-radius:50%;background:var(--d);color:#fff;display:grid;place-items:center;font:700 12px/1 var(--font-body);box-shadow:0 0 0 3px var(--surface)}
+.tp-stop h3{font:700 17px/1.3 var(--font-display)}
+.tp-stop .when{margin-top:2px;font:var(--body-s);color:var(--on-surface-variant)}
+.tp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:10px;border-radius:14px;overflow:hidden}
+.tp-grid>*{position:relative;display:block;width:100%;aspect-ratio:1;border:0;padding:0;cursor:pointer}
+.tp-grid>* b{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,26,22,.45);color:#fff;font:600 14px/1 var(--font-body)}
+.tp-grid>* .star{position:absolute;left:5px;top:5px;width:24px;height:24px;border-radius:50%;background:#fffdf9;color:#d18a0c;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tp-grid>* .star .ms{--ms-size:16px}
+.tp-end{padding:18px 20px 0 56px;font:var(--body-s);color:var(--on-surface-variant)}
+
+/* ── best shots ── */
+#best .content,#clean .content{padding:4px 0 24px}
+.bs-intro{padding:4px 20px 8px;font:var(--body-m);color:var(--on-surface-variant)}
+.bs-grp{padding:14px 0 6px}
+.bs-grp h3{padding:0 20px;font:700 16px/1.3 var(--font-display)}
+.bs-grp h3 span{font:var(--body-s);color:var(--on-surface-variant);margin-left:6px}
+.bs-row{display:flex;gap:10px;overflow-x:auto;padding:12px 20px 8px;scrollbar-width:none}
+.bs-row button{position:relative;flex:none;width:104px;height:104px;border:0;border-radius:16px;padding:0;cursor:pointer;transition:transform .35s cubic-bezier(.3,1.5,.5,1),box-shadow .3s;filter:saturate(.75) brightness(.97)}
+.bs-row button.on{transform:translateY(-4px) scale(1.04);box-shadow:0 0 0 3px #f2b33d,0 8px 16px -8px rgba(31,26,22,.5);filter:none}
+.bs-row .rec{position:absolute;left:6px;bottom:6px;font:600 11px/1 var(--font-body);background:rgba(31,26,22,.72);color:#fff;padding:4px 6px;border-radius:6px}
+.bs-row .star{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:#f2b33d;color:#3a2a06;display:grid;place-items:center;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.bs-row .on .star{transform:none}
+.bs-row .star .ms{--ms-size:17px}
+
+/* ── clean up ── */
+.cl-cat{padding:14px 20px 4px;display:flex;align-items:baseline;gap:8px}
+.cl-cat b{font:700 16px/1.3 var(--font-display)}
+.cl-cat span{font:var(--body-s);color:var(--on-surface-variant)}
+.cl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 20px 6px}
+.cl-grid button{position:relative;aspect-ratio:1;border:0;border-radius:12px;padding:0;cursor:pointer;overflow:hidden}
+.cl-grid button i{position:absolute;inset:0}
+.cl-grid .blur i{filter:blur(4px);transform:scale(1.2)}
+.cl-grid .dark i{filter:brightness(.32)}
+.cl-grid .ck{position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.18);display:grid;place-items:center;color:#fff}
+.cl-grid .ck .ms{--ms-size:15px;opacity:0}
+.cl-grid button.on .ck{background:var(--error);border-color:var(--error)}
+.cl-grid button.on .ck .ms{opacity:1}
+.cl-grid button:not(.on){opacity:.55}
+.cl-note{display:flex;gap:8px;align-items:center;padding:8px 4px 10px;font:var(--body-s);color:var(--on-surface-variant)}
+.cl-note .ms{--ms-size:18px}
+#clean .bottom-bar,#best .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:0}
+.btn.danger{background:var(--error);color:var(--on-error)}
+</style>
+
+<style id="left-style">
+/* ═══ Flow 6 · 빠진 사진 ═══════════════════════════════════════════════ */
+#left .content{padding:0 0 24px}
+#left .top-app-bar .sub{display:block;font:var(--body-s);color:var(--on-surface-variant);margin-top:2px}
+#left .top-app-bar .title{line-height:1.25}
+#left.selecting .top-app-bar{background:var(--surface-container)}
+.lf-intro{padding:4px 20px 6px;font:var(--body-m);color:var(--on-surface-variant)}
+.lf-day{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:10px 8px 8px 20px;background:var(--surface)}
+.lf-day b{font:700 16px/1.3 var(--font-display)}
+.lf-day span{flex:1;font:var(--body-s);color:var(--on-surface-variant)}
+.lf-day .btn{min-height:40px;padding:0 12px;font:var(--label-l)}
+#left:not(.selecting) .lf-day .btn{display:none}
+.lf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 3px 10px}
+.lf-grid button{position:relative;aspect-ratio:1;border:0;padding:0;cursor:pointer;overflow:hidden;transition:transform .2s}
+.lf-grid button .ck{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.18);display:none;place-items:center;color:var(--on-primary)}
+.lf-grid button .ck .ms{--ms-size:15px;opacity:0}
+#left.selecting .lf-grid button .ck{display:grid}
+.lf-grid button.on{transform:scale(.88);border-radius:10px}
+.lf-grid button.on .ck{background:var(--primary);border-color:var(--primary)}
+.lf-grid button.on .ck .ms{opacity:1}
+.lf-grid button .pin{position:absolute;left:5px;bottom:5px;color:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.lf-grid button .pin .ms{--ms-size:15px}
+.lf-more{padding:16px 20px;text-align:center;font:var(--body-m);color:var(--on-surface-variant)}
+#left .bottom-bar{background:var(--surface);gap:8px}
+#left .bottom-bar .btn{flex:1}
+#left:not(.selecting) .bottom-bar{display:none}
+
+/* photos joining a trip: they shrink into the trip's colour and merge like drops */
+.fly-layer{position:absolute;inset:0;z-index:30;pointer-events:none;filter:url(#goo)}
+.fly-layer i{position:absolute;left:0;top:0;border-radius:6px;transition:transform .75s cubic-bezier(.6,0,.3,1),border-radius .75s,background-color .5s .15s}
+
+/* add-to-trip sheet */
+.at-list{display:flex;flex-direction:column;gap:4px}
+.at-item{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:8px 12px;border:0;border-radius:16px;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.at-item:hover{background:var(--surface-container-low)}
+.at-item .tk-dot{flex:none}
+.at-item .body{flex:1;min-width:0}
+.at-item .body b{display:block;font:700 16px/1.3 var(--font-display)}
+.at-item .body span{display:block;font:var(--body-s);color:var(--on-surface-variant)}
+.at-item .gap{font:var(--label-m);color:var(--on-surface-variant);white-space:nowrap}
+.at-item.near{background:var(--surface-container-low)}
+.at-item.near .gap{color:#9a2a14;font-weight:600}
+.nt-when{display:flex;align-items:center;gap:8px;margin:4px 0 16px;font:var(--body-m);color:var(--on-surface-variant)}
+.nt-when .ms{--ms-size:18px}
+#new-trip .field{margin-bottom:4px}
+#add-sheet .btn.text,#new-trip .btn.text{color:#9a2a14}
+</style>
+
+<style id="viewer-style">
+/* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════ */
+#viewer{--screen-bg:#0f0d0b;color:#f6f1e9}
+#viewer .top-app-bar{background:transparent;color:#f6f1e9;position:relative;z-index:2}
+#viewer .top-app-bar .icon-btn{color:#f6f1e9}
+#viewer .top-app-bar .title{line-height:1.25;font:600 15px/1.3 var(--font-body)}
+#viewer .top-app-bar .title span{display:flex;align-items:center;gap:4px;margin-top:2px;font:var(--body-s);color:#c9bfb2}
+#viewer .top-app-bar .title span .ms{--ms-size:14px}
+#viewer .top-app-bar .title i{width:8px;height:8px;border-radius:50%;background:var(--c,#8a7d70);display:inline-block}
+#viewer .content{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.vw-track{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.vw-track::-webkit-scrollbar{display:none}
+.vw-slide{flex:none;width:100%;height:100%;scroll-snap-align:center;display:grid;place-items:center;padding:12px 0}
+.vw-slide i{display:block;width:100%;aspect-ratio:3/4;max-height:100%;position:relative}
+.vw-slide i .star{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:4px;padding:6px 10px 6px 8px;border-radius:999px;background:#fffdf9;color:#7a4f05;font:600 12px/1 var(--font-body)}
+.vw-slide i .star .ms{--ms-size:16px;color:#d18a0c}
+.vw-count{align-self:center;margin:6px 0 10px;padding:6px 12px;border-radius:999px;background:rgba(246,241,233,.12);font:var(--label-m);color:#e9e1d4}
+#viewer .bottom-bar{background:#0f0d0b;justify-content:space-around;padding-top:6px;gap:0}
+.vw-act{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:76px;min-height:56px;padding:6px 4px;border:0;border-radius:16px;background:transparent;color:#f6f1e9;font:var(--label-m);cursor:pointer}
+.vw-act .ms{--ms-size:24px}
+.vw-act.on .ms{color:#f2b33d}
+.vw-act.warn{color:#ffb4a8}
+</style>
+
+<style id="prefs-style">
+/* ═══ Flow 7 · 설정 ═══════════════════════════════════════════════════ */
+#prefs .content{padding:4px 0 32px}
+.pf-me{display:flex;align-items:center;gap:16px;margin:4px 16px 8px;padding:14px 8px 14px 14px;border-radius:20px;background:var(--surface-container-low)}
+.pf-me canvas{width:64px;height:64px;flex:none}
+.pf-me .body{flex:1;min-width:0}
+.pf-me .body b{display:block;font:700 19px/1.3 var(--font-display)}
+.pf-me .body>span{display:block;margin-top:2px;font:var(--body-s);color:var(--on-surface-variant)}
+.pf-sec{padding:20px 20px 6px;font:600 13px/1 var(--font-body);color:#9a2a14;letter-spacing:.2px}
+.pf-row{display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:8px 16px 8px 20px;border:0;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.pf-row>.ms{--ms-size:22px;color:var(--on-surface-variant);flex:none}
+.pf-row .body{flex:1;min-width:0}
+.pf-row .body b{display:block;font:500 16px/1.35 var(--font-body)}
+.pf-row .body span{display:block;margin-top:2px;font:var(--body-s);color:var(--on-surface-variant)}
+.pf-row .state{display:inline-flex;align-items:center;gap:4px;font:600 13px/1 var(--font-body);color:#1d7a62;white-space:nowrap}
+.pf-row .state.some{color:#8a5a00}.pf-row .state.none{color:var(--error)}
+.pf-row .state .ms{--ms-size:16px}
+.pf-row.danger b{color:var(--error)}
+.pf-row.danger>.ms{color:var(--error)}
+.pf-row .switch{flex:none}
+.pf-div{height:1px;margin:0 20px 0 58px;background:var(--outline-variant)}
+.pf-ver{padding:20px;text-align:center;font:var(--body-s);color:var(--on-surface-variant)}
+.pf-steps{display:flex;flex-direction:column;gap:10px;margin:4px 0 8px;font:var(--body-m)}
+.pf-steps div{display:flex;gap:10px;align-items:center}
+.pf-steps i{width:24px;height:24px;border-radius:50%;background:var(--surface-container-high);display:grid;place-items:center;font:700 12px/1 var(--font-body);font-style:normal;flex:none}
+.pf-say{display:flex;gap:10px;align-items:flex-start;margin-top:12px}
+.pf-say svg{width:40px;height:40px;flex:none}
+.pf-say .bub{max-width:none;font:var(--body-m)}
+#prefs-name .btn.text,#prefs-wipe .btn.text,#prefs-rescan .btn.text,#tag-sheet .btn.text{color:#9a2a14}
+#prefs-wipe .btn.text.del{color:var(--error)}
+</style>
+
 </head>
 <body>
 <!-- gooey filters: blur + alpha threshold, so touching shapes merge like liquid -->
@@ -606,8 +1004,458 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
         <div class="actions"><button class="icon-btn" data-action="replay" aria-label="처음부터 다시 듣기"><span class="ms">replay</span></button></div>
       </header>
       <div class="content"><div id="chat"></div></div>
-      <div class="bottom-bar"><button class="btn block lg" id="guide-cta" data-action="finish" disabled>알겠어요, 시작할게요</button></div>
+      <div class="bottom-bar"><button class="btn block lg" id="guide-cta" data-go="perm" disabled>알겠어요, 시작할게요</button></div>
     </section>
+
+    <!-- ═══ Flow 2 · 사진 접근 권한 ═══ -->
+
+    <!-- 5 · 권한 안내 (요청 전 설명) -->
+    <section class="screen" id="perm" data-title="사진 접근 안내">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title"></h1>
+      </header>
+      <div class="content">
+        <h1 class="pm-h"><span class="nk-slot">여행자</span>님의 앨범을<br>열어 주세요</h1>
+        <p class="pm-sub">지금은 사진이 보이지 않아 지구본이 비어 있어요.</p>
+        <div class="ag-stage">
+          <canvas id="ag-perm" style="filter:url(#goo-c)" width="520" height="520" aria-label="아직 열리지 않은 앨범을 뜻하는 옅은 색 지구본" data-js></canvas>
+        </div>
+        <div class="why">
+          <div class="why-row"><span class="ic"><span class="ms">photo_library</span></span>
+            <div><b>사진·영상 전체 보기</b><span class="d">여행은 사진이 며칠씩 이어져야 찾을 수 있어서, 일부만 보면 여행이 잘려요.</span></div></div>
+          <div class="why-row"><span class="ic pin"><span class="ms fill">location_on</span></span>
+            <div><b>사진 속 위치 읽기</b><span class="d">핀이 장소를 알아낼 때 써요. 사진 권한과 함께 요청돼요.</span></div></div>
+          <div class="why-row"><span class="ic"><span class="ms">phonelink_lock</span></span>
+            <div><b>기기 밖으로 보내지 않아요</b><span class="d">어디에도 올리지 않고 이 휴대폰 안에서만 읽어요. 직접 고르기 전에는 지우지 않아요.</span></div></div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="pm-pick"><span class="ms fill">touch_app</span><span>다음 안내창에서 <b>모두 허용</b>을 골라 주세요</span></div>
+        <button class="btn block lg" data-action="request" data-links="settings" data-dialog="sys-perm">사진 접근 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 6 · 시스템 사진 선택기 (Android 14 부분 접근) -->
+    <section class="screen sysui" id="picker" data-title="사진 선택(시스템)">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="닫기"><span class="ms">close</span></button>
+        <h1 class="title">항목 선택</h1>
+        <div class="actions"><span class="sys-tag"><span class="ms">android</span>시스템 화면 재현</span></div>
+      </header>
+      <div class="content">
+        <div class="pk-tabs"><span class="on">사진</span><span>앨범</span></div>
+        <div id="pk-body"></div>
+      </div>
+      <div class="bottom-bar">
+        <span class="pk-count" id="pk-count">항목을 선택하세요</span>
+        <button class="pk-allow" id="pk-allow" data-action="pickDone" data-links="partial" disabled>허용</button>
+      </div>
+    </section>
+
+    <!-- 7 · 결과: 모두 허용 -->
+    <section class="screen" id="granted" data-title="앨범 열림" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px"><span class="nk-slot">여행자</span>님의 앨범이<br><em>열렸어요</em></h1>
+        <p class="pm-sub">지구본의 방울이 이제 실제 사진이에요.</p>
+        <div class="ag-stage">
+          <canvas id="ag-granted" style="filter:url(#goo-c)" width="520" height="520" aria-label="앨범이 열리면서 지구본의 방울이 앞쪽부터 진하게 채워지는 애니메이션" data-js></canvas>
+          <div class="ag-cap"><span><i class="ink"></i>볼 수 있는 사진</span></div>
+        </div>
+        <div class="res-rows">
+          <div class="res-row"><span class="ms">photo_library</span>사진<span class="n num" data-count="2418" data-unit="장">2,418장</span></div>
+          <div class="res-row"><span class="ms">videocam</span>영상<span class="n num" data-count="136" data-unit="개">136개</span></div>
+          <div class="res-row pin"><span class="ms fill">location_on</span>위치가 남아 있는 사진·영상<span class="n num" data-count="1874" data-unit="개">1,874개</span></div>
+        </div>
+      </div>
+      <div class="bottom-bar"><button class="btn block lg" data-action="startAnalysis" data-links="analyze">여행 찾기 시작</button></div>
+    </section>
+
+    <!-- 8 · 결과: 사진 선택(부분 접근) -->
+    <section class="screen" id="partial" data-title="일부만 허용됨" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">고르신 <em id="pt-n">14장</em>만<br>볼 수 있어요</h1>
+        <div class="ag-stage" style="height:248px">
+          <canvas id="ag-partial" style="filter:url(#goo-c);width:240px;height:240px" width="480" height="480" aria-label="지구본 대부분이 옅은 채로, 고른 사진만큼만 진한 방울이 띄엄띄엄 보이는 모습" data-js></canvas>
+          <div class="ag-cap"><span><i class="ink"></i>고른 사진</span><span><i></i>안 보이는 사진</span></div>
+        </div>
+        <div class="cut">
+          <div class="cut-t"><span class="ms fill">content_cut</span>이렇게 여행이 잘릴 수 있어요</div>
+          <div class="cut-strip" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="cut-legend"><span>7월 12일</span><span>제주 · 12일 동안 41장</span><span>7월 23일</span></div>
+          <p>3장만 고르면 틱과 핀은 <b>하루짜리 여행 세 개</b>로 읽어요. 사진은 나중에 더 고를 수도 있어요.</p>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" data-dialog="sys-more">모든 사진 허용하기</button>
+        <button class="btn text block" data-action="startAnalysis" data-links="analyze">고른 사진으로 시작할게요</button>
+      </div>
+    </section>
+
+    <!-- 9 · 결과: 허용 안 함 -->
+    <section class="screen" id="denied" data-title="허용 안 됨" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">앨범이 닫혀 있어서<br>여행을 찾을 수 없어요</h1>
+        <div class="ag-stage" style="height:236px">
+          <canvas id="ag-denied" style="filter:url(#goo-c);width:220px;height:220px" width="440" height="440" aria-label="방울이 모두 옅은 색으로 남아 있는 빈 지구본" data-js></canvas>
+        </div>
+        <div class="dn-say">
+          <svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="col"><div class="who" style="font:600 12px/1 var(--font-body);color:var(--on-surface-variant);margin:6px 0 8px 4px">핀 · 장소 담당</div>
+            <div class="bub" id="dn-bub">읽을 사진이 없으면 틱이랑 저는 할 수 있는 게 없어요. 사진은 어디에도 올리지 않고, 직접 고르기 전에는 지우지 않아요.</div></div>
+        </div>
+        <div class="dn-steps" id="dn-steps" hidden>
+          <b>안내창이 더는 뜨지 않아요.</b> 설정에서 직접 바꿔 주세요.<br>
+          <span class="ms">settings</span> 권한 <span class="ms">chevron_right</span> 사진 및 동영상 <span class="ms">chevron_right</span> <b>항상 모두 허용</b>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" id="dn-cta" data-action="retry" data-links="settings">다시 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 10 · 시스템 설정: 앱 권한 -->
+    <section class="screen sysui" id="settings" data-title="앱 권한 설정(시스템)">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">사진 및 동영상 권한</h1>
+        <div class="actions"><span class="sys-tag"><span class="ms">android</span>시스템 화면 재현</span></div>
+      </header>
+      <div class="content">
+        <div class="st-app"><span class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="16" cy="22" r="10" fill="#e2553a"/><circle cx="26" cy="15" r="6" fill="#f2b33d"/></svg></span><b>Wend</b></div>
+        <div class="st-sec">이 앱의 사진 및 동영상 액세스</div>
+        <div class="st-list" id="st-list">
+          <button class="st-row" data-action="setPerm" data-v="all"><span class="rd"></span><span>항상 모두 허용</span></button>
+          <button class="st-row" data-action="setPerm" data-v="some"><span class="rd"></span><span>제한된 액세스 허용<small>앱으로 돌아가면 사진을 고르는 화면이 열려요</small></span></button>
+          <button class="st-row on" data-action="setPerm" data-v="none"><span class="rd"></span><span>허용 안함</span></button>
+        </div>
+        <div class="st-foot"><span class="ms">info</span><span>사진 및 동영상을 허용하면 사진에 저장된 위치 정보도 함께 읽을 수 있어요.</span></div>
+      </div>
+    </section>
+
+    <!-- system permission dialog (first request) -->
+    <div class="dialog sys sysui" id="sys-perm" role="dialog" aria-label="사진 접근 권한 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">photo_library</span>
+      <div class="d-title"><b>Wend</b>에서 기기의 사진 및 동영상에 액세스하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="grantAll" data-go="granted">모두 허용</button>
+        <button data-close data-go="picker">사진 및 동영상 선택</button>
+        <button data-close data-action="deny" data-go="denied">허용 안함</button>
+      </div>
+    </div>
+
+    <!-- system permission dialog (re-request after partial access) -->
+    <div class="dialog sys sysui" id="sys-more" role="dialog" aria-label="사진 접근 권한 다시 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">photo_library</span>
+      <div class="d-title"><b>Wend</b>에서 기기의 사진 및 동영상에 액세스하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="grantAll" data-go="granted">모두 허용</button>
+        <button data-close data-action="pickMore" data-go="picker">사진 더 선택</button>
+        <button data-close>현재 선택 유지</button>
+      </div>
+    </div>
+
+    <!-- ═══ Flow 3 · 분석 중 ═══ -->
+
+    <!-- 11 · 분석 중 -->
+    <section class="screen" id="analyze" data-title="여행 찾는 중" data-no-up data-links="found">
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px"><span class="nk-slot">여행자</span>님의 여행을<br><em>찾고 있어요</em></h1>
+        <div class="an-status" id="an-status" aria-live="polite"></div>
+        <div class="ag-stage" style="height:252px">
+          <canvas id="tg-run" style="filter:url(#goo-c);width:244px;height:244px" width="488" height="488" aria-label="사진 방울들이 색을 띠며 여행별 덩어리로 뭉치는 애니메이션" data-js></canvas>
+        </div>
+        <div class="an-read"><span>읽은 사진</span><span class="bar"><i id="an-bar"></i></span><span class="num" id="an-count">0 / 2,554</span></div>
+        <div class="an-found-t">찾은 여행 <b id="an-n">0</b></div>
+        <div class="tks" id="an-list" data-links="nofound"><div class="an-empty" id="an-empty">아직 찾는 중이에요</div></div>
+        <div class="an-note"><span class="ms">phonelink_lock</span>이 휴대폰 안에서만 읽어요. 사진은 어디에도 올리지 않아요.</div>
+      </div>
+    </section>
+
+    <!-- 12 · 찾기 완료 -->
+    <section class="screen" id="found" data-title="여행 찾기 완료" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px" id="fd-h">여행 <em>7개</em>를<br>찾았어요</h1>
+        <p class="fd-sub" id="fd-sub"></p>
+        <div class="ag-stage">
+          <canvas id="tg-done" style="filter:url(#goo-c)" width="424" height="424" aria-label="여행마다 다른 색 덩어리로 뭉친 지구본" data-js></canvas>
+        </div>
+        <div class="tks" id="fd-list"></div>
+        <div class="fd-cut" id="fd-cut" hidden><span class="ms fill">content_cut</span><span>고른 사진만 보면 한 여행이 여러 개로 나뉘어 보일 수 있어요. 모든 사진을 허용하면 이어서 찾아 드려요.</span></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" data-action="openTrips" data-links="trips">여행 보러 가기</button>
+        <button class="btn text block" id="fd-more" data-dialog="sys-more" hidden>모든 사진 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 13 · 여행을 하나도 못 찾음 -->
+    <section class="screen" id="nofound" data-title="여행 없음" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">아직 여행을<br>찾지 못했어요</h1>
+        <p class="fd-sub" id="nf-sub"></p>
+        <div class="ag-stage" style="height:224px">
+          <canvas id="tg-none" style="filter:url(#goo-c);width:212px;height:212px" width="424" height="424" aria-label="색이 들지 않은 회색 방울만 남은 지구본" data-js></canvas>
+        </div>
+        <div class="dn-say">
+          <svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="col"><div class="who" style="font:600 12px/1 var(--font-body);color:var(--on-surface-variant);margin:6px 0 8px 4px">핀 · 장소 담당</div>
+            <div class="bub" id="nf-bub"></div></div>
+        </div>
+        <div class="dn-steps" id="nf-steps">
+          <span class="ms">photo_camera</span> 카메라 <span class="ms">chevron_right</span> 설정 <span class="ms">chevron_right</span> <b>위치 태그</b> 켜기
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" id="nf-cta" data-action="openTrips" data-links="trips">확인했어요</button>
+        <button class="btn block lg" id="nf-more" data-dialog="sys-more" hidden>모든 사진 허용하기</button>
+        <button class="btn text block" id="nf-skip" data-action="openTrips" hidden>이대로 둘러볼게요</button>
+      </div>
+    </section>
+
+    <!-- ═══ Flow 4 · 여행 목록 (메인) ═══ -->
+
+    <!-- 14 · 여행 목록 -->
+    <section class="screen" id="trips" data-title="여행 목록" data-no-up>
+      <header class="top-app-bar">
+        <h1 class="title">Wend</h1>
+        <div class="actions">
+          <span class="tr-dock" id="tr-dock" aria-hidden="true"></span>
+          <button class="icon-btn" data-action="openSettings" data-links="prefs" aria-label="설정"><span class="ms">settings</span></button>
+        </div>
+      </header>
+      <canvas class="tr-globe" id="tg-list" style="filter:url(#goo-c)" width="400" height="400" aria-label="여행마다 다른 색 덩어리로 뭉친 지구본. 덩어리를 누르면 그 여행으로 이동해요" data-js></canvas>
+      <div class="content" id="tr-scroll">
+        <div class="tr-hero" data-links="left">
+          <div class="tr-slot" id="tr-slot"></div>
+          <div class="tr-sum" id="tr-sum"></div>
+          <div class="tr-hint" id="tr-hint">색 덩어리를 누르면 그 여행으로 가요</div>
+        </div>
+        <div id="tr-list" data-links="trip"></div>
+      </div>
+    </section>
+
+    <!-- ═══ Flow 5 · 여행 상세 ═══ -->
+
+    <!-- 15 · 여행 상세 -->
+    <section class="screen" id="trip" data-title="여행 상세">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title" id="tp-title">부산</h1>
+      </header>
+      <div class="content" id="tp-scroll">
+        <div class="tp-map" id="tp-map">
+          <svg viewBox="0 0 380 220" preserveAspectRatio="xMidYMid slice" aria-label="부산 여행 이동 경로 지도. 스크롤하면 핀이 경로를 따라 이동해요" role="img">
+            <path class="land" d="M0 0H380V28C362 30 348 40 336 43C322 46 306 44 292 48C276 52 262 50 250 58C238 64 230 70 220 66C208 72 200 84 192 96C182 110 170 118 156 126C142 134 132 142 124 152C118 160 104 162 96 164C86 166 78 172 68 168C58 164 48 170 40 176C28 182 14 176 0 180Z"/>
+            <ellipse class="land" cx="114" cy="184" rx="22" ry="12"/>
+            <path class="road" d="M97 119C140 100 190 80 283 40M97 119L51 151M85 150L97 119"/>
+            <g id="tp-routes"></g>
+            <g id="tp-stops"></g>
+          </svg>
+          <div class="tp-nums" id="tp-nums" aria-hidden="true"></div>
+          <svg class="tp-here bot b2" id="tp-here" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="tp-legend"><span><i style="background:#e2553a"></i>1일째</span><span><i style="background:#2f7fd8"></i>2일째</span><span><i style="background:#2bae8e"></i>3일째</span></div>
+        </div>
+        <div class="tp-sum">
+          <h2>부산</h2>
+          <p id="tp-meta">2026. 5. 3 – 5. 5 · 3일 · 186장 · 7곳</p>
+        </div>
+        <div class="tp-acts">
+          <button class="btn tonal" data-go="best"><span class="ms fill">star</span>베스트샷 고르기</button>
+          <button class="btn outlined" data-go="clean"><span class="ms">auto_delete</span>사진 정리하기</button>
+        </div>
+        <div id="tp-days" data-links="viewer"></div>
+      </div>
+    </section>
+
+    <!-- 16 · 베스트샷 고르기 -->
+    <section class="screen" id="best" data-title="베스트샷 고르기">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">베스트샷 고르기</h1>
+      </header>
+      <div class="content">
+        <p class="bs-intro">장소마다 비슷하게 찍은 사진을 모았어요. 가장 마음에 드는 한 장을 골라 주세요. 고른 사진이 여행의 대표 사진이 돼요.</p>
+        <div id="bs-list"></div>
+      </div>
+      <div class="bottom-bar"><button class="btn block lg" data-action="bestDone">8장으로 정하기</button></div>
+    </section>
+
+    <!-- 17 · 사진 정리하기 -->
+    <section class="screen" id="clean" data-title="사진 정리하기">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">사진 정리하기</h1>
+      </header>
+      <div class="content">
+        <p class="bs-intro">필요 없어 보이는 사진을 골라 뒀어요. 남기고 싶은 사진은 눌러서 빼 주세요.</p>
+        <div id="cl-list"></div>
+      </div>
+      <div class="bottom-bar">
+        <div class="cl-note"><span class="ms">restore_from_trash</span>휴지통으로 옮긴 사진은 30일 동안 갤러리에서 되살릴 수 있어요.</div>
+        <button class="btn block lg danger" id="cl-go" data-action="trashAsk" data-dialog="sys-trash">23장 휴지통으로 옮기기</button>
+      </div>
+    </section>
+
+    <!-- system trash confirmation (MediaStore.createTrashRequest) -->
+    <div class="dialog sys sysui" id="sys-trash" role="dialog" aria-label="사진 휴지통 이동 확인">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">delete</span>
+      <div class="d-title"><b>Wend</b>에서 사진 <b id="tr-n">23개</b>를 휴지통으로 이동하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="trashOk" data-back>허용</button>
+        <button data-close>거부</button>
+      </div>
+    </div>
+
+    <!-- ═══ Flow 6 · 빠진 사진 ═══ -->
+
+    <!-- 18 · 여행에 담기지 않은 사진 -->
+    <section class="screen" id="left" data-title="빠진 사진">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms" id="lf-back-ic">arrow_back</span></button>
+        <h1 class="title" id="lf-title">여행에 담기지 않은 사진<span class="sub" id="lf-sub">1,233장 · 최신순</span></h1>
+        <div class="actions"><button class="icon-btn" id="lf-sel-btn" data-action="selectMode" aria-label="사진 선택"><span class="ms">checklist</span></button></div>
+      </header>
+      <div class="content" id="lf-scroll">
+        <p class="lf-intro">찍은 날짜순으로 모아 뒀어요. 사진을 골라 여행에 넣거나 새 여행으로 만들 수 있어요.</p>
+        <div id="lf-list" data-links="viewer"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn tonal lg" id="lf-add" data-action="askAdd" data-sheet="add-sheet"><span class="ms">library_add</span>여행에 넣기</button>
+        <button class="btn lg" id="lf-new" data-action="askNew" data-dialog="new-trip"><span class="ms">add_location_alt</span>새 여행 만들기</button>
+      </div>
+    </section>
+
+    <!-- add to an existing trip: nearest in time first -->
+    <div class="sheet" id="add-sheet" aria-label="여행에 넣기">
+      <div class="sheet-title" id="at-title">어느 여행에 넣을까요?</div>
+      <div class="sheet-body"><div class="at-list" id="at-list"></div></div>
+      <div class="sheet-actions"><button class="btn text" data-close>취소</button></div>
+    </div>
+
+    <!-- make a new trip from the picked photos -->
+    <div class="dialog" id="new-trip" aria-label="새 여행 만들기">
+      <span class="ms d-icon">add_location_alt</span>
+      <div class="d-title">새 여행 만들기</div>
+      <div class="nt-when"><span class="ms">event</span><span id="nt-when">2026. 6. 20 · 7장</span></div>
+      <label class="field"><input id="nt-name" maxlength="14" placeholder=" " data-js><span class="label">여행 이름</span><span class="support">나중에 바꿀 수 있어요</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-close data-action="makeTrip">만들기</button></div>
+    </div>
+
+    <!-- ═══ Common · 사진 크게 보기 (one screen; the bottom actions depend on where it was opened) ═══ -->
+    <section class="screen" id="viewer" data-title="사진 크게 보기" data-status="light">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title" id="vw-title">2026년 5월 3일 오후 1:40<span id="vw-place"><i></i>감천문화마을</span></h1>
+      </header>
+      <div class="content">
+        <div class="vw-track" id="vw-track" aria-label="사진. 옆으로 밀어 다음 사진을 볼 수 있어요"></div>
+        <div class="vw-count num" id="vw-count">1 / 6</div>
+      </div>
+      <div class="bottom-bar" id="vw-acts"></div>
+    </section>
+
+    <!-- ═══ Flow 7 · 설정 ═══ -->
+
+    <!-- 20 · 설정 -->
+    <section class="screen" id="prefs" data-title="설정">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">설정</h1>
+      </header>
+      <div class="content">
+        <div class="pf-me">
+          <canvas id="ag-prefs" style="filter:url(#goo-c)" width="128" height="128" aria-label="앨범 지구본. 볼 수 있는 사진만큼 진하게 채워져 있어요" data-js></canvas>
+          <div class="body"><b><span class="nk-slot">여행자</span>님</b><span id="pf-count">사진·영상 2,554개 · 여행 7개</span></div>
+          <button class="icon-btn" data-action="askName" data-dialog="prefs-name" aria-label="닉네임 바꾸기"><span class="ms">edit</span></button>
+        </div>
+
+        <div class="pf-sec">사진 접근</div>
+        <button class="pf-row" data-action="toSysSettings" data-links="settings"><span class="ms">photo_library</span>
+          <span class="body"><b>사진 및 동영상</b><span>Android 설정에서 바꿀 수 있어요</span></span><span class="state" id="pf-access"><span class="ms fill">check_circle</span>모두 허용</span></button>
+        <div class="pf-div"></div>
+        <div class="pf-row" style="cursor:default"><span class="ms">location_on</span>
+          <span class="body"><b>사진 속 위치 읽기</b><span>사진 권한과 함께 허용돼요</span></span><span class="state" id="pf-loc"><span class="ms fill">check_circle</span>허용</span></div>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-sheet="tag-sheet"><span class="ms">photo_camera</span>
+          <span class="body"><b>카메라 위치 태그 켜는 법</b><span>켜 두면 여행을 더 정확하게 찾아요</span></span><span class="ms">chevron_right</span></button>
+
+        <div class="pf-sec">여행 찾기</div>
+        <label class="pf-row"><span class="ms">autorenew</span>
+          <span class="body"><b>새 사진으로 자동 찾기</b><span>새로 찍은 사진이 생기면 여행을 이어서 찾아요</span></span>
+          <span class="switch"><input type="checkbox" id="pf-auto" checked><span class="track"></span></span></label>
+        <div class="pf-div"></div>
+        <label class="pf-row"><span class="ms">notifications</span>
+          <span class="body"><b>새 여행 알림</b><span>새 여행을 찾으면 알려 드려요</span></span>
+          <span class="switch"><input type="checkbox" id="pf-noti" data-js data-links="sys-noti"><span class="track"></span></span></label>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-dialog="prefs-rescan"><span class="ms">travel_explore</span>
+          <span class="body"><b>처음부터 다시 찾기</b><span>직접 넣고 뺀 사진은 그대로 둬요</span></span><span class="ms">chevron_right</span></button>
+
+        <div class="pf-sec">데이터</div>
+        <button class="pf-row danger" data-dialog="prefs-wipe"><span class="ms">delete_forever</span>
+          <span class="body"><b>Wend 데이터 지우기</b><span>찾은 여행과 정리한 기록을 지워요. 사진은 그대로 있어요</span></span></button>
+
+        <div class="pf-sec">정보</div>
+        <button class="pf-row" data-action="pfInfo" data-v="개인정보 처리방침"><span class="ms">shield_person</span><span class="body"><b>개인정보 처리방침</b><span>사진은 이 휴대폰 밖으로 나가지 않아요</span></span><span class="ms">open_in_new</span></button>
+        <div class="pf-div"></div>
+        <button class="pf-row" data-action="pfInfo" data-v="오픈소스 라이선스"><span class="ms">description</span><span class="body"><b>오픈소스 라이선스</b></span><span class="ms">chevron_right</span></button>
+        <div class="pf-ver">Wend 1.0.0</div>
+      </div>
+    </section>
+
+    <!-- nickname -->
+    <div class="dialog" id="prefs-name" aria-label="닉네임 바꾸기">
+      <div class="d-title">닉네임 바꾸기</div>
+      <label class="field"><input id="pf-name" maxlength="10" placeholder=" " data-js><span class="label">닉네임</span><span class="support" id="pf-name-help">2~10자, 한글·영문·숫자</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-action="saveName">저장</button></div>
+    </div>
+
+    <!-- camera location tag how-to -->
+    <div class="sheet" id="tag-sheet" aria-label="카메라 위치 태그 켜는 법">
+      <div class="sheet-title">카메라 위치 태그 켜는 법</div>
+      <div class="sheet-body">
+        <div class="pf-steps">
+          <div><i>1</i><span>카메라 앱을 열어요</span></div>
+          <div><i>2</i><span>왼쪽 위 <span class="ms" style="--ms-size:18px;vertical-align:-4px">settings</span> 설정을 눌러요</span></div>
+          <div><i>3</i><span><b>위치 태그</b>를 켜요</span></div>
+        </div>
+        <div class="pf-say"><svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="bub">켜 둔 뒤에 찍은 사진부터 장소가 남아요. 기기마다 메뉴 이름이 조금 다를 수 있어요.</div></div>
+      </div>
+      <div class="sheet-actions"><span class="grow"></span><button class="btn text" data-close>알겠어요</button></div>
+    </div>
+
+    <!-- rescan -->
+    <div class="dialog" id="prefs-rescan" aria-label="처음부터 다시 찾기">
+      <span class="ms d-icon">travel_explore</span>
+      <div class="d-title">처음부터 다시 찾을까요?</div>
+      <p class="d-text">모든 사진을 다시 읽어서 여행을 찾아요. 직접 넣고 뺀 사진, 만든 여행, 베스트샷은 그대로 둬요.</p>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-close data-action="rescan" data-links="analyze">다시 찾기</button></div>
+    </div>
+
+    <!-- wipe -->
+    <div class="dialog" id="prefs-wipe" aria-label="Wend 데이터 지우기">
+      <span class="ms d-icon">delete_forever</span>
+      <div class="d-title">Wend 데이터를 지울까요?</div>
+      <p class="d-text">찾은 여행, 베스트샷, 직접 넣고 뺀 기록, 닉네임이 지워지고 처음 화면으로 돌아가요. <b>기기의 사진은 하나도 지워지지 않아요.</b></p>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text del" data-close data-action="wipe" data-links="splash">지우기</button></div>
+    </div>
+
+    <!-- system notification permission (Android 13+) -->
+    <div class="dialog sys sysui" id="sys-noti" role="dialog" aria-label="알림 권한 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">notifications</span>
+      <div class="d-title"><b>Wend</b>에서 알림을 보내도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="notiOk">허용</button>
+        <button data-close data-action="notiNo">허용 안함</button>
+      </div>
+    </div>
+
   </div>
   <div class="overlays"></div>
 </div>
@@ -624,9 +1472,39 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
   var qs = function (s, r) { return (r || document).querySelector(s); };
   var qsa = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var params = new URLSearchParams(location.search);
-  var MODE = params.has('audit') ? 'audit' : params.has('shot') ? 'shot' : 'live';
+  // live = normal · film = bare device, real-time motion (proto.py frames) · shot/audit = bare device, animations at end state
+  var MODE = params.has('audit') ? 'audit' : params.has('shot') ? 'shot' : params.has('film') ? 'film' : 'live';
   var html = document.documentElement;
   if (MODE !== 'live') html.classList.add('shot');
+  if (MODE === 'shot' || MODE === 'audit') html.classList.add('still');
+  if (MODE === 'film') filmClock(parseFloat(params.get('film')) || 0);
+
+  /* film=<seconds>: one deterministic clock for JS timers, rAF and CSS animations, frozen at that moment
+     so `proto.py frames` captures exactly t seconds after the page booted. */
+  function filmClock(stopAt) {
+    // Headless virtual time starves requestAnimationFrame after ~1s, so film mode drives everything from timers,
+    // which virtual time advances deterministically: a 16ms ticker syncs CSS/WAAPI animations, and rAF is emulated.
+    var st = window.setTimeout, frozen = false, t0 = performance.now(), born = new WeakMap();
+    window.setTimeout = function (fn, ms) { var args = Array.prototype.slice.call(arguments, 2); return st(function () { if (!frozen && typeof fn === 'function') fn.apply(null, args); }, ms); };
+    window.requestAnimationFrame = function (fn) { return st(function () { if (!frozen) fn(performance.now()); }, 16); };
+    window.cancelAnimationFrame = function (id) { clearTimeout(id); };
+    function sync(el) {
+      document.getAnimations().forEach(function (a) {
+        if (!born.has(a)) { born.set(a, el); a.pause(); }
+        try { a.currentTime = Math.max(0, el - born.get(a)); } catch (e) { /* finished/removed */ }
+      });
+    }
+    function freeze() { if (frozen) return; sync(stopAt * 1000); frozen = true; html.setAttribute('data-film-done', String(stopAt)); }
+    st(freeze, stopAt * 1000);
+    (function tick() {
+      if (frozen) return;
+      var el = performance.now() - t0;
+      if (el >= stopAt * 1000) return freeze();
+      sync(el);
+      st(tick, 16);
+    })();
+  }
+
   if (params.get('dark') === '1') html.classList.add('dark');
   var jsErrors = [];
   window.addEventListener('error', function (e) { jsErrors.push((e.message || 'error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')); });
@@ -643,7 +1521,23 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
 
   var App = window.App = window.App || {};
   App.stack = []; App.state = App.state || {}; App.actions = App.actions || {}; App._enter = App._enter || {};
+  App._leave = App._leave || {};
+  App.mode = MODE;
+  App.shot = MODE === 'shot' || MODE === 'audit';   // still screenshot: show the finished state, skip waits
+  App.reducedMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   App.onEnter = function (id, fn) { (App._enter[id] = App._enter[id] || []).push(fn); };
+  App.onLeave = function (id, fn) { (App._leave[id] = App._leave[id] || []).push(fn); };
+  /* setTimeout that runs immediately in still screenshots, so sequences (chat, reveals) render complete */
+  App.after = function (ms, fn) { if (App.shot) { fn(); return 0; } return setTimeout(fn, ms); };
+  /* requestAnimationFrame loop that runs only while screen #id is showing. draw(dt, t) in seconds. */
+  App.loop = function (id, draw) {
+    var raf = 0, last = 0, t = 0;
+    function tick(now) { var dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now; t += dt; draw(dt, t); raf = requestAnimationFrame(tick); }
+    function start() { if (!raf) { last = 0; raf = requestAnimationFrame(tick); } }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+    App.onEnter(id, start); App.onLeave(id, stop);
+    return { start: start, stop: stop };
+  };
   App.current = function () { return App.stack[App.stack.length - 1]; };
 
   function screens() { return qsa('.screen', device); }
@@ -684,6 +1578,7 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
     if (!isScreen(next)) { console.warn('No screen #' + id); App.snack(T.missing + id); return false; }
     var prev = qs('.screen.active', device);
     if (prev === next) return true;
+    if (prev) (App._leave[prev.id] || []).forEach(function (f) { try { f(prev); } catch (e) { console.error(e); } });
     next.hidden = false;
     next.classList.add('active');
     layoutChrome(next);
@@ -891,6 +1786,14 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
         '</span><span class="sb-icons"><span class="ms fill">signal_cellular_alt</span><span class="ms fill">wifi</span><span class="ms fill">battery_full</span></span></div>');
     }
     statusBar = qs('.status-bar', device);
+    if (!document.getElementById('goo')) document.body.insertAdjacentHTML('afterbegin',
+      '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' +
+      // goo: blur + alpha threshold so touching shapes merge like liquid; goo-c keeps colours crisp; goo-s for small things
+      '<filter id="goo" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter>' +
+      '<filter id="goo-c" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="g"/><feComposite in="SourceGraphic" in2="g" operator="atop"/></filter>' +
+      '<filter id="goo-s" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"/></filter>' +
+      '<filter id="grain" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter>' +
+      '</defs></svg>');
     if (!qs('.gesture-bar', device)) device.insertAdjacentHTML('beforeend', '<div class="gesture-bar"></div>');
     gestureBar = qs('.gesture-bar', device);
     overlaysEl = qs('.overlays', device);
@@ -1120,8 +2023,10 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
         var a = boxes[i], b = boxes[j];
         if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
         if (a.el.closest('.badge,[data-overlap-ok]') || b.el.closest('.badge,[data-overlap-ok]')) continue;
-        var ov = overlap(a.r, b.r);
-        if (ov > 0.15 * Math.min(area(a.r), area(b.r)) && inView(a.el, a.r) && inView(b.el, b.r)) add('error', 'text-overlap', where, a.el, 'Overlaps "' + short(ownText(b.el)) + '".');
+        var ra = clipTo(a.r, clipRect(a.el)), rb = clipTo(b.r, clipRect(b.el));   // compare only what is actually visible
+        if (!ra || !rb) continue;
+        var ov = overlap(ra, rb);
+        if (ov > 0.15 * Math.min(area(ra), area(rb))) add('error', 'text-overlap', where, a.el, 'Overlaps "' + short(ownText(b.el)) + '".');
       }
       /* text covered by something else (FAB, bars, sheets) — at top, then scrolled to the bottom */
       var covered = function (pass) {
@@ -1168,6 +2073,10 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
         }
       }
       return c;
+    }
+    function clipTo(r, c) {
+      var l = Math.max(r.left, c.left), t = Math.max(r.top, c.top), rr = Math.min(r.right, c.right), b = Math.min(r.bottom, c.bottom);
+      return rr > l && b > t ? { left: l, top: t, right: rr, bottom: b, width: rr - l, height: b - t } : null;
     }
     function pointInClip(el, x, y, root) { var c = clipRect(el, root); return x >= c.left && x <= c.right && y >= c.top && y <= c.bottom; }
     function inView(el, r) { var c = clipRect(el); return r.right > c.left && r.left < c.right && r.bottom > c.top && r.top < c.bottom; }
@@ -1254,7 +2163,7 @@ html.shot .bot .eyes,html.shot .bot .body,html.shot .typing i{animation:none!imp
 
 </script>
 <script id="app-js">
-var SHOT = document.documentElement.classList.contains('shot');
+var SHOT = App.shot;  // still screenshot: render finished states, skip timers
 App.state.nick = '';
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function nick() { return esc(App.state.nick || '여행자'); }
@@ -1356,25 +2265,23 @@ function SCRIPT() {
     { b: 'pin', h: '저는 <b>어디서</b> 찍혔는지 읽는 핀이고요. 둘이 힘을 합쳐서 사진을 여행별로 묶어 드려요.' },
     { b: 'tick', h: '시작하기 전에 꼭 알려 드릴 게 하나 있어요.' },
     { b: 'pin', h: '사진과 영상 안에는 보통 <b>촬영 시간</b>과 <b>위치</b>가 같이 저장돼요. 저희는 그걸 보고 여행을 찾아요.' },
-    { b: 'tick', key: true, h: '<span class="ms fill">info</span>그래서 시간이나 위치 정보가 없는 사진·영상은 <b>여행에 포함되지 않아요.</b>' },
+    { b: 'tick', key: true, h: '<span class="ms fill">info</span>그래서 시간이나 위치 정보가 없는 사진·영상은 <b>여행에 담기지 않을 수 있어요.</b>' },
     { b: 'pin', h: '예를 들면 이렇게요.', card: true },
   ];
 }
 var REPLIES = [
-  { q: '빠진 사진은 지워지나요?', b: 'tick', a: '아니요! 기기에 있는 사진은 하나도 지우거나 옮기지 않아요. 여행 정리에서만 빠지는 거예요.' },
-  { q: '위치는 어떻게 남겨요?', b: 'pin', a: '카메라 앱 설정에서 <b>위치 태그</b>를 켜 두세요. 그다음부터 찍는 사진은 자동으로 여행에 담겨요.' },
-  { q: '영상도 똑같아요?', b: 'tick', a: '네, 영상도 같아요. 촬영 시간과 위치가 함께 저장된 영상만 여행에 들어가요.' },
+  { q: '빠진 사진은 지워지나요?', b: 'tick', a: '아니요! 직접 고르기 전에는 사진을 지우거나 옮기지 않아요. 여행 정리에서만 빠지는 거예요.' },
+  { q: '위치는 어떻게 남겨요?', b: 'pin', a: '카메라 앱 설정에서 <b>위치 태그</b>를 켜 두면 여행을 더 정확하게 찾아요.' },
+  { q: '영상도 똑같아요?', b: 'tick', a: '네, 영상도 사진과 똑같아요.' },
 ];
 var CARD = '<div class="ex">' +
   '<div class="ex-lab in"><span class="ms fill">check_circle</span>여행에 담겨요</div>' +
   '<div class="ex-row"><div class="ph sea"><span class="tag">카메라</span></div><div class="meta">' +
     '<span class="ok"><span class="ms">schedule</span>2026. 7. 14 오후 6:32</span>' +
     '<span class="ok"><span class="ms">location_on</span>제주 애월읍</span></div></div>' +
-  '<div class="ex-row" style="flex-direction:column;gap:0"><div class="ex-lab out"><span class="ms fill">cancel</span>여행에 담기지 않아요</div>' +
-    '<div class="row" style="--gap:10px"><div class="outs"><div class="ph shot"><i></i><i></i><i></i><i></i><span class="tag">캡처</span></div>' +
-    '<div class="ph recv"><span class="tag">받은 사진</span></div></div><div class="meta">' +
-    '<span class="no"><span class="ms">location_off</span><span class="no-t">위치 없음</span></span>' +
-    '<span class="no"><span class="ms">history_toggle_off</span><span class="no-t">시간 불분명</span></span></div></div></div>' +
+  '<div class="ex-row" style="flex-direction:column;gap:0"><div class="ex-lab out"><span class="ms fill">cancel</span>여행에 담기지 않을 수 있어요</div>' +
+    '<div class="row" style="--gap:10px"><div class="outs"><div class="ph shot"><i></i><i></i><i></i><i></i><span class="tag">캡처</span></div></div><div class="meta">' +
+    '<span class="no"><span class="ms">location_off</span><span class="no-t">위치 없음</span></span></div></div></div>' +
   '</div>';
 
 var chatRun = 0, lastBot = null;
@@ -1431,13 +2338,1055 @@ App.actions.ask = function (el) {
   say({ b: r.b, h: r.a }, run, renderReplies);
 };
 App.actions.replay = function () { playChat(); };
-App.actions.finish = function () {
-  App.snack(nick() + '님, 좋아요! 다음 단계(사진 접근 권한)는 시안 승인 후 이어서 만들어요');
-};
 App.onEnter('guide', function () {
   var who = App.state.nick || '여행자';
   if (App.state.chatFor !== who || SHOT) { App.state.chatFor = who; playChat(); }
 });
 </script>
+<script id="perm-js">
+/* ═══ Flow 2 · 사진 접근 권한 ═══════════════════════════════════════════
+   Signature: the album globe. Pale dots = photos Wend can't see yet; when access is granted the dots fill with ink
+   in a wave from the front — exactly as many as the access allows (all · only the picked ones · none). */
+App.state.access = 'unasked';   // unasked | all | some | none
+App.state.denies = 0;           // Android stops showing the dialog after the 2nd denial
+App.state.picked = 0;
+
+function seeded(s) { return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+function AlbumGlobe(canvasId, screenId, seed) {
+  var cv = document.getElementById(canvasId), ctx = cv.getContext('2d');
+  var S = cv.width, C = S / 2, R = S * .4, U = S / 720;
+  var PAPER = [246, 241, 233], GHOST = [214, 202, 185], INK = [58, 50, 43];
+  var rnd = seeded(seed || 7), N = 280, ga = Math.PI * (3 - Math.sqrt(5)), pts = [];
+  for (var i = 0; i < N; i++) {
+    var y = 1 - 2 * (i + .5) / N, r = Math.sqrt(1 - y * y), th = ga * i;
+    pts.push({ v: [Math.cos(th) * r, y, Math.sin(th) * r], ph: rnd() * 6.28, s: .8 + rnd() * .45, sc: .4 + rnd(), want: 0, rank: 0, pick: rnd() });
+  }
+  var rot = .6, wave = -1, t0 = 0, scatter = 0, onTick = null;
+  function mix(a, b, f) { return 'rgb(' + a.map(function (x, i) { return Math.round(x + (b[i] - x) * f); }).join(',') + ')'; }
+  function lerp3(a, b, f) { return a.map(function (x, i) { return x + (b[i] - x) * f; }); }
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  // which dots become visible: 'all', a count (partial access), or 0
+  function open(what) {
+    var F = [Math.sin(rot), 0, Math.cos(rot)], lit = what === 'all' ? N : Math.max(0, Math.min(N, what | 0));
+    pts.forEach(function (p) { p.want = 0; p.rank = (1 - (p.v[0] * F[0] + p.v[1] * F[1] + p.v[2] * F[2])) / 2; });
+    // partial access: the picked photos lean to the visible side so the few that light up can be seen
+    var order = pts.slice().sort(function (a, b) { return (a.pick * .55 + a.rank * .45) - (b.pick * .55 + b.rank * .45); });
+    order.slice(0, lit).forEach(function (p) { p.want = 1; });
+    t0 = performance.now(); wave = (App.shot || App.reducedMotion) ? 2 : -.12;
+  }
+  function draw(dt, t) {
+    rot += dt * .3;
+    if (wave < 2) wave = (App.shot || App.reducedMotion) ? 2 : Math.min(2, -.12 + (performance.now() - t0) / 1000 * .62);
+    scatter *= Math.pow(.12, dt);
+    ctx.clearRect(0, 0, S, S);
+    var cr = Math.cos(rot), sr = Math.sin(rot), ca = Math.cos(.38), sa = Math.sin(.38), list = [];
+    pts.forEach(function (p) {
+      var a = p.want ? clamp((wave - p.rank) / .22) : 0;
+      a = a * a * (3 - 2 * a);
+      var rr = 1 + .03 * Math.sin(t * 1.4 + p.ph) + scatter * p.sc * .5;
+      var x = p.v[0] * cr - p.v[2] * sr, z = p.v[0] * sr + p.v[2] * cr, y = p.v[1] * ca - z * sa; z = p.v[1] * sa + z * ca;
+      var d = (z + 1) / 2;
+      var size = 15 * U * p.s * (.45 + .7 * d) * (1 + .55 * Math.sin(Math.PI * a) + .22 * a);
+      var rgb = lerp3(GHOST, INK, a);
+      list.push({ x: C + x * R * rr, y: C + y * R * rr, z: z, size: size, col: mix(rgb, PAPER, Math.min(.8, (1 - d) * .6)) });
+    });
+    list.sort(function (a, b) { return a.z - b.z; });
+    list.forEach(function (o) { ctx.beginPath(); ctx.fillStyle = o.col; ctx.arc(o.x, o.y, o.size, 0, 6.2832); ctx.fill(); });
+    if (onTick) { var f = clamp((wave + .12) / .8); onTick(f); }
+  }
+  cv.addEventListener('click', function () { scatter = 1.1; });
+  var loop = App.loop(screenId, draw);
+  if (App.shot) App.onEnter(screenId, function () { draw(.016, 1); });
+  return { open: open, tick: function (fn) { onTick = fn; } };
+}
+
+var AG = {
+  perm: AlbumGlobe('ag-perm', 'perm', 11),
+  granted: AlbumGlobe('ag-granted', 'granted', 11),
+  partial: AlbumGlobe('ag-partial', 'partial', 11),
+  denied: AlbumGlobe('ag-denied', 'denied', 11),
+};
+
+/* result screens always sit directly above #perm: the picker / settings detours drop out of the back stack */
+function settleAbovePerm(id) {
+  setTimeout(function () {
+    var i = App.stack.lastIndexOf('perm');
+    if (i >= 0 && App.current() === id) App.stack = App.stack.slice(0, i + 1).concat([id]);
+  }, 0);
+}
+function fillNick(screen) { screen.querySelectorAll('.nk-slot').forEach(function (s) { s.textContent = App.state.nick || '여행자'; }); }
+
+/* ── perm: if Android would no longer show the dialog, the same button leads where it really can ── */
+App.onEnter('perm', fillNick);
+App.actions.request = function () {
+  if (App.state.denies >= 2) { App.go('settings'); return false; }
+  if (App.state.access === 'some') { App.dialog('sys-more'); return false; }
+};
+App.actions.grantAll = function () { App.state.access = 'all'; };
+App.actions.deny = function () { App.state.access = 'none'; App.state.denies++; if (App.current() === 'denied') renderDenied(); };
+App.actions.pickMore = function () { /* keep the current selection; the picker shows it */ };
+
+/* ── picker (system photo picker, Android 14 partial access) ── */
+var PHOTOS = [
+  ['이번 주', ['p-cafe', 'p-shot', 'p-food', 'p-sky', 'p-doc', 'p-city']],
+  ['7월 · 제주', ['p-sea', 'p-sea', 'p-dusk', 'p-forest', 'p-food', 'p-sea', 'p-sky', 'p-dusk', 'p-forest']],
+  ['5월', ['p-city', 'p-city', 'p-food', 'p-snow', 'p-cafe', 'p-shot']],
+];
+App.state.sel = {};
+function renderPicker() {
+  var k = 0, html = '';
+  PHOTOS.forEach(function (sec) {
+    html += '<div class="pk-sec">' + sec[0] + '</div><div class="pk-grid">';
+    sec[1].forEach(function (c) {
+      var id = 'ph' + (k++), vid = k % 7 === 3;
+      html += '<button class="' + c + (App.state.sel[id] ? ' sel' : '') + '" data-action="pick" data-id="' + id + '" aria-label="' + sec[0] + (vid ? ' 영상 ' : ' 사진 ') + k + '">' +
+        '<span class="ck"><span class="ms">check</span></span>' + (vid ? '<span class="vid"><span class="ms fill">play_circle</span>0:12</span>' : '') + '</button>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('pk-body').innerHTML = html;
+  pickerCount();
+}
+function pickerCount() {
+  var n = Object.keys(App.state.sel).filter(function (k) { return App.state.sel[k]; }).length;
+  document.getElementById('pk-count').textContent = n ? n + '개 선택됨' : '항목을 선택하세요';
+  document.getElementById('pk-allow').disabled = !n;
+  return n;
+}
+App.actions.pick = function (el) {
+  var id = el.getAttribute('data-id');
+  App.state.sel[id] = !App.state.sel[id];
+  el.classList.toggle('sel', !!App.state.sel[id]);
+  pickerCount();
+};
+App.actions.pickDone = function () {
+  // the prototype's 21-photo picker stands in for a whole album: each tap = ~3 photos in Wend's count
+  var n = pickerCount();
+  App.state.picked = Math.min(60, n * 3 + 2);
+  App.state.access = 'some';
+  App.go('partial');
+};
+App.onEnter('picker', renderPicker);
+
+/* ── results ── */
+App.onEnter('granted', function (s) {
+  fillNick(s); settleAbovePerm('granted');
+  var nums = s.querySelectorAll('[data-count]');
+  AG.granted.tick(function (f) {
+    nums.forEach(function (el) { var v = +el.getAttribute('data-count'); el.textContent = fmt(Math.round(v * f)) + el.getAttribute('data-unit'); });
+  });
+  AG.granted.open('all');
+});
+App.onEnter('partial', function () {
+  settleAbovePerm('partial');
+  var n = App.state.picked || 14;
+  document.getElementById('pt-n').textContent = n + '장';
+  AG.partial.open(n);
+});
+/* back from system settings (to #perm or #denied): follow the choice made there */
+function returnFromSettings() {
+  if (!App.state.fromSettings) return false;
+  App.state.fromSettings = false;
+  if (App.state.access === 'all') { App.after(380, function () { App.go('granted'); }); return true; }
+  if (App.state.access === 'some') { App.after(380, function () { App.go('picker'); }); return true; }
+  return false;
+}
+App.onLeave('settings', function () { App.state.fromSettings = true; });
+App.onEnter('perm', returnFromSettings);
+App.onEnter('denied', function () {
+  settleAbovePerm('denied');
+  if (returnFromSettings()) return;
+  renderDenied();
+});
+function renderDenied() {
+  var hard = App.state.denies >= 2;
+  document.getElementById('dn-steps').hidden = !hard;
+  document.getElementById('dn-cta').textContent = hard ? '설정에서 허용하기' : '다시 허용하기';
+  document.getElementById('dn-bub').textContent = hard
+    ? '두 번 거절하시면 Android가 안내창을 더 띄우지 않아요. 설정에서 한 번만 바꿔 주시면 돼요.'
+    : '읽을 사진이 없으면 틱이랑 저는 할 수 있는 게 없어요. 사진은 어디에도 올리지 않고, 직접 고르기 전에는 지우지 않아요.';
+  AG.denied.open(0);
+}
+App.actions.retry = function () {
+  if (App.state.denies >= 2) App.go('settings'); else App.dialog('sys-perm');
+};
+
+/* ── system settings ── */
+App.onEnter('settings', function () {
+  var cur = App.state.access === 'all' ? 'all' : App.state.access === 'some' ? 'some' : 'none';
+  document.querySelectorAll('#st-list .st-row').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === cur); });
+});
+App.actions.setPerm = function (el) {
+  document.querySelectorAll('#st-list .st-row').forEach(function (b) { b.classList.toggle('on', b === el); });
+  var v = el.getAttribute('data-v');
+  App.state.access = v;
+  if (v !== 'none') App.state.denies = 0;
+  App.snack(v === 'all' ? '뒤로 가면 Wend로 돌아가요' : v === 'some' ? '돌아가면 사진을 고를 수 있어요' : '허용 안함으로 바뀌었어요');
+};
+
+App.onEnter('perm', function () { AG.perm.open(0); });
+</script>
+
+<script id="analyze-js">
+/* ═══ Flow 3 · 분석 중 ═══════════════════════════════════════════════
+   Signature: the ink album globe sorts itself. A sun-coloured sweep reads the time (틱), dots take colour (핀),
+   then one cluster after another pulls together and merges — and the moment a cluster becomes solid, that trip
+   drops out of the globe as a ticket. Only results are shown, never how they were decided. */
+var TRIPS_ALL = [   // found oldest → newest (Wend reads in shooting order); the list shows newest on top
+  { place: '전주', date: '2025. 4. 5', days: '당일', n: 58, c: '#f2b33d' },
+  { place: '오사카', date: '2025. 6. 7 – 6. 10', days: '4일', n: 231, c: '#2f7fd8' },
+  { place: '성수동', date: '2025. 9. 13', days: '당일', n: 73, c: '#e2553a' },
+  { place: '강릉', date: '2025. 12. 30 – 2026. 1. 1', days: '3일', n: 97, c: '#2bae8e' },
+  { place: '도쿄', date: '2026. 3. 19 – 3. 22', days: '4일', n: 264, c: '#f2b33d' },
+  { place: '부산', date: '2026. 5. 3 – 5. 5', days: '3일', n: 186, c: '#e2553a' },
+  { place: '제주', date: '2026. 7. 12 – 7. 23', days: '12일', n: 412, c: '#2f7fd8' },
+];
+var TOTAL_ALL = 2554;   // 사진 2,418 + 영상 136 (앨범 열림 화면과 같은 숫자)
+
+function analysisData() {
+  if (App.state.access === 'some') {
+    var n = App.state.picked || 14, a = Math.ceil(n * .4), b = Math.floor(n * .3);
+    if (n < 10) return { total: n, partial: true, trips: [] };   // one or two picks: nothing that reads as a trip
+    return { total: n, partial: true, trips: [
+      { place: '제주', date: '2026. 7. 14', days: '당일', n: a, c: '#2f7fd8' },
+      { place: '제주', date: '2026. 7. 19', days: '당일', n: b, c: '#2bae8e' },
+    ] };
+  }
+  return { total: TOTAL_ALL, partial: false, trips: TRIPS_ALL };
+}
+function ticket(t, drop, k) {   // k given → a tappable ticket that opens that trip
+  var tag = k == null ? 'div' : 'button';
+  return '<' + tag + ' class="tk' + (drop ? ' drop' : '') + '"' + (k == null ? '' : ' data-action="openTrip" data-k="' + k + '" data-links="trip"') + '><i class="tk-dot" style="--c:' + t.c + '"></i>' +
+    '<span class="tk-main"><b>' + t.place + '</b><span>' + t.date + ' · ' + t.days + '</span></span>' +
+    '<span class="tk-n num">' + fmt(t.n) + '장</span></' + tag + '>';
+}
+
+/* ── trip globe: same sphere as the album globe; p (0…1) = how far the analysis has got ── */
+function TripGlobe(canvasId, screenId) {
+  var cv = document.getElementById(canvasId), ctx = cv.getContext('2d');
+  var S = cv.width, C = S / 2, R = S * .4, U = S / 720;
+  var PAPER = [246, 241, 233], GHOST = [214, 202, 185], INK = [58, 50, 43], SUN = [242, 179, 61], DIM = [176, 164, 150];
+  var rnd = seeded(23), N = 280, ga = Math.PI * (3 - Math.sqrt(5)), pts = [];
+  for (var i = 0; i < N; i++) {
+    var y = 1 - 2 * (i + .5) / N, r = Math.sqrt(1 - y * y), th = ga * i;
+    pts.push({ v: [Math.cos(th) * r, y, Math.sin(th) * r], ph: rnd() * 6.28, s: .8 + rnd() * .45, sc: .4 + rnd(), pick: rnd() });
+  }
+  function norm(v) { var l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
+  function hex(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function ease(x) { x = clamp(x); return x * x * (3 - 2 * x); }
+  function mix(a, b, f) { return 'rgb(' + a.map(function (x, i) { return Math.round(x + (b[i] - x) * f); }).join(',') + ')'; }
+  function lerp3(a, b, f) { return a.map(function (x, i) { return x + (b[i] - x) * f; }); }
+  var CENTERS = [[.75, .35, .55], [-.6, .55, .55], [.15, -.75, .65], [-.55, -.45, -.7], [.6, .5, -.62], [-.95, .05, -.1], [.2, .15, .97], [-.2, .9, .3], [.4, -.3, -.85], [-.7, -.7, .2], [.85, -.35, .1]].map(norm);
+  var trips = [], visible = N, p = 0, rot = .4, scatter = 0, focus = -1, fAmt = 0, proj = [], onPick = null;
+  // assign dots: the nearest trip centre within reach becomes that trip; the rest stay ink (everyday photos)
+  function setup(data) {
+    trips = data.trips.map(function (t, k) { return { rgb: hex(t.c), at: .28 + k * (.62 / data.trips.length), c: CENTERS[(k + (data.partial ? 6 : 0)) % CENTERS.length] }; });
+    if (data.partial && trips[1]) { trips[1].c = norm([.55, .55, .62]); }
+    visible = data.partial ? Math.max(12, Math.round(N * .16)) : N;
+    var order = pts.slice().sort(function (a, b) { return a.pick - b.pick; });
+    pts.forEach(function (q) { q.lit = 0; q.trip = -1; });
+    order.slice(0, visible).forEach(function (q) { q.lit = 1; });
+    pts.forEach(function (q) {
+      if (!q.lit) return;
+      var best = -1, bd = data.partial ? .55 : .86;
+      trips.forEach(function (t, k) { var d = t.c[0] * q.v[0] + t.c[1] * q.v[1] + t.c[2] * q.v[2]; if (d > bd) { bd = d; best = k; } });
+      q.trip = best;
+    });
+  }
+  function draw(dt, t) {
+    if (focus >= 0 && trips[focus]) {                          // turn the focused trip's cluster to the front
+      var fc = trips[focus].c, want = Math.atan2(fc[0], fc[2]), dr = want - rot;
+      dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+      rot += dr * Math.min(1, dt * 3.2);
+    } else rot += dt * (p >= 1 ? .2 : .32);
+    fAmt += ((focus >= 0 ? 1 : 0) - fAmt) * Math.min(1, dt * 3);
+    scatter *= Math.pow(.12, dt);
+    ctx.clearRect(0, 0, S, S);
+    var cr = Math.cos(rot), sr = Math.sin(rot), ca = Math.cos(.38), sa = Math.sin(.38), list = [];
+    var read = 1 - clamp((p - .3) / .1);                       // time sweep fades out as places come in
+    pts.forEach(function (q) {
+      var tr = q.trip >= 0 ? trips[q.trip] : null;
+      var tint = tr ? ease((p - tr.at + .1) / .1) : 0;         // dot takes its trip colour …
+      var pull = tr ? ease((p - tr.at + .02) / .08) * .62 : 0;  // … then the cluster pulls together and merges
+      var v = tr ? norm(lerp3(q.v, tr.c, pull)) : q.v;
+      var rr = 1 + .03 * Math.sin(t * 1.4 + q.ph) + scatter * q.sc * .5;
+      var x = v[0] * cr - v[2] * sr, z = v[0] * sr + v[2] * cr, y = v[1] * ca - z * sa; z = v[1] * sa + z * ca;
+      var d = (z + 1) / 2;
+      var wave = q.lit ? Math.max(0, Math.sin(t * 2.6 - q.v[1] * 4.5)) * read : 0;
+      var base = q.lit ? lerp3(INK, SUN, wave) : GHOST;
+      var calm = !tr && q.lit ? ease((p - .5) / .2) : 0;        // everyday photos fade back to a soft grey
+      var rgb = tr ? lerp3(base, tr.rgb, tint) : lerp3(base, DIM, calm);
+      if (tr && q.trip !== focus) rgb = lerp3(rgb, DIM, .62 * fAmt);   // other trips step back
+      var size = 15 * U * q.s * (.45 + .7 * d) * (1 + wave * .3) * (1 + pull * .7);
+      list.push({ x: C + x * R * rr, y: C + y * R * rr, z: z, size: size, col: mix(rgb, PAPER, Math.min(.8, (1 - d) * .6)) });
+    });
+    list.sort(function (a, b) { return a.z - b.z; });
+    list.forEach(function (o) { ctx.beginPath(); ctx.fillStyle = o.col; ctx.arc(o.x, o.y, o.size, 0, 6.2832); ctx.fill(); });
+    proj = trips.map(function (tr) {                            // where each cluster sits on screen, for tapping
+      var v = tr.c, x = v[0] * cr - v[2] * sr, z = v[0] * sr + v[2] * cr, y = v[1] * ca - z * sa; z = v[1] * sa + z * ca;
+      return { x: C + x * R, y: C + y * R, z: z };
+    });
+  }
+  cv.addEventListener('click', function (e) {
+    var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * S / r.width, y = (e.clientY - r.top) * S / r.height, best = -1, bd = (S * .16) * (S * .16);
+    if (onPick) proj.forEach(function (o, k) { var d = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y); if (o.z > -.1 && d < bd) { bd = d; best = k; } });
+    if (best >= 0) onPick(best); else scatter = 1.1;
+  });
+  App.loop(screenId, draw);
+  return { setup: setup, set: function (v) { p = v; }, draw: function () { draw(.016, 1); }, trips: function () { return trips; },
+    focus: function (k, snap) { focus = k; if (snap && k >= 0 && trips[k]) { rot = Math.atan2(trips[k].c[0], trips[k].c[2]); fAmt = 1; } },
+    pick: function (fn) { onPick = fn; } };
+}
+var TG = { run: TripGlobe('tg-run', 'analyze'), done: TripGlobe('tg-done', 'found'), none: TripGlobe('tg-none', 'nofound') };
+
+/* ── analyze: ~9s of progress told as a story, then on to the result ── */
+var STATUS = [
+  { until: .3, b: 'tick', t: '틱이 사진을 찍은 순서대로 읽고 있어요' },
+  { until: .55, b: 'pin', t: '핀이 사진 속 장소를 살펴보고 있어요' },
+  { until: 1.01, b: 'both', t: '같은 여행의 사진끼리 모으고 있어요' },
+];
+var anRun = 0;
+function setStatus(i) {
+  var s = STATUS[i], el = document.getElementById('an-status');
+  if (el.getAttribute('data-i') === String(i)) return;
+  el.setAttribute('data-i', i);
+  var av = s.b === 'both' ? '<span class="cast"><svg class="bot"><use href="#bot-tick"/></svg><svg class="bot b2"><use href="#bot-pin"/></svg></span>'
+    : '<svg class="bot' + (s.b === 'pin' ? ' b2' : '') + '" aria-hidden="true"><use href="#bot-' + s.b + '"/></svg>';
+  el.innerHTML = av + '<span>' + s.t + '</span>';
+}
+function renderProgress(data, p, shown) {
+  var read = Math.min(1, p / .92);
+  document.getElementById('an-bar').style.width = (read * 100).toFixed(1) + '%';
+  document.getElementById('an-count').textContent = fmt(Math.round(data.total * read)) + ' / ' + fmt(data.total);
+  var i = 0; while (p > STATUS[i].until) i++; setStatus(i);
+  var trips = TG.run.trips(), list = document.getElementById('an-list');
+  while (shown.n < trips.length && p >= trips[shown.n].at) {
+    if (!shown.n) list.innerHTML = '';
+    list.insertAdjacentHTML('afterbegin', ticket(data.trips[shown.n], !App.shot));
+    shown.n++;
+    var tks = list.querySelectorAll('.tk'); if (tks.length > 4) tks[tks.length - 1].remove();   // newest four stay in view
+  }
+  document.getElementById('an-n').textContent = shown.n;
+}
+App.onEnter('analyze', function (s) {
+  fillNick(s);
+  var run = ++anRun, data = analysisData(), shown = { n: 0 };
+  TG.run.setup(data);
+  document.getElementById('an-list').innerHTML = '<div class="an-empty">아직 찾는 중이에요</div>';
+  document.getElementById('an-status').removeAttribute('data-i');
+  if (App.shot) { TG.run.set(.66); renderProgress(data, .66, shown); TG.run.draw(); return; }   // still: mid-story, 4 trips in
+  var DUR = App.reducedMotion ? 1 : 9.5, t0 = performance.now();
+  (function tick() {
+    if (run !== anRun || App.current() !== 'analyze') return;
+    var p = Math.min(1, (performance.now() - t0) / 1000 / DUR);
+    TG.run.set(p); renderProgress(data, p, shown);
+    if (p < 1) return requestAnimationFrame(tick);
+    setTimeout(function () { if (run === anRun && App.current() === 'analyze') App.go(data.trips.length ? 'found' : 'nofound'); }, 1100);
+  })();
+});
+App.onLeave('analyze', function () { anRun++; });
+
+/* ── found: the finished globe + the newest trips; back skips the analysis screen ── */
+function skipAnalyzeOnBack(id) {
+  setTimeout(function () {
+    var i = App.stack.lastIndexOf('analyze');
+    if (i >= 0 && App.current() === id) App.stack.splice(i, 1);
+  }, 0);
+}
+App.onEnter('found', function () {
+  skipAnalyzeOnBack('found');
+  var data = analysisData(), trips = data.trips, sum = trips.reduce(function (a, t) { return a + t.n; }, 0);
+  TG.done.setup(data); TG.done.set(1); TG.done.draw();
+  document.getElementById('fd-h').innerHTML = (data.partial ? '고르신 사진에서<br>' : (App.state.nick ? esc(App.state.nick) + '님의 ' : '')) +
+    '여행 <em>' + trips.length + '개</em>를' + (data.partial ? ' ' : '<br>') + '찾았어요';
+  document.getElementById('fd-sub').innerHTML = data.partial
+    ? '고르신 ' + fmt(data.total) + '장 중 <b>' + fmt(sum) + '장</b>이 여행에 담겼어요.'
+    : '사진·영상 ' + fmt(data.total) + '개 중 <b>' + fmt(sum) + '개</b>가 여행에 담겼어요. 나머지는 앨범에 그대로 있어요.';
+  var newest = trips.slice().reverse(), top = newest.slice(0, 3);
+  document.getElementById('fd-list').innerHTML = top.map(function (t) { return ticket(t, false, trips.indexOf(t)); }).join('') +
+    (newest.length > 3 ? '<div class="tk-more">그 밖에 여행 ' + (newest.length - 3) + '개가 더 있어요</div>' : '');
+  document.getElementById('fd-cut').hidden = !data.partial;
+  document.getElementById('fd-more').hidden = !data.partial;
+});
+/* ── nofound: nothing became a trip — say what the user can do, not how Wend decides ── */
+App.onEnter('nofound', function () {
+  skipAnalyzeOnBack('nofound');
+  var data = analysisData();
+  TG.none.setup({ total: data.total, partial: data.partial, trips: [] }); TG.none.set(1); TG.none.draw();
+  document.getElementById('nf-sub').textContent = data.partial
+    ? '고르신 ' + fmt(data.total) + '장으로는 여행을 찾기 어려웠어요.'
+    : '사진·영상 ' + fmt(data.total) + '개를 모두 읽었지만 여행으로 묶을 사진이 없었어요.';
+  document.getElementById('nf-bub').textContent = data.partial
+    ? '여행은 사진이 여러 장 이어져야 보여요. 모든 사진을 허용해 주시면 처음부터 다시 찾아볼게요.'
+    : '사진에 위치가 남아 있지 않으면 여행을 찾기 어려워요. 카메라에서 위치 태그를 켜 두시면 다음 여행부터 찾아 드릴게요.';
+  document.getElementById('nf-steps').hidden = data.partial;
+  document.getElementById('nf-cta').hidden = data.partial;
+  document.getElementById('nf-more').hidden = !data.partial;
+  document.getElementById('nf-skip').hidden = !data.partial;
+});
+App.actions.startAnalysis = function () { App.go('analyze'); };
+</script>
+
+<script id="trips-js">
+/* ═══ Flow 4 · 여행 목록 (메인) ═══════════════════════════════════════
+   Signature: the globe from the analysis stays with you. It sits big above the list, then shrinks into the app bar as
+   you scroll — and keeps turning so the trip you're looking at faces front in its colour while the others step back.
+   Tap a cluster on the globe and the list jumps to that trip. One globe, one list, the same trips. */
+var TRIP_PHOTOS = {   // stand-in photos per trip (same swatches as the photo picker)
+  '전주': ['p-food', 'p-forest', 'p-cafe'], '오사카': ['p-city', 'p-food', 'p-dusk'], '성수동': ['p-cafe', 'p-food', 'p-city'],
+  '강릉': ['p-sea', 'p-snow', 'p-cafe'], '도쿄': ['p-city', 'p-dusk', 'p-food'], '부산': ['p-sea', 'p-food', 'p-city'], '제주': ['p-sea', 'p-dusk', 'p-forest'],
+};
+TG.list = TripGlobe('tg-list', 'trips');
+var TR = { data: null, focus: -1 };
+
+function tripCard(t, k) {
+  var ph = TRIP_PHOTOS[t.place] || ['p-sky', 'p-food', 'p-city'];
+  return '<button class="tc" data-action="openTrip" data-links="trip" data-k="' + k + '" style="--c:' + t.c + '" aria-label="' + t.place + ' 여행, ' + t.date + ', ' + t.n + '장">' +
+    '<span class="tc-ph"><i class="' + ph[0] + '"></i><i class="' + ph[1] + '"></i><i class="more ' + ph[2] + '"><b>+' + fmt(Math.max(0, t.n - 3)) + '</b></i></span>' +
+    '<span class="tc-row"><i class="tk-dot" style="--c:' + t.c + '"></i><span class="tc-main"><b>' + t.place + '</b><span>' + t.date + ' · ' + t.days + '</span></span>' +
+    '<span class="tc-n num">' + fmt(t.n) + '장</span></span></button>';
+}
+function renderTrips() {
+  var data = TR.data = analysisData(), trips = data.trips, sum = trips.reduce(function (a, t) { return a + t.n; }, 0);
+  TG.list.setup(data); TG.list.set(1);
+  document.getElementById('tr-sum').innerHTML = trips.length
+    ? '여행 <b>' + trips.length + '</b>개 · 사진 <b>' + fmt(sum) + '</b>장'
+    : '아직 찾은 여행이 없어요';
+  document.getElementById('tr-hint').hidden = !trips.length;
+  var html = '';
+  if (data.partial) html += '<div class="tr-part"><span class="ms fill">photo_library</span><span>고르신 사진에서 찾은 여행만 보여요.</span>' +
+    '<button class="btn tonal" data-dialog="sys-more">모두 허용</button></div>';
+  if (!trips.length) {
+    html += '<div class="tr-empty"><b>여행이 생기면 여기에 모여요</b>위치 태그를 켜고 찍은 사진이 쌓이면 틱과 핀이 여행을 찾아 드릴게요.</div>';
+  } else {
+    var year = null;
+    trips.map(function (t, k) { return k; }).reverse().forEach(function (k) {
+      var t = trips[k], y = t.date.slice(0, 4);
+      if (y !== year) {
+        year = y;
+        var cnt = trips.filter(function (x) { return x.date.slice(0, 4) === y; }).length;
+        html += '<div class="tr-year"><b>' + y + '</b><span>여행 ' + cnt + '개</span></div>';
+      }
+      html += tripCard(t, k);
+    });
+  }
+  var left = data.total - sum;
+  if (left > 0) html += '<button class="tr-left" data-action="openLeft"><span class="ms">photo_library</span><span>여행에 담기지 않은 사진·영상 <b class="num">' + fmt(left) + '</b>개</span><span class="ms">chevron_right</span></button>';
+  document.getElementById('tr-list').innerHTML = html;
+  TR.focus = -1; placeGlobe();
+}
+
+/* scroll → globe size/position (header ↔ app bar) and which trip faces front */
+function placeGlobe() {
+  var scr = document.getElementById('trips'), sc = document.getElementById('tr-scroll'), cv = document.getElementById('tg-list');
+  var sr = scr.getBoundingClientRect(), k = scr.offsetWidth / sr.width;
+  var a = document.getElementById('tr-slot').getBoundingClientRect(), b = document.getElementById('tr-dock').getBoundingClientRect();
+  var f = Math.max(0, Math.min(1, sc.scrollTop / 170)); f = f * f * (3 - 2 * f);
+  var x = (a.left + (b.left - a.left) * f - sr.left) * k, y = (a.top + (b.top - a.top) * f - sr.top) * k, size = 200 + (40 - 200) * f;
+  cv.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (size / 200).toFixed(3) + ')';
+  cv.classList.toggle('docked', f > .7);
+  document.getElementById('tr-slot').style.opacity = Math.max(0, 1 - f * 2.5).toFixed(2);   // the dashed orbit stays behind, so fade it
+  // focus: the first card whose bottom is below the app bar + a little; at the very top, the newest trip
+  var cards = document.querySelectorAll('#tr-list .tc'), line = b.bottom + 24, pick = -1;
+  for (var i = 0; i < cards.length; i++) { if (cards[i].getBoundingClientRect().bottom > line) { pick = +cards[i].getAttribute('data-k'); break; } }
+  if (sc.scrollTop < 40 && cards.length) pick = +cards[0].getAttribute('data-k');
+  if (pick !== TR.focus) {
+    TR.focus = pick;
+    TG.list.focus(pick, App.shot);
+    cards.forEach(function (c) { c.classList.toggle('on', +c.getAttribute('data-k') === pick); });
+  }
+}
+var trRaf = 0;
+document.getElementById('tr-scroll').addEventListener('scroll', function () {
+  if (trRaf) return; trRaf = requestAnimationFrame(function () { trRaf = 0; placeGlobe(); });
+}, { passive: true });
+window.addEventListener('resize', function () { if (App.current() === 'trips') placeGlobe(); });
+
+/* globe taps: a cluster → its trip card; the docked globe → back to the top */
+document.getElementById('tg-list').addEventListener('click', function (e) {
+  if (!this.classList.contains('docked')) return;
+  e.stopImmediatePropagation();
+  document.getElementById('tr-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+}, true);
+TG.list.pick(function (k) {
+  var sc = document.getElementById('tr-scroll'), card = document.querySelector('#tr-list .tc[data-k="' + k + '"]');
+  if (!card) return;
+  var top = sc.scrollTop + card.getBoundingClientRect().top - document.getElementById('tr-dock').getBoundingClientRect().bottom - 28;
+  sc.scrollTo({ top: Math.max(180, top), behavior: 'smooth' });
+});
+
+App.onEnter('trips', function () { renderTrips(); App.after(0, placeGlobe); });
+/* the list is home: arriving here clears the first-run screens from the back stack */
+App.actions.openTrips = function () {
+  App.go('trips');
+  setTimeout(function () { if (App.current() === 'trips') App.stack = ['trips']; }, 0);
+  return false;
+};
+App.actions.openLeft = function () { App.go('left'); return false; };
+App.actions.openSettings = function () { App.go('prefs'); return false; };
+</script>
+
+<script id="trip-js">
+/* ═══ Flow 5 · 여행 상세 ═══════════════════════════════════════════════
+   Signature: the trip read in the order it happened. Sections follow time (day → place), the paper map above keeps the
+   whole route in faint day colours, and as you scroll 핀 walks the route to the place you're reading — the walked part
+   turns solid. Scrolling the trip = moving through it. */
+var DAYC = ['#e2553a', '#2f7fd8', '#2bae8e'], DAYT = ['#b8391f', '#1f63b3', '#1d7a62'];   // map colours · text-safe shades
+var BUSAN = {
+  days: [
+    { label: '1일째', date: '5월 3일 일요일' },
+    { label: '2일째', date: '5월 4일 월요일' },
+    { label: '3일째', date: '5월 5일 화요일 · 어린이날' },
+  ],
+  stops: [   // x,y on the map (lon/lat projected); ph = stand-in photos, first five = one "similar" group
+    { d: 0, place: '부산역', when: '오전 11:20', n: 6, x: 97, y: 119, ph: ['p-city', 'p-cafe', 'p-city', 'p-sky', 'p-cafe', 'p-food'] },
+    { d: 0, place: '감천문화마을', when: '오후 1:40 – 3:30', n: 38, x: 51, y: 151, ph: ['p-sky', 'p-city', 'p-sky', 'p-cafe', 'p-dusk', 'p-food'] },
+    { d: 0, place: '남포동 · 자갈치시장', when: '오후 5:10 – 7:00', n: 21, x: 85, y: 150, ph: ['p-food', 'p-food', 'p-city', 'p-dusk', 'p-food', 'p-cafe'] },
+    { d: 1, place: '해운대', when: '오전 9:50 – 12:10', n: 34, x: 283, y: 40, ph: ['p-sea', 'p-sea', 'p-sky', 'p-sea', 'p-food', 'p-cafe'] },
+    { d: 1, place: '청사포', when: '오후 2:00 – 4:20', n: 29, x: 332, y: 36, ph: ['p-sea', 'p-sky', 'p-sea', 'p-forest', 'p-cafe', 'p-sea'] },
+    { d: 1, place: '광안리', when: '오후 7:30 – 9:40', n: 31, x: 218, y: 51, ph: ['p-dusk', 'p-city', 'p-dusk', 'p-dusk', 'p-food', 'p-city'] },
+    { d: 2, place: '흰여울문화마을', when: '오전 10:30 – 12:00', n: 19, x: 107, y: 186, ph: ['p-sea', 'p-sky', 'p-sea', 'p-cafe', 'p-sky', 'p-sea'] },
+    { d: 2, place: '부산역', when: '오후 3:10', n: 8, x: 97, y: 119, ph: ['p-city', 'p-food', 'p-cafe', 'p-city', 'p-sky', 'p-cafe'] },
+  ],
+};
+App.state.best = BUSAN.stops.map(function () { return 0; });   // index of the chosen best shot per stop (0 = 추천)
+App.state.bestDone = false;
+App.state.removed = BUSAN.stops.map(function () { return 0; });
+
+var SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) { var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+var TP = { segs: [], cum: [0], total: 0, L: 0, Lwant: 0, intro: 1 };
+
+/* map: one curved segment per move; overnight moves (day changes) drawn as a dotted line */
+function buildMap() {
+  var routes = document.getElementById('tp-routes'), stopsG = document.getElementById('tp-stops'), S = BUSAN.stops;
+  routes.innerHTML = ''; stopsG.innerHTML = ''; TP.segs = []; TP.cum = [0];
+  for (var i = 0; i < S.length - 1; i++) {
+    var a = S[i], b = S[i + 1], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y;
+    var bend = a.x === b.x && a.y === b.y ? 0 : .18, cx = mx - dy * bend, cy = my + dx * bend;
+    var d = 'M' + a.x + ' ' + a.y + 'Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + b.x + ' ' + b.y;
+    var night = a.d !== b.d, col = DAYC[b.d];
+    var all = svgEl('path', { d: d, class: night ? 'r-night' : 'r-all', stroke: night ? '' : col });
+    var go = svgEl('path', { d: d, class: 'r-go', stroke: night ? '#8a7d70' : col });
+    if (night) go.setAttribute('stroke-dasharray', '2 5');
+    routes.appendChild(all); routes.appendChild(go);
+    var len = go.getTotalLength();
+    TP.segs.push({ go: go, all: all, len: len, night: night });
+    TP.cum.push(TP.cum[i] + len);
+  }
+  TP.total = TP.cum[TP.cum.length - 1];
+  placeStopNumbers();
+}
+/* stop numbers sit on the map as HTML (crisp at any scale); positions follow the SVG's "slice" scaling */
+function mapScale() {
+  var w = document.getElementById('tp-map').offsetWidth || 412, sc = Math.max(w / 380, 1);
+  return { sc: sc, ox: (w - 380 * sc) / 2, oy: (220 - 220 * sc) / 2 };
+}
+function placeStopNumbers() {
+  var box = document.getElementById('tp-nums'), m = mapScale(), sc = m.sc, ox = m.ox, oy = m.oy;
+  box.innerHTML = BUSAN.stops.map(function (s, i) {
+    if (i === BUSAN.stops.length - 1 && s.x === BUSAN.stops[0].x && s.y === BUSAN.stops[0].y) return '';   // back at the station: one dot is enough
+    return '<span style="background:' + DAYT[s.d] + ';left:' + (ox + s.x * sc).toFixed(1) + 'px;top:' + (oy + s.y * sc).toFixed(1) + 'px">' + (i + 1) + '</span>';
+  }).join('');
+}
+function drawRoute(L, intro) {
+  TP.segs.forEach(function (sg, i) {
+    var drawn = Math.max(0, Math.min(sg.len, L - TP.cum[i]));
+    if (!sg.night) sg.go.style.strokeDasharray = drawn + ' ' + (sg.len + 1);
+    else sg.go.style.opacity = drawn > 0 ? 1 : 0;
+    // intro: the faint full route draws itself once when the trip opens
+    var shown = Math.max(0, Math.min(sg.len, intro * TP.total - TP.cum[i]));
+    if (!sg.night) sg.all.style.strokeDasharray = shown + ' ' + (sg.len + 1);
+    else sg.all.style.opacity = shown > 0 ? .7 : 0;
+  });
+  var i = 0; while (i < TP.segs.length - 1 && L > TP.cum[i + 1]) i++;
+  var p = TP.segs.length ? TP.segs[i].go.getPointAtLength(Math.max(0, Math.min(TP.segs[i].len, L - TP.cum[i]))) : { x: 0, y: 0 };
+  var m = mapScale();
+  document.getElementById('tp-here').style.transform = 'translate(' + (m.ox + p.x * m.sc).toFixed(1) + 'px,' + (m.oy + p.y * m.sc).toFixed(1) + 'px)';
+}
+
+function stopHTML(s, i) {
+  var shown = s.n - App.state.removed[i], more = shown - 6, best = App.state.best[i];
+  var cells = s.ph.map(function (c, k) {
+    var star = App.state.bestDone && k === best ? '<span class="star"><span class="ms fill">star</span></span>' : '';
+    return '<button class="' + c + '" data-action="viewTrip" data-s="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + ' 크게 보기">' + star + (k === 5 && more > 0 ? '<b>+' + more + '</b>' : '') + '</button>';
+  }).join('');
+  return '<div class="tp-stop" data-i="' + i + '" style="--d:' + DAYT[s.d] + '"><span class="no">' + (i + 1) + '</span>' +
+    '<h3>' + s.place + '</h3><div class="when">' + s.when + ' · ' + shown + '장</div><div class="tp-grid">' + cells + '</div></div>';
+}
+function renderTrip() {
+  var S = BUSAN.stops, html = '', removed = App.state.removed.reduce(function (a, b) { return a + b; }, 0);
+  BUSAN.days.forEach(function (day, d) {
+    var idx = S.map(function (s, i) { return s.d === d ? i : -1; }).filter(function (i) { return i >= 0; });
+    html += '<div class="tp-day" style="--d:' + DAYT[d] + '"><b>' + day.label + '</b><span>' + day.date + ' · ' + idx.map(function (i) { return S[i].place.split(' ·')[0]; }).join(' → ') + '</span></div>';
+    idx.forEach(function (i) {
+      html += stopHTML(S[i], i);
+    });
+  });
+  html += '<div class="tp-end">여행 끝 · 부산역 오후 3:10</div>';
+  document.getElementById('tp-days').innerHTML = html;
+  document.getElementById('tp-meta').textContent = '2026. 5. 3 – 5. 5 · 3일 · ' + (186 - removed) + '장 · 7곳';
+}
+
+/* scroll → where 핀 stands: stays at the stop you're reading, walks on as that stop leaves the screen */
+function tripProgress() {
+  var map = document.getElementById('tp-map').getBoundingClientRect(), line = map.bottom + 60;
+  var stops = document.querySelectorAll('#tp-days .tp-stop'), idx = 0, frac = 0;
+  for (var i = 0; i < stops.length; i++) {
+    var r = stops[i].getBoundingClientRect();
+    if (r.top <= line) { idx = i; frac = Math.max(0, Math.min(1, (line - r.top) / r.height)); }
+  }
+  var walk = Math.max(0, Math.min(1, (frac - .55) / .45)); walk = walk * walk * (3 - 2 * walk);
+  var seg = TP.segs[idx];
+  return seg ? TP.cum[idx] + seg.len * walk : TP.total;
+}
+App.loop('trip', function (dt) {
+  if (TP.intro < 1) TP.intro = Math.min(1, TP.intro + dt / 1.6);
+  TP.Lwant = tripProgress();
+  TP.L += (TP.Lwant - TP.L) * Math.min(1, dt * 6);
+  drawRoute(TP.L, TP.intro);
+});
+App.onEnter('trip', function () {
+  renderTrip();
+  if (!TP.segs.length) buildMap();
+  TP.intro = (App.shot || App.reducedMotion || App.state.tripSeen) ? 1 : 0;
+  App.state.tripSeen = true;
+  TP.L = TP.Lwant = tripProgress();
+  drawRoute(TP.L, TP.intro);
+});
+
+/* only the Busan trip has sample data in the prototype */
+App.actions.openTrip = function (el) {
+  var k = +el.getAttribute('data-k'), t = analysisData().trips[k];
+  if (t && t.place === '부산' && !analysisData().partial) { App.go('trip'); return false; }
+  App.snack('시안에서는 부산 여행만 열어 볼 수 있어요');
+  return false;
+};
+
+/* ── best shots: one row of similar photos per stop, the recommended one pre-picked ── */
+function renderBest() {
+  document.getElementById('bs-list').innerHTML = BUSAN.stops.map(function (s, i) {
+    return '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '<span>비슷한 사진 5장</span></h3><div class="bs-row">' +
+      s.ph.slice(0, 5).map(function (c, k) {
+        return '<button class="' + c + (App.state.best[i] === k ? ' on' : '') + '" data-action="pickBest" data-i="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + (k === 0 ? ', 추천' : '') + '">' +
+          (k === 0 ? '<span class="rec">추천</span>' : '') + '<span class="star"><span class="ms fill">star</span></span></button>';
+      }).join('') + '</div></div>';
+  }).join('');
+}
+App.onEnter('best', renderBest);
+App.actions.pickBest = function (el) {
+  var i = +el.getAttribute('data-i'), k = +el.getAttribute('data-k');
+  App.state.best[i] = k;
+  el.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === el); });
+};
+App.actions.bestDone = function () {
+  App.state.bestDone = true;
+  App.back();
+  App.after(320, function () { App.snack('베스트샷 8장을 골랐어요. 사진에 별이 붙어 있어요'); });
+};
+
+/* ── clean up: suggested photos, all pre-checked; Android's own dialog confirms the move to trash ── */
+var CLEAN = [
+  { t: '흔들린 사진', cls: 'blur', items: [[1, 'p-sky'], [1, 'p-city'], [3, 'p-sea'], [3, 'p-sea'], [5, 'p-dusk'], [5, 'p-city'], [4, 'p-sea'], [1, 'p-cafe'], [2, 'p-food']] },
+  { t: '비슷한 사진', sub: '베스트샷과 거의 같은 사진', cls: '', items: [[1, 'p-sky'], [1, 'p-sky'], [1, 'p-city'], [3, 'p-sea'], [3, 'p-sea'], [5, 'p-dusk'], [5, 'p-dusk'], [5, 'p-dusk'], [4, 'p-sea'], [6, 'p-sea'], [4, 'p-sky']] },
+  { t: '너무 어두운 사진', cls: 'dark', items: [[5, 'p-city'], [5, 'p-dusk'], [2, 'p-food']] },
+];
+App.state.cleanSel = null;
+function renderClean() {
+  if (!App.state.cleanSel) App.state.cleanSel = CLEAN.map(function (c) { return c.items.map(function () { return true; }); });
+  document.getElementById('cl-list').innerHTML = CLEAN.map(function (c, ci) {
+    return '<div class="cl-cat"><b>' + c.t + '</b><span>' + (c.sub ? c.sub + ' · ' : '') + c.items.length + '장</span></div><div class="cl-grid">' +
+      c.items.map(function (it, k) {
+        return '<button class="' + c.cls + (App.state.cleanSel[ci][k] ? ' on' : '') + '" data-action="toggleClean" data-c="' + ci + '" data-k="' + k + '" aria-label="' + c.t + ' ' + (k + 1) + ', ' + BUSAN.stops[it[0]].place + '">' +
+          '<i class="' + it[1] + '"></i><span class="ck"><span class="ms">check</span></span></button>';
+      }).join('') + '</div>';
+  }).join('');
+  cleanCount();
+}
+function cleanCount() {
+  var n = 0; App.state.cleanSel.forEach(function (row) { row.forEach(function (v) { if (v) n++; }); });
+  var b = document.getElementById('cl-go');
+  b.textContent = n ? n + '장 휴지통으로 옮기기' : '옮길 사진을 골라 주세요';
+  b.disabled = !n;
+  return n;
+}
+App.onEnter('clean', function () { App.state.cleanSel = null; renderClean(); });
+App.actions.toggleClean = function (el) {
+  var c = +el.getAttribute('data-c'), k = +el.getAttribute('data-k');
+  App.state.cleanSel[c][k] = !App.state.cleanSel[c][k];
+  el.classList.toggle('on', App.state.cleanSel[c][k]);
+  cleanCount();
+};
+App.actions.trashAsk = function () { document.getElementById('tr-n').textContent = cleanCount() + '개'; };
+App.actions.trashOk = function () {
+  var n = 0;
+  CLEAN.forEach(function (c, ci) { c.items.forEach(function (it, k) { if (App.state.cleanSel[ci][k]) { App.state.removed[it[0]]++; n++; } }); });
+  TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n -= n; });
+  TOTAL_ALL -= n;
+  App.after(320, function () { App.snack(n + '장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
+};
+</script>
+
+<script id="left-js">
+/* ═══ Flow 6 · 빠진 사진 ═══════════════════════════════════════════════
+   No reasons are shown — only the photos, by date, newest first. Pick some and either put them into a trip
+   (nearest in time first) or make a new trip. Signature: the picked photos shrink into the trip's colour and run
+   together like drops before they leave the list. */
+function mkItems(d, rows) { return rows.map(function (r, k) { return { id: d + '-' + k, d: d, c: r[0], t: r[1], place: r[2] || '' }; }); }
+var LEFT = [
+  { d: '2026-08-15', label: '8월 15일 토요일', items: mkItems('2026-08-15', [['p-sky', '오후 4:12', '망원한강공원'], ['p-food', '오후 5:03', '망원한강공원'], ['p-city', '오후 6:40'], ['p-cafe', '오후 7:15'], ['p-sky', '오후 7:52', '망원한강공원']]) },
+  { d: '2026-07-09', label: '7월 9일 목요일', items: mkItems('2026-07-09', [['p-cafe', '오후 12:31'], ['p-doc', '오후 2:10'], ['p-food', '오후 7:44']]) },
+  { d: '2026-06-20', label: '6월 20일 토요일', items: mkItems('2026-06-20', [['p-forest', '오전 10:05', '양평 두물머리'], ['p-forest', '오전 10:12', '양평 두물머리'], ['p-sky', '오전 10:40', '양평 두물머리'], ['p-sea', '오전 11:20', '양평 두물머리'], ['p-food', '오후 12:50', '양평'], ['p-forest', '오후 2:35', '양평 세미원'], ['p-dusk', '오후 6:10']]) },
+  { d: '2026-05-06', label: '5월 6일 수요일', items: mkItems('2026-05-06', [['p-sea', '오전 9:12'], ['p-food', '오전 9:40'], ['p-city', '오전 10:05']]) },
+  { d: '2026-04-12', label: '4월 12일 일요일', items: mkItems('2026-04-12', [['p-food', '오후 12:20', '성수동'], ['p-cafe', '오후 1:45', '성수동'], ['p-city', '오후 3:02'], ['p-sky', '오후 4:30'], ['p-cafe', '오후 5:10', '성수동'], ['p-food', '오후 7:25']]) },
+  { d: '2026-03-02', label: '3월 2일 월요일', items: mkItems('2026-03-02', [['p-doc', '오전 9:30'], ['p-cafe', '오후 12:05'], ['p-city', '오후 6:20'], ['p-sky', '오후 6:45']]) },
+];
+var DOW = ['일', '월', '화', '수', '목', '금', '토'];
+function dayLabel(d) { var x = new Date(d + 'T12:00:00'); return (x.getMonth() + 1) + '월 ' + x.getDate() + '일 ' + DOW[x.getDay()] + '요일'; }
+function leftItem(id) { for (var g = 0; g < LEFT.length; g++) for (var i = 0; i < LEFT[g].items.length; i++) if (LEFT[g].items[i].id === id) return LEFT[g].items[i]; return null; }
+function leftAdd(item) {   // a photo taken out of a trip comes back here, at its date
+  var g = LEFT.filter(function (x) { return x.d === item.d; })[0];
+  if (!g) { g = { d: item.d, label: dayLabel(item.d), items: [] }; LEFT.push(g); LEFT.sort(function (a, b) { return a.d < b.d ? 1 : -1; }); }
+  g.items.push(item);
+}
+function leftRemove(ids) {
+  LEFT.forEach(function (g) { g.items = g.items.filter(function (it) { return ids.indexOf(it.id) < 0; }); });
+  for (var i = LEFT.length - 1; i >= 0; i--) if (!LEFT[i].items.length) LEFT.splice(i, 1);
+}
+function leftTotal() { var data = analysisData(); return data.total - data.trips.reduce(function (a, t) { return a + t.n; }, 0); }
+
+App.state.lsel = {};
+App.state.selecting = false;
+function selIds() { return Object.keys(App.state.lsel).filter(function (k) { return App.state.lsel[k]; }); }
+function renderLeft() {
+  var sample = 0, html = '';
+  LEFT.forEach(function (g) {
+    sample += g.items.length;
+    html += '<div class="lf-day"><b>' + g.label + '</b><span>' + g.d.slice(0, 4) + ' · ' + g.items.length + '장</span>' +
+      '<button class="btn text" data-action="selectDay" data-d="' + g.d + '">모두 선택</button></div><div class="lf-grid">' +
+      g.items.map(function (it) {
+        return '<button class="' + it.c + (App.state.lsel[it.id] ? ' on' : '') + '" data-action="leftTap" data-id="' + it.id + '" aria-label="' + g.label + ' ' + it.t + ' 사진"><span class="ck"><span class="ms">check</span></span></button>';
+      }).join('') + '</div>';
+  });
+  var total = leftTotal(), older = Math.max(0, total - sample);
+  if (older) html += '<div class="lf-more">이전 사진 ' + fmt(older) + '장이 더 있어요</div>';
+  if (!total) html = '<div class="tr-empty"><b>모든 사진이 여행에 담겼어요</b>새로 찍은 사진 중 여행에 담기지 않은 사진이 생기면 여기에 모여요.</div>';
+  document.getElementById('lf-list').innerHTML = html;
+  selectUI();
+}
+function selectUI() {
+  var n = selIds().length, scr = document.getElementById('left');
+  scr.classList.toggle('selecting', App.state.selecting);
+  document.getElementById('lf-title').innerHTML = App.state.selecting
+    ? (n ? n + '장 선택됨' : '사진을 골라 주세요')
+    : '여행에 담기지 않은 사진<span class="sub" id="lf-sub">' + fmt(leftTotal()) + '장 · 최신순</span>';
+  document.getElementById('lf-back-ic').textContent = App.state.selecting ? 'close' : 'arrow_back';
+  document.getElementById('lf-sel-btn').hidden = App.state.selecting;
+  document.getElementById('lf-add').disabled = !n;
+  document.getElementById('lf-new').disabled = !n;
+}
+function setSelecting(on) {
+  App.state.selecting = on;
+  if (!on) App.state.lsel = {};
+  document.querySelectorAll('#lf-list .lf-grid button').forEach(function (b) { b.classList.toggle('on', !!App.state.lsel[b.getAttribute('data-id')]); });
+  selectUI();
+}
+/* in selection mode, back (app bar ✕ or system back) leaves selection first */
+var _appBack = App.back;
+App.back = function () {
+  if (App.current() === 'left' && App.state.selecting) { setSelecting(false); return true; }
+  return _appBack.apply(App, arguments);
+};
+App.onEnter('left', function () {
+  App.state.selecting = false; App.state.lsel = {};
+  if (App.shot) {   // still: show the picking state (one day picked) and fill the sheet / dialog that follow
+    LEFT[2].items.forEach(function (it) { App.state.lsel[it.id] = true; });
+    App.state.selecting = true; App.state.pickFrom = 'left';
+    renderLeft(); App.actions.askAdd(); App.actions.askNew(); return;
+  }
+  renderLeft();
+});
+App.actions.selectMode = function () { setSelecting(true); };
+App.actions.selectDay = function (el) {
+  var d = el.getAttribute('data-d'), g = LEFT.filter(function (x) { return x.d === d; })[0];
+  var all = g.items.every(function (it) { return App.state.lsel[it.id]; });
+  g.items.forEach(function (it) { App.state.lsel[it.id] = !all; });
+  setSelecting(true);
+};
+App.actions.leftTap = function (el) {
+  var id = el.getAttribute('data-id');
+  if (!App.state.selecting) { openViewer('left', id); return false; }
+  App.state.lsel[id] = !App.state.lsel[id];
+  el.classList.toggle('on', App.state.lsel[id]);
+  selectUI();
+};
+
+/* ── dates of trips and picks, for "nearest trip" and new trip ranges ── */
+function parseTripRange(t) {
+  var p = t.date.split(' – '), a = p[0].split('. ').map(Number), b = p[1] ? p[1].split('. ').map(Number) : null;
+  var s = new Date(a[0], a[1] - 1, a[2]), e = b ? (b.length === 3 ? new Date(b[0], b[1] - 1, b[2]) : new Date(a[0], b[0] - 1, b[1])) : s;
+  return [s, e];
+}
+function pickIds() { return App.state.pickFrom === 'viewer' ? [App.state.vw.id] : selIds(); }
+function pickDates() { return pickIds().map(function (id) { return leftItem(id).d; }).sort(); }
+App.actions.askAdd = function (el) {
+  if (el && el.closest && el.closest('#left')) App.state.pickFrom = 'left';
+  var ds = pickDates(), first = new Date(ds[0] + 'T00:00:00'), last = new Date(ds[ds.length - 1] + 'T00:00:00'), trips = analysisData().trips;
+  var rows = trips.map(function (t, k) {
+    var r = parseTripRange(t), gap = last < r[0] ? (r[0] - last) : first > r[1] ? (first - r[1]) : 0;
+    return { k: k, t: t, gap: Math.round(gap / 864e5) };
+  }).sort(function (a, b) { return a.gap - b.gap; });
+  document.getElementById('at-title').textContent = ds.length + '장을 어느 여행에 넣을까요?';
+  document.getElementById('at-list').innerHTML = rows.map(function (r, i) {
+    var g = r.gap === 0 ? '같은 기간' : r.gap === 1 ? '하루 차이' : r.gap < 60 ? r.gap + '일 차이' : Math.round(r.gap / 30) + '달 차이';
+    return '<button class="at-item' + (i === 0 ? ' near' : '') + '" data-close data-action="addTo" data-k="' + r.k + '">' +
+      '<i class="tk-dot" style="--c:' + r.t.c + '"></i><span class="body"><b>' + r.t.place + '</b><span>' + r.t.date + ' · ' + fmt(r.t.n) + '장</span></span>' +
+      '<span class="gap">' + (i === 0 ? '가장 가까워요 · ' : '') + g + '</span></button>';
+  }).join('');
+};
+App.actions.askNew = function (el) {
+  if (el && el.closest && el.closest('#left')) App.state.pickFrom = 'left';
+  var ids = pickIds(), ds = pickDates(), places = {};
+  ids.forEach(function (id) { var p = leftItem(id).place.split(' ')[0]; if (p) places[p] = (places[p] || 0) + 1; });
+  var top = Object.keys(places).sort(function (a, b) { return places[b] - places[a]; })[0];
+  var f = new Date(ds[0] + 'T12:00:00');
+  document.getElementById('nt-name').value = top || ((f.getMonth() + 1) + '월 ' + f.getDate() + '일 여행');
+  document.getElementById('nt-when').textContent = rangeText(ds) + ' · ' + ids.length + '장';
+};
+function dotDate(d) { var p = d.split('-'); return +p[0] + '. ' + +p[1] + '. ' + +p[2]; }
+function rangeText(ds) {
+  var a = ds[0], b = ds[ds.length - 1];
+  if (a === b) return dotDate(a);
+  return dotDate(a) + ' – ' + (a.slice(0, 4) === b.slice(0, 4) ? dotDate(b).split('. ').slice(1).join('. ') : dotDate(b));
+}
+
+/* ── apply: animate (from the list), then move the photos ── */
+var NEW_COLS = ['#2bae8e', '#f2b33d', '#e2553a', '#2f7fd8'];
+function flyInto(ids, color, done) {
+  var scr = document.getElementById('left');
+  if (App.current() !== 'left' || App.reducedMotion || App.shot) return done();
+  var sr = scr.getBoundingClientRect(), k = scr.offsetWidth / sr.width, layer = document.createElement('div');
+  layer.className = 'fly-layer'; scr.appendChild(layer);
+  var tx = scr.offsetWidth / 2, ty = 120, drops = [];
+  ids.forEach(function (id, i) {
+    var b = document.querySelector('#lf-list [data-id="' + id + '"]'); if (!b) return;
+    var r = b.getBoundingClientRect(), w = r.width * k, x = (r.left - sr.left) * k, y = (r.top - sr.top) * k;
+    var d = document.createElement('i'); d.className = b.className.replace(' on', '');
+    d.style.cssText = 'width:' + w + 'px;height:' + w + 'px;transform-origin:50% 50%;transform:translate(' + x + 'px,' + y + 'px)';
+    layer.appendChild(d); drops.push([d, w, i]);
+    b.style.visibility = 'hidden';
+  });
+  requestAnimationFrame(function () { requestAnimationFrame(function () {
+    drops.forEach(function (o) {
+      var d = o[0], w = o[1];
+      d.style.transitionDelay = (o[2] * 45) + 'ms';
+      d.style.backgroundImage = 'none'; d.style.backgroundColor = color; d.style.borderRadius = '50%';
+      d.style.transform = 'translate(' + (tx - w / 2) + 'px,' + (ty - w / 2) + 'px) scale(' + (34 / w).toFixed(3) + ')';
+    });
+  }); });
+  setTimeout(function () { layer.style.transition = 'opacity .3s'; layer.style.opacity = '0'; }, 900 + drops.length * 45);
+  setTimeout(function () { layer.remove(); done(); }, 1250 + drops.length * 45);
+}
+function finishPick(msg) {
+  App.state.lsel = {}; App.state.selecting = false;
+  if (App.state.pickFrom === 'viewer') { App.state.pickFrom = null; App.back(); App.after(320, function () { App.snack(msg); }); return; }
+  renderLeft(); App.snack(msg);
+}
+App.actions.addTo = function (el) {
+  var k = +el.getAttribute('data-k'), t = analysisData().trips[k], ids = pickIds();
+  flyInto(ids, t.c, function () {
+    leftRemove(ids); t.n += ids.length;
+    finishPick(ids.length + '장을 ' + t.place + ' 여행에 넣었어요');
+  });
+};
+App.actions.makeTrip = function () {
+  var ids = pickIds(), ds = pickDates(), name = document.getElementById('nt-name').value.trim() || '새 여행';
+  var a = new Date(ds[0] + 'T12:00:00'), b = new Date(ds[ds.length - 1] + 'T12:00:00'), days = Math.round((b - a) / 864e5) + 1;
+  var color = NEW_COLS[(TRIPS_ALL.length) % NEW_COLS.length];
+  var trip = { place: esc(name), date: rangeText(ds), days: days === 1 ? '당일' : days + '일', n: ids.length, c: color };
+  TRIP_PHOTOS[trip.place] = ids.slice(0, 3).map(function (id) { return leftItem(id).c; });
+  flyInto(ids, color, function () {
+    leftRemove(ids);
+    var at = TRIPS_ALL.length; while (at > 0 && parseTripRange(TRIPS_ALL[at - 1])[0] > a) at--;
+    TRIPS_ALL.splice(at, 0, trip);
+    finishPick('‘' + trip.place + '’ 여행을 만들었어요. 여행 목록에서 볼 수 있어요');
+  });
+};
+</script>
+
+<script id="viewer-js">
+/* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════
+   One viewer for every photo grid. It pages through the set it was opened from (swipe sideways); the header shows
+   when and where; only the bottom actions change with the place it was opened from:
+   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
+var TRIP_DATES = ['2026-05-03', '2026-05-04', '2026-05-05'];
+function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
+  var am = t.indexOf('오전') === 0, hm = t.split(' ')[1].split(':'), h = +hm[0] % 12 + (am ? 0 : 12), min = h * 60 + +hm[1] + m;
+  h = Math.floor(min / 60) % 24; var mm = min % 60;
+  return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + ':' + (mm < 10 ? '0' : '') + mm;
+}
+function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '월 ' + +p[2] + '일'; }
+
+/* open from a trip stop (s = stop, k = photo) or from the left-out list (id) */
+function openViewer(ctx, a, b) {
+  var items, i = 0;
+  if (ctx === 'trip') {
+    var st = BUSAN.stops[a], start = st.when.split(' – ')[0];
+    items = st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin(start, k * 7), place: st.place, col: DAYC[st.d], s: a, k: k }; });
+    i = b;
+  } else {
+    items = []; LEFT.forEach(function (g) { g.items.forEach(function (it) { items.push({ c: it.c, d: it.d, t: it.t, place: it.place, id: it.id }); }); });
+    items.forEach(function (it, n) { if (it.id === a) i = n; });
+  }
+  App.state.vw = { ctx: ctx, items: items, i: i };
+  App.go('viewer');
+}
+App.actions.viewTrip = function (el) { openViewer('trip', +el.getAttribute('data-s'), +el.getAttribute('data-k')); return false; };
+
+function vwCur() { var v = App.state.vw; return v.items[v.i]; }
+function vwHeader() {
+  var v = App.state.vw, it = vwCur();
+  v.id = it.id;
+  document.getElementById('vw-title').innerHTML = longDate(it.d) + ' ' + it.t +
+    (it.place ? '<span id="vw-place" style="--c:' + (it.col || '#8a7d70') + '"><i></i>' + it.place + '</span>' : '');
+  document.getElementById('vw-count').textContent = (v.i + 1) + ' / ' + v.items.length;
+  vwActions();
+}
+function act(icon, label, action, extra) {
+  return '<button class="vw-act' + (extra || '') + '" data-action="' + action + '"><span class="ms' + (extra === ' on' ? ' fill' : '') + '">' + icon + '</span>' + label + '</button>';
+}
+function vwActions() {
+  var v = App.state.vw, it = vwCur(), html;
+  if (v.ctx === 'trip') {
+    var isBest = App.state.bestDone && App.state.best[it.s] === it.k;
+    html = act('star', isBest ? '베스트샷' : '베스트샷으로', 'vwBest', isBest ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
+      act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
+  } else {
+    html = act('library_add', '여행에 넣기', 'vwAdd') + act('add_location_alt', '새 여행', 'vwNew') + act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
+  }
+  document.getElementById('vw-acts').innerHTML = html;
+}
+function vwSlides() {
+  var v = App.state.vw;
+  document.getElementById('vw-track').innerHTML = v.items.map(function (it) {
+    var star = v.ctx === 'trip' && App.state.bestDone && App.state.best[it.s] === it.k ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
+    return '<div class="vw-slide"><i class="' + it.c + '">' + star + '</i></div>';
+  }).join('');
+}
+App.onEnter('viewer', function () {
+  if (!App.state.vw) openViewerState();
+  vwSlides(); vwHeader();
+  var tr = document.getElementById('vw-track');
+  App.after(0, function () { tr.scrollLeft = App.state.vw.i * tr.clientWidth; });
+});
+function openViewerState() { var st = BUSAN.stops[1]; App.state.vw = { ctx: 'trip', i: 0, items: st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin('오후 1:40', k * 7), place: st.place, col: DAYC[st.d], s: 1, k: k }; }) }; }
+document.getElementById('vw-track').addEventListener('scroll', function () {
+  var v = App.state.vw; if (!v) return;
+  var i = Math.round(this.scrollLeft / this.clientWidth);
+  if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
+}, { passive: true });
+
+/* ── trip actions ── */
+App.actions.vwBest = function () {
+  var it = vwCur();
+  App.state.best[it.s] = it.k; App.state.bestDone = true;
+  vwSlides(); vwActions();
+  var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
+  App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
+};
+App.actions.vwOut = function () {
+  var it = vwCur();
+  App.state.removed[it.s]++;
+  TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; });
+  leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
+  App.back();
+  App.after(320, function () { App.snack('여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요'); });
+};
+App.actions.vwShare = function () { App.snack('Android 공유 시트가 열려요'); };
+App.actions.vwTrash = function () {
+  App.state.trashCtx = 'viewer';
+  document.getElementById('tr-n').textContent = '1개';
+  App.dialog('sys-trash');
+};
+/* ── left-out actions: same sheet / dialog as the list, for this one photo ── */
+App.actions.vwAdd = function () { App.state.pickFrom = 'viewer'; App.actions.askAdd(); App.sheet('add-sheet'); };
+App.actions.vwNew = function () { App.state.pickFrom = 'viewer'; App.actions.askNew(); App.dialog('new-trip'); };
+
+/* the trash dialog serves the clean-up screen and the viewer */
+var _trashOk = App.actions.trashOk;
+App.actions.trashOk = function (el) {
+  if (App.state.trashCtx !== 'viewer') { App.state.trashCtx = null; return _trashOk(el); }
+  App.state.trashCtx = null;
+  var it = vwCur();
+  TOTAL_ALL--;
+  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; }); }
+  else leftRemove([it.id]);
+  App.after(320, function () { App.snack('1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
+};
+</script>
+
+<script id="prefs-js">
+/* ═══ Flow 7 · 설정 ═══════════════════════════════════════════════════
+   Quiet on purpose. The only picture is the small album globe next to the name: as full as the photo access allows
+   (the same globe the permission flow used), so the access state reads at a glance. */
+AG.prefs = AlbumGlobe('ag-prefs', 'prefs', 11);
+
+App.onEnter('prefs', function (s) {
+  App.state.fromSettings = false;   // came back from Android settings: nothing to replay here
+  fillNick(s);
+  var data = analysisData(), acc = App.state.access;
+  document.getElementById('pf-count').textContent = '사진·영상 ' + fmt(data.total) + '개 · 여행 ' + data.trips.length + '개';
+  var st = document.getElementById('pf-access'), loc = document.getElementById('pf-loc');
+  if (acc === 'some') { st.className = 'state some'; st.innerHTML = '<span class="ms fill">error</span>일부만 · ' + (App.state.picked || 14) + '장'; }
+  else if (acc === 'none') { st.className = 'state none'; st.innerHTML = '<span class="ms fill">cancel</span>허용 안 됨'; }
+  else { st.className = 'state'; st.innerHTML = '<span class="ms fill">check_circle</span>모두 허용'; }
+  loc.className = acc === 'none' ? 'state none' : 'state';
+  loc.innerHTML = acc === 'none' ? '<span class="ms fill">cancel</span>허용 안 됨' : '<span class="ms fill">check_circle</span>허용';
+  AG.prefs.open(acc === 'some' ? (App.state.picked || 14) : acc === 'none' ? 0 : 'all');
+  document.getElementById('pf-noti').checked = !!App.state.noti;
+});
+App.actions.toSysSettings = function () { App.go('settings'); return false; };
+App.actions.pfInfo = function (el) { App.snack(el.getAttribute('data-v') + '는 웹 페이지로 열려요'); };
+
+/* nickname: same rule as onboarding */
+App.actions.askName = function () {
+  document.getElementById('pf-name').value = App.state.nick || '';
+  document.getElementById('pf-name-help').textContent = '2~10자, 한글·영문·숫자';
+  document.getElementById('pf-name').closest('.field').classList.remove('error');
+};
+App.actions.saveName = function () {
+  var v = document.getElementById('pf-name').value.trim();
+  if (!NICK_RE.test(v)) {
+    document.getElementById('pf-name').closest('.field').classList.add('error');
+    document.getElementById('pf-name-help').textContent = v.length < 2 ? '두 글자 이상 입력해 주세요' : '한글·영문·숫자만 쓸 수 있어요';
+    return false;
+  }
+  App.state.nick = v; App.close();
+  fillNick(document.getElementById('prefs'));
+  App.snack('이제 ' + esc(v) + '님으로 불러 드릴게요');
+};
+
+/* notifications: Android 13+ asks the first time the switch goes on */
+document.getElementById('pf-noti').addEventListener('change', function () {
+  if (this.checked && !App.state.noti) { this.checked = false; App.dialog('sys-noti'); }
+  else if (!this.checked) { App.state.noti = false; }
+});
+App.actions.notiOk = function () { App.state.noti = true; document.getElementById('pf-noti').checked = true; App.snack('새 여행을 찾으면 알려 드릴게요'); };
+App.actions.notiNo = function () { App.snack('알림을 허용하지 않았어요. Android 설정에서 바꿀 수 있어요'); };
+
+App.actions.rescan = function () { App.go('analyze'); return false; };
+App.actions.wipe = function () {
+  App.state.nick = ''; App.state.chatFor = null; App.state.bestDone = false; App.state.noti = false;
+  App.state.best = BUSAN.stops.map(function () { return 0; });
+  document.getElementById('nick-input').value = ''; nickCheck(false);
+  App.reset('splash');
+  App.after(400, function () { App.snack('Wend 데이터를 지웠어요. 사진은 그대로 있어요'); });
+  return false;
+};
+</script>
+
 </body>
 </html>

@@ -1,0 +1,59 @@
+<script id="prefs-js">
+/* ═══ Flow 7 · 설정 ═══════════════════════════════════════════════════
+   Quiet on purpose. The only picture is the small album globe next to the name: as full as the photo access allows
+   (the same globe the permission flow used), so the access state reads at a glance. */
+AG.prefs = AlbumGlobe('ag-prefs', 'prefs', 11);
+
+App.onEnter('prefs', function (s) {
+  App.state.fromSettings = false;   // came back from Android settings: nothing to replay here
+  fillNick(s);
+  var data = analysisData(), acc = App.state.access;
+  document.getElementById('pf-count').textContent = '사진·영상 ' + fmt(data.total) + '개 · 여행 ' + data.trips.length + '개';
+  var st = document.getElementById('pf-access'), loc = document.getElementById('pf-loc');
+  if (acc === 'some') { st.className = 'state some'; st.innerHTML = '<span class="ms fill">error</span>일부만 · ' + (App.state.picked || 14) + '장'; }
+  else if (acc === 'none') { st.className = 'state none'; st.innerHTML = '<span class="ms fill">cancel</span>허용 안 됨'; }
+  else { st.className = 'state'; st.innerHTML = '<span class="ms fill">check_circle</span>모두 허용'; }
+  loc.className = acc === 'none' ? 'state none' : 'state';
+  loc.innerHTML = acc === 'none' ? '<span class="ms fill">cancel</span>허용 안 됨' : '<span class="ms fill">check_circle</span>허용';
+  AG.prefs.open(acc === 'some' ? (App.state.picked || 14) : acc === 'none' ? 0 : 'all');
+  document.getElementById('pf-noti').checked = !!App.state.noti;
+});
+App.actions.toSysSettings = function () { App.go('settings'); return false; };
+App.actions.pfInfo = function (el) { App.snack(el.getAttribute('data-v') + '는 웹 페이지로 열려요'); };
+
+/* nickname: same rule as onboarding */
+App.actions.askName = function () {
+  document.getElementById('pf-name').value = App.state.nick || '';
+  document.getElementById('pf-name-help').textContent = '2~10자, 한글·영문·숫자';
+  document.getElementById('pf-name').closest('.field').classList.remove('error');
+};
+App.actions.saveName = function () {
+  var v = document.getElementById('pf-name').value.trim();
+  if (!NICK_RE.test(v)) {
+    document.getElementById('pf-name').closest('.field').classList.add('error');
+    document.getElementById('pf-name-help').textContent = v.length < 2 ? '두 글자 이상 입력해 주세요' : '한글·영문·숫자만 쓸 수 있어요';
+    return false;
+  }
+  App.state.nick = v; App.close();
+  fillNick(document.getElementById('prefs'));
+  App.snack('이제 ' + esc(v) + '님으로 불러 드릴게요');
+};
+
+/* notifications: Android 13+ asks the first time the switch goes on */
+document.getElementById('pf-noti').addEventListener('change', function () {
+  if (this.checked && !App.state.noti) { this.checked = false; App.dialog('sys-noti'); }
+  else if (!this.checked) { App.state.noti = false; }
+});
+App.actions.notiOk = function () { App.state.noti = true; document.getElementById('pf-noti').checked = true; App.snack('새 여행을 찾으면 알려 드릴게요'); };
+App.actions.notiNo = function () { App.snack('알림을 허용하지 않았어요. Android 설정에서 바꿀 수 있어요'); };
+
+App.actions.rescan = function () { App.go('analyze'); return false; };
+App.actions.wipe = function () {
+  App.state.nick = ''; App.state.chatFor = null; App.state.bestDone = false; App.state.noti = false;
+  App.state.best = BUSAN.stops.map(function () { return 0; });
+  document.getElementById('nick-input').value = ''; nickCheck(false);
+  App.reset('splash');
+  App.after(400, function () { App.snack('Wend 데이터를 지웠어요. 사진은 그대로 있어요'); });
+  return false;
+};
+</script>

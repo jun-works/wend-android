@@ -1,0 +1,34 @@
+    <!-- ═══ Flow 6 · 빠진 사진 ═══ -->
+
+    <!-- 18 · 여행에 담기지 않은 사진 -->
+    <section class="screen" id="left" data-title="빠진 사진">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms" id="lf-back-ic">arrow_back</span></button>
+        <h1 class="title" id="lf-title">여행에 담기지 않은 사진<span class="sub" id="lf-sub">1,233장 · 최신순</span></h1>
+        <div class="actions"><button class="icon-btn" id="lf-sel-btn" data-action="selectMode" aria-label="사진 선택"><span class="ms">checklist</span></button></div>
+      </header>
+      <div class="content" id="lf-scroll">
+        <p class="lf-intro">찍은 날짜순으로 모아 뒀어요. 사진을 골라 여행에 넣거나 새 여행으로 만들 수 있어요.</p>
+        <div id="lf-list" data-links="viewer"></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn tonal lg" id="lf-add" data-action="askAdd" data-sheet="add-sheet"><span class="ms">library_add</span>여행에 넣기</button>
+        <button class="btn lg" id="lf-new" data-action="askNew" data-dialog="new-trip"><span class="ms">add_location_alt</span>새 여행 만들기</button>
+      </div>
+    </section>
+
+    <!-- add to an existing trip: nearest in time first -->
+    <div class="sheet" id="add-sheet" aria-label="여행에 넣기">
+      <div class="sheet-title" id="at-title">어느 여행에 넣을까요?</div>
+      <div class="sheet-body"><div class="at-list" id="at-list"></div></div>
+      <div class="sheet-actions"><button class="btn text" data-close>취소</button></div>
+    </div>
+
+    <!-- make a new trip from the picked photos -->
+    <div class="dialog" id="new-trip" aria-label="새 여행 만들기">
+      <span class="ms d-icon">add_location_alt</span>
+      <div class="d-title">새 여행 만들기</div>
+      <div class="nt-when"><span class="ms">event</span><span id="nt-when">2026. 6. 20 · 7장</span></div>
+      <label class="field"><input id="nt-name" maxlength="14" placeholder=" " data-js><span class="label">여행 이름</span><span class="support">나중에 바꿀 수 있어요</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-close data-action="makeTrip">만들기</button></div>
+    </div>

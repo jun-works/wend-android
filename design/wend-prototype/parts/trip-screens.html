@@ -1,0 +1,72 @@
+    <!-- ═══ Flow 5 · 여행 상세 ═══ -->
+
+    <!-- 15 · 여행 상세 -->
+    <section class="screen" id="trip" data-title="여행 상세">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title" id="tp-title">부산</h1>
+      </header>
+      <div class="content" id="tp-scroll">
+        <div class="tp-map" id="tp-map">
+          <svg viewBox="0 0 380 220" preserveAspectRatio="xMidYMid slice" aria-label="부산 여행 이동 경로 지도. 스크롤하면 핀이 경로를 따라 이동해요" role="img">
+            <path class="land" d="M0 0H380V28C362 30 348 40 336 43C322 46 306 44 292 48C276 52 262 50 250 58C238 64 230 70 220 66C208 72 200 84 192 96C182 110 170 118 156 126C142 134 132 142 124 152C118 160 104 162 96 164C86 166 78 172 68 168C58 164 48 170 40 176C28 182 14 176 0 180Z"/>
+            <ellipse class="land" cx="114" cy="184" rx="22" ry="12"/>
+            <path class="road" d="M97 119C140 100 190 80 283 40M97 119L51 151M85 150L97 119"/>
+            <g id="tp-routes"></g>
+            <g id="tp-stops"></g>
+          </svg>
+          <div class="tp-nums" id="tp-nums" aria-hidden="true"></div>
+          <svg class="tp-here bot b2" id="tp-here" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="tp-legend"><span><i style="background:#e2553a"></i>1일째</span><span><i style="background:#2f7fd8"></i>2일째</span><span><i style="background:#2bae8e"></i>3일째</span></div>
+        </div>
+        <div class="tp-sum">
+          <h2>부산</h2>
+          <p id="tp-meta">2026. 5. 3 – 5. 5 · 3일 · 186장 · 7곳</p>
+        </div>
+        <div class="tp-acts">
+          <button class="btn tonal" data-go="best"><span class="ms fill">star</span>베스트샷 고르기</button>
+          <button class="btn outlined" data-go="clean"><span class="ms">auto_delete</span>사진 정리하기</button>
+        </div>
+        <div id="tp-days" data-links="viewer"></div>
+      </div>
+    </section>
+
+    <!-- 16 · 베스트샷 고르기 -->
+    <section class="screen" id="best" data-title="베스트샷 고르기">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">베스트샷 고르기</h1>
+      </header>
+      <div class="content">
+        <p class="bs-intro">장소마다 비슷하게 찍은 사진을 모았어요. 가장 마음에 드는 한 장을 골라 주세요. 고른 사진이 여행의 대표 사진이 돼요.</p>
+        <div id="bs-list"></div>
+      </div>
+      <div class="bottom-bar"><button class="btn block lg" data-action="bestDone">8장으로 정하기</button></div>
+    </section>
+
+    <!-- 17 · 사진 정리하기 -->
+    <section class="screen" id="clean" data-title="사진 정리하기">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">사진 정리하기</h1>
+      </header>
+      <div class="content">
+        <p class="bs-intro">필요 없어 보이는 사진을 골라 뒀어요. 남기고 싶은 사진은 눌러서 빼 주세요.</p>
+        <div id="cl-list"></div>
+      </div>
+      <div class="bottom-bar">
+        <div class="cl-note"><span class="ms">restore_from_trash</span>휴지통으로 옮긴 사진은 30일 동안 갤러리에서 되살릴 수 있어요.</div>
+        <button class="btn block lg danger" id="cl-go" data-action="trashAsk" data-dialog="sys-trash">23장 휴지통으로 옮기기</button>
+      </div>
+    </section>
+
+    <!-- system trash confirmation (MediaStore.createTrashRequest) -->
+    <div class="dialog sys sysui" id="sys-trash" role="dialog" aria-label="사진 휴지통 이동 확인">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">delete</span>
+      <div class="d-title"><b>Wend</b>에서 사진 <b id="tr-n">23개</b>를 휴지통으로 이동하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="trashOk" data-back>허용</button>
+        <button data-close>거부</button>
+      </div>
+    </div>

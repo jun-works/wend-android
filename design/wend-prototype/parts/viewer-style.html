@@ -1,0 +1,23 @@
+<style id="viewer-style">
+/* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════ */
+#viewer{--screen-bg:#0f0d0b;color:#f6f1e9}
+#viewer .top-app-bar{background:transparent;color:#f6f1e9;position:relative;z-index:2}
+#viewer .top-app-bar .icon-btn{color:#f6f1e9}
+#viewer .top-app-bar .title{line-height:1.25;font:600 15px/1.3 var(--font-body)}
+#viewer .top-app-bar .title span{display:flex;align-items:center;gap:4px;margin-top:2px;font:var(--body-s);color:#c9bfb2}
+#viewer .top-app-bar .title span .ms{--ms-size:14px}
+#viewer .top-app-bar .title i{width:8px;height:8px;border-radius:50%;background:var(--c,#8a7d70);display:inline-block}
+#viewer .content{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.vw-track{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.vw-track::-webkit-scrollbar{display:none}
+.vw-slide{flex:none;width:100%;height:100%;scroll-snap-align:center;display:grid;place-items:center;padding:12px 0}
+.vw-slide i{display:block;width:100%;aspect-ratio:3/4;max-height:100%;position:relative}
+.vw-slide i .star{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:4px;padding:6px 10px 6px 8px;border-radius:999px;background:#fffdf9;color:#7a4f05;font:600 12px/1 var(--font-body)}
+.vw-slide i .star .ms{--ms-size:16px;color:#d18a0c}
+.vw-count{align-self:center;margin:6px 0 10px;padding:6px 12px;border-radius:999px;background:rgba(246,241,233,.12);font:var(--label-m);color:#e9e1d4}
+#viewer .bottom-bar{background:#0f0d0b;justify-content:space-around;padding-top:6px;gap:0}
+.vw-act{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:76px;min-height:56px;padding:6px 4px;border:0;border-radius:16px;background:transparent;color:#f6f1e9;font:var(--label-m);cursor:pointer}
+.vw-act .ms{--ms-size:24px}
+.vw-act.on .ms{color:#f2b33d}
+.vw-act.warn{color:#ffb4a8}
+</style>

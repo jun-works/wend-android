@@ -1,0 +1,44 @@
+<style id="analyze-style">
+/* ═══ Flow 3 · 분석 중 ═══════════════════════════════════════════════ */
+/* ── analyze: the ink globe sorts itself; every trip that solidifies drops out as a ticket ── */
+#analyze .content,#found .content,#nofound .content{padding:0 24px 16px;display:flex;flex-direction:column}
+.an-status{display:flex;align-items:center;gap:10px;margin-top:14px;min-height:36px;font:var(--body-m);color:var(--on-surface-variant)}
+.an-status svg{width:34px;height:34px;flex:none}
+.an-status span{animation:fadeUp .4s both}
+.an-read{display:flex;align-items:center;gap:10px;margin:2px 0 18px;font:var(--label-m);color:var(--on-surface-variant)}
+.an-read .bar{flex:1;height:4px;border-radius:2px;background:var(--surface-container-high);overflow:hidden}
+.an-read .bar i{display:block;height:100%;width:0;background:var(--on-surface);border-radius:2px}
+.an-read .num{min-width:92px;text-align:right}
+.an-found-t{display:flex;align-items:baseline;gap:6px;font:600 14px/1 var(--font-body);margin-bottom:10px}
+.an-found-t b{font:700 20px/1 var(--font-display);color:var(--primary)}
+.an-empty{font:var(--body-m);color:var(--on-surface-variant);padding:14px 0}
+.an-note{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:16px;color:var(--on-surface-variant);font:var(--body-s)}
+.an-note .ms{--ms-size:18px}
+
+/* trip ticket: colour blob = the cluster it came from · perforated edge before the count */
+.tks{display:flex;flex-direction:column;gap:8px}
+.tk{position:relative;display:flex;align-items:center;gap:14px;min-height:62px;padding:0 0 0 14px;border-radius:16px;background:var(--surface-container-lowest);box-shadow:0 1px 0 var(--outline-variant)}
+.tk.drop{animation:tkDrop .6s cubic-bezier(.3,1.35,.5,1) both}
+@keyframes tkDrop{from{opacity:0;transform:translateY(-34px) scale(.9)}to{opacity:1;transform:none}}
+.tk-dot{position:relative;width:22px;height:22px;border-radius:50%;background:var(--c);flex:none;margin:0 2px}
+.tk-dot::after{content:"";position:absolute;right:-7px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tk-main{flex:1;min-width:0;padding:10px 0;text-align:left}
+button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
+.tk-main b{display:block;color:var(--on-surface);font:700 17px/1.2 var(--font-display)}
+.tk-main span{display:block;margin-top:3px;font:var(--body-s);color:var(--on-surface-variant)}
+.tk-n{position:relative;align-self:stretch;display:flex;align-items:center;padding:0 16px 0 14px;border-left:1.5px dashed var(--outline-variant);font:600 14px/1 var(--font-body)}
+.tk-n::before,.tk-n::after{content:"";position:absolute;left:-7px;width:12px;height:12px;border-radius:50%;background:var(--surface)}
+.tk-n::before{top:-6px}.tk-n::after{bottom:-6px}
+.tk-more{padding:12px 4px 0;font:var(--body-m);color:var(--on-surface-variant)}
+
+/* ── found ── */
+#found .ag-stage{height:224px}
+#nofound .ag-stage::before{width:194px;height:194px;margin:-97px 0 0 -97px}
+#found .ag-stage canvas{width:212px;height:212px}
+#found .ag-stage::before{width:194px;height:194px;margin:-97px 0 0 -97px}
+.fd-sub{margin-top:10px;color:var(--on-surface-variant);font:var(--body-l)}
+.fd-sub b{color:var(--on-surface);font-weight:600}
+.fd-cut{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--surface-container-low);font:var(--body-m)}
+.fd-cut .ms{--ms-size:20px;color:var(--primary);flex:none}
+#found .bottom-bar,#nofound .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:4px}
+</style>

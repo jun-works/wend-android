@@ -1,0 +1,4 @@
+.DS_Store
+wend-prototype/app-shots/
+wend-prototype/*.audit.json
+wend-prototype/*-frames.png

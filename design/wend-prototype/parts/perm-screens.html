@@ -1,0 +1,149 @@
+    <!-- ═══ Flow 2 · 사진 접근 권한 ═══ -->
+
+    <!-- 5 · 권한 안내 (요청 전 설명) -->
+    <section class="screen" id="perm" data-title="사진 접근 안내">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title"></h1>
+      </header>
+      <div class="content">
+        <h1 class="pm-h"><span class="nk-slot">여행자</span>님의 앨범을<br>열어 주세요</h1>
+        <p class="pm-sub">지금은 사진이 보이지 않아 지구본이 비어 있어요.</p>
+        <div class="ag-stage">
+          <canvas id="ag-perm" style="filter:url(#goo-c)" width="520" height="520" aria-label="아직 열리지 않은 앨범을 뜻하는 옅은 색 지구본" data-js></canvas>
+        </div>
+        <div class="why">
+          <div class="why-row"><span class="ic"><span class="ms">photo_library</span></span>
+            <div><b>사진·영상 전체 보기</b><span class="d">여행은 사진이 며칠씩 이어져야 찾을 수 있어서, 일부만 보면 여행이 잘려요.</span></div></div>
+          <div class="why-row"><span class="ic pin"><span class="ms fill">location_on</span></span>
+            <div><b>사진 속 위치 읽기</b><span class="d">핀이 장소를 알아낼 때 써요. 사진 권한과 함께 요청돼요.</span></div></div>
+          <div class="why-row"><span class="ic"><span class="ms">phonelink_lock</span></span>
+            <div><b>기기 밖으로 보내지 않아요</b><span class="d">어디에도 올리지 않고 이 휴대폰 안에서만 읽어요. 직접 고르기 전에는 지우지 않아요.</span></div></div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="pm-pick"><span class="ms fill">touch_app</span><span>다음 안내창에서 <b>모두 허용</b>을 골라 주세요</span></div>
+        <button class="btn block lg" data-action="request" data-links="settings" data-dialog="sys-perm">사진 접근 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 6 · 시스템 사진 선택기 (Android 14 부분 접근) -->
+    <section class="screen sysui" id="picker" data-title="사진 선택(시스템)">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="닫기"><span class="ms">close</span></button>
+        <h1 class="title">항목 선택</h1>
+        <div class="actions"><span class="sys-tag"><span class="ms">android</span>시스템 화면 재현</span></div>
+      </header>
+      <div class="content">
+        <div class="pk-tabs"><span class="on">사진</span><span>앨범</span></div>
+        <div id="pk-body"></div>
+      </div>
+      <div class="bottom-bar">
+        <span class="pk-count" id="pk-count">항목을 선택하세요</span>
+        <button class="pk-allow" id="pk-allow" data-action="pickDone" data-links="partial" disabled>허용</button>
+      </div>
+    </section>
+
+    <!-- 7 · 결과: 모두 허용 -->
+    <section class="screen" id="granted" data-title="앨범 열림" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px"><span class="nk-slot">여행자</span>님의 앨범이<br><em>열렸어요</em></h1>
+        <p class="pm-sub">지구본의 방울이 이제 실제 사진이에요.</p>
+        <div class="ag-stage">
+          <canvas id="ag-granted" style="filter:url(#goo-c)" width="520" height="520" aria-label="앨범이 열리면서 지구본의 방울이 앞쪽부터 진하게 채워지는 애니메이션" data-js></canvas>
+          <div class="ag-cap"><span><i class="ink"></i>볼 수 있는 사진</span></div>
+        </div>
+        <div class="res-rows">
+          <div class="res-row"><span class="ms">photo_library</span>사진<span class="n num" data-count="2418" data-unit="장">2,418장</span></div>
+          <div class="res-row"><span class="ms">videocam</span>영상<span class="n num" data-count="136" data-unit="개">136개</span></div>
+          <div class="res-row pin"><span class="ms fill">location_on</span>위치가 남아 있는 사진·영상<span class="n num" data-count="1874" data-unit="개">1,874개</span></div>
+        </div>
+      </div>
+      <div class="bottom-bar"><button class="btn block lg" data-action="startAnalysis" data-links="analyze">여행 찾기 시작</button></div>
+    </section>
+
+    <!-- 8 · 결과: 사진 선택(부분 접근) -->
+    <section class="screen" id="partial" data-title="일부만 허용됨" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">고르신 <em id="pt-n">14장</em>만<br>볼 수 있어요</h1>
+        <div class="ag-stage" style="height:248px">
+          <canvas id="ag-partial" style="filter:url(#goo-c);width:240px;height:240px" width="480" height="480" aria-label="지구본 대부분이 옅은 채로, 고른 사진만큼만 진한 방울이 띄엄띄엄 보이는 모습" data-js></canvas>
+          <div class="ag-cap"><span><i class="ink"></i>고른 사진</span><span><i></i>안 보이는 사진</span></div>
+        </div>
+        <div class="cut">
+          <div class="cut-t"><span class="ms fill">content_cut</span>이렇게 여행이 잘릴 수 있어요</div>
+          <div class="cut-strip" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="cut-legend"><span>7월 12일</span><span>제주 · 12일 동안 41장</span><span>7월 23일</span></div>
+          <p>3장만 고르면 틱과 핀은 <b>하루짜리 여행 세 개</b>로 읽어요. 사진은 나중에 더 고를 수도 있어요.</p>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" data-dialog="sys-more">모든 사진 허용하기</button>
+        <button class="btn text block" data-action="startAnalysis" data-links="analyze">고른 사진으로 시작할게요</button>
+      </div>
+    </section>
+
+    <!-- 9 · 결과: 허용 안 함 -->
+    <section class="screen" id="denied" data-title="허용 안 됨" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">앨범이 닫혀 있어서<br>여행을 찾을 수 없어요</h1>
+        <div class="ag-stage" style="height:236px">
+          <canvas id="ag-denied" style="filter:url(#goo-c);width:220px;height:220px" width="440" height="440" aria-label="방울이 모두 옅은 색으로 남아 있는 빈 지구본" data-js></canvas>
+        </div>
+        <div class="dn-say">
+          <svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="col"><div class="who" style="font:600 12px/1 var(--font-body);color:var(--on-surface-variant);margin:6px 0 8px 4px">핀 · 장소 담당</div>
+            <div class="bub" id="dn-bub">읽을 사진이 없으면 틱이랑 저는 할 수 있는 게 없어요. 사진은 어디에도 올리지 않고, 직접 고르기 전에는 지우지 않아요.</div></div>
+        </div>
+        <div class="dn-steps" id="dn-steps" hidden>
+          <b>안내창이 더는 뜨지 않아요.</b> 설정에서 직접 바꿔 주세요.<br>
+          <span class="ms">settings</span> 권한 <span class="ms">chevron_right</span> 사진 및 동영상 <span class="ms">chevron_right</span> <b>항상 모두 허용</b>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" id="dn-cta" data-action="retry" data-links="settings">다시 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 10 · 시스템 설정: 앱 권한 -->
+    <section class="screen sysui" id="settings" data-title="앱 권한 설정(시스템)">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <h1 class="title">사진 및 동영상 권한</h1>
+        <div class="actions"><span class="sys-tag"><span class="ms">android</span>시스템 화면 재현</span></div>
+      </header>
+      <div class="content">
+        <div class="st-app"><span class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="16" cy="22" r="10" fill="#e2553a"/><circle cx="26" cy="15" r="6" fill="#f2b33d"/></svg></span><b>Wend</b></div>
+        <div class="st-sec">이 앱의 사진 및 동영상 액세스</div>
+        <div class="st-list" id="st-list">
+          <button class="st-row" data-action="setPerm" data-v="all"><span class="rd"></span><span>항상 모두 허용</span></button>
+          <button class="st-row" data-action="setPerm" data-v="some"><span class="rd"></span><span>제한된 액세스 허용<small>앱으로 돌아가면 사진을 고르는 화면이 열려요</small></span></button>
+          <button class="st-row on" data-action="setPerm" data-v="none"><span class="rd"></span><span>허용 안함</span></button>
+        </div>
+        <div class="st-foot"><span class="ms">info</span><span>사진 및 동영상을 허용하면 사진에 저장된 위치 정보도 함께 읽을 수 있어요.</span></div>
+      </div>
+    </section>
+
+    <!-- system permission dialog (first request) -->
+    <div class="dialog sys sysui" id="sys-perm" role="dialog" aria-label="사진 접근 권한 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">photo_library</span>
+      <div class="d-title"><b>Wend</b>에서 기기의 사진 및 동영상에 액세스하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="grantAll" data-go="granted">모두 허용</button>
+        <button data-close data-go="picker">사진 및 동영상 선택</button>
+        <button data-close data-action="deny" data-go="denied">허용 안함</button>
+      </div>
+    </div>
+
+    <!-- system permission dialog (re-request after partial access) -->
+    <div class="dialog sys sysui" id="sys-more" role="dialog" aria-label="사진 접근 권한 다시 요청">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <span class="ms d-icon lg">photo_library</span>
+      <div class="d-title"><b>Wend</b>에서 기기의 사진 및 동영상에 액세스하도록 허용하시겠습니까?</div>
+      <div class="sys-btns">
+        <button data-close data-action="grantAll" data-go="granted">모두 허용</button>
+        <button data-close data-action="pickMore" data-go="picker">사진 더 선택</button>
+        <button data-close>현재 선택 유지</button>
+      </div>
+    </div>

@@ -1,0 +1,185 @@
+<script id="perm-js">
+/* ═══ Flow 2 · 사진 접근 권한 ═══════════════════════════════════════════
+   Signature: the album globe. Pale dots = photos Wend can't see yet; when access is granted the dots fill with ink
+   in a wave from the front — exactly as many as the access allows (all · only the picked ones · none). */
+App.state.access = 'unasked';   // unasked | all | some | none
+App.state.denies = 0;           // Android stops showing the dialog after the 2nd denial
+App.state.picked = 0;
+
+function seeded(s) { return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+function AlbumGlobe(canvasId, screenId, seed) {
+  var cv = document.getElementById(canvasId), ctx = cv.getContext('2d');
+  var S = cv.width, C = S / 2, R = S * .4, U = S / 720;
+  var PAPER = [246, 241, 233], GHOST = [214, 202, 185], INK = [58, 50, 43];
+  var rnd = seeded(seed || 7), N = 280, ga = Math.PI * (3 - Math.sqrt(5)), pts = [];
+  for (var i = 0; i < N; i++) {
+    var y = 1 - 2 * (i + .5) / N, r = Math.sqrt(1 - y * y), th = ga * i;
+    pts.push({ v: [Math.cos(th) * r, y, Math.sin(th) * r], ph: rnd() * 6.28, s: .8 + rnd() * .45, sc: .4 + rnd(), want: 0, rank: 0, pick: rnd() });
+  }
+  var rot = .6, wave = -1, t0 = 0, scatter = 0, onTick = null;
+  function mix(a, b, f) { return 'rgb(' + a.map(function (x, i) { return Math.round(x + (b[i] - x) * f); }).join(',') + ')'; }
+  function lerp3(a, b, f) { return a.map(function (x, i) { return x + (b[i] - x) * f; }); }
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  // which dots become visible: 'all', a count (partial access), or 0
+  function open(what) {
+    var F = [Math.sin(rot), 0, Math.cos(rot)], lit = what === 'all' ? N : Math.max(0, Math.min(N, what | 0));
+    pts.forEach(function (p) { p.want = 0; p.rank = (1 - (p.v[0] * F[0] + p.v[1] * F[1] + p.v[2] * F[2])) / 2; });
+    // partial access: the picked photos lean to the visible side so the few that light up can be seen
+    var order = pts.slice().sort(function (a, b) { return (a.pick * .55 + a.rank * .45) - (b.pick * .55 + b.rank * .45); });
+    order.slice(0, lit).forEach(function (p) { p.want = 1; });
+    t0 = performance.now(); wave = (App.shot || App.reducedMotion) ? 2 : -.12;
+  }
+  function draw(dt, t) {
+    rot += dt * .3;
+    if (wave < 2) wave = (App.shot || App.reducedMotion) ? 2 : Math.min(2, -.12 + (performance.now() - t0) / 1000 * .62);
+    scatter *= Math.pow(.12, dt);
+    ctx.clearRect(0, 0, S, S);
+    var cr = Math.cos(rot), sr = Math.sin(rot), ca = Math.cos(.38), sa = Math.sin(.38), list = [];
+    pts.forEach(function (p) {
+      var a = p.want ? clamp((wave - p.rank) / .22) : 0;
+      a = a * a * (3 - 2 * a);
+      var rr = 1 + .03 * Math.sin(t * 1.4 + p.ph) + scatter * p.sc * .5;
+      var x = p.v[0] * cr - p.v[2] * sr, z = p.v[0] * sr + p.v[2] * cr, y = p.v[1] * ca - z * sa; z = p.v[1] * sa + z * ca;
+      var d = (z + 1) / 2;
+      var size = 15 * U * p.s * (.45 + .7 * d) * (1 + .55 * Math.sin(Math.PI * a) + .22 * a);
+      var rgb = lerp3(GHOST, INK, a);
+      list.push({ x: C + x * R * rr, y: C + y * R * rr, z: z, size: size, col: mix(rgb, PAPER, Math.min(.8, (1 - d) * .6)) });
+    });
+    list.sort(function (a, b) { return a.z - b.z; });
+    list.forEach(function (o) { ctx.beginPath(); ctx.fillStyle = o.col; ctx.arc(o.x, o.y, o.size, 0, 6.2832); ctx.fill(); });
+    if (onTick) { var f = clamp((wave + .12) / .8); onTick(f); }
+  }
+  cv.addEventListener('click', function () { scatter = 1.1; });
+  var loop = App.loop(screenId, draw);
+  if (App.shot) App.onEnter(screenId, function () { draw(.016, 1); });
+  return { open: open, tick: function (fn) { onTick = fn; } };
+}
+
+var AG = {
+  perm: AlbumGlobe('ag-perm', 'perm', 11),
+  granted: AlbumGlobe('ag-granted', 'granted', 11),
+  partial: AlbumGlobe('ag-partial', 'partial', 11),
+  denied: AlbumGlobe('ag-denied', 'denied', 11),
+};
+
+/* result screens always sit directly above #perm: the picker / settings detours drop out of the back stack */
+function settleAbovePerm(id) {
+  setTimeout(function () {
+    var i = App.stack.lastIndexOf('perm');
+    if (i >= 0 && App.current() === id) App.stack = App.stack.slice(0, i + 1).concat([id]);
+  }, 0);
+}
+function fillNick(screen) { screen.querySelectorAll('.nk-slot').forEach(function (s) { s.textContent = App.state.nick || '여행자'; }); }
+
+/* ── perm: if Android would no longer show the dialog, the same button leads where it really can ── */
+App.onEnter('perm', fillNick);
+App.actions.request = function () {
+  if (App.state.denies >= 2) { App.go('settings'); return false; }
+  if (App.state.access === 'some') { App.dialog('sys-more'); return false; }
+};
+App.actions.grantAll = function () { App.state.access = 'all'; };
+App.actions.deny = function () { App.state.access = 'none'; App.state.denies++; if (App.current() === 'denied') renderDenied(); };
+App.actions.pickMore = function () { /* keep the current selection; the picker shows it */ };
+
+/* ── picker (system photo picker, Android 14 partial access) ── */
+var PHOTOS = [
+  ['이번 주', ['p-cafe', 'p-shot', 'p-food', 'p-sky', 'p-doc', 'p-city']],
+  ['7월 · 제주', ['p-sea', 'p-sea', 'p-dusk', 'p-forest', 'p-food', 'p-sea', 'p-sky', 'p-dusk', 'p-forest']],
+  ['5월', ['p-city', 'p-city', 'p-food', 'p-snow', 'p-cafe', 'p-shot']],
+];
+App.state.sel = {};
+function renderPicker() {
+  var k = 0, html = '';
+  PHOTOS.forEach(function (sec) {
+    html += '<div class="pk-sec">' + sec[0] + '</div><div class="pk-grid">';
+    sec[1].forEach(function (c) {
+      var id = 'ph' + (k++), vid = k % 7 === 3;
+      html += '<button class="' + c + (App.state.sel[id] ? ' sel' : '') + '" data-action="pick" data-id="' + id + '" aria-label="' + sec[0] + (vid ? ' 영상 ' : ' 사진 ') + k + '">' +
+        '<span class="ck"><span class="ms">check</span></span>' + (vid ? '<span class="vid"><span class="ms fill">play_circle</span>0:12</span>' : '') + '</button>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('pk-body').innerHTML = html;
+  pickerCount();
+}
+function pickerCount() {
+  var n = Object.keys(App.state.sel).filter(function (k) { return App.state.sel[k]; }).length;
+  document.getElementById('pk-count').textContent = n ? n + '개 선택됨' : '항목을 선택하세요';
+  document.getElementById('pk-allow').disabled = !n;
+  return n;
+}
+App.actions.pick = function (el) {
+  var id = el.getAttribute('data-id');
+  App.state.sel[id] = !App.state.sel[id];
+  el.classList.toggle('sel', !!App.state.sel[id]);
+  pickerCount();
+};
+App.actions.pickDone = function () {
+  // the prototype's 21-photo picker stands in for a whole album: each tap = ~3 photos in Wend's count
+  var n = pickerCount();
+  App.state.picked = Math.min(60, n * 3 + 2);
+  App.state.access = 'some';
+  App.go('partial');
+};
+App.onEnter('picker', renderPicker);
+
+/* ── results ── */
+App.onEnter('granted', function (s) {
+  fillNick(s); settleAbovePerm('granted');
+  var nums = s.querySelectorAll('[data-count]');
+  AG.granted.tick(function (f) {
+    nums.forEach(function (el) { var v = +el.getAttribute('data-count'); el.textContent = fmt(Math.round(v * f)) + el.getAttribute('data-unit'); });
+  });
+  AG.granted.open('all');
+});
+App.onEnter('partial', function () {
+  settleAbovePerm('partial');
+  var n = App.state.picked || 14;
+  document.getElementById('pt-n').textContent = n + '장';
+  AG.partial.open(n);
+});
+/* back from system settings (to #perm or #denied): follow the choice made there */
+function returnFromSettings() {
+  if (!App.state.fromSettings) return false;
+  App.state.fromSettings = false;
+  if (App.state.access === 'all') { App.after(380, function () { App.go('granted'); }); return true; }
+  if (App.state.access === 'some') { App.after(380, function () { App.go('picker'); }); return true; }
+  return false;
+}
+App.onLeave('settings', function () { App.state.fromSettings = true; });
+App.onEnter('perm', returnFromSettings);
+App.onEnter('denied', function () {
+  settleAbovePerm('denied');
+  if (returnFromSettings()) return;
+  renderDenied();
+});
+function renderDenied() {
+  var hard = App.state.denies >= 2;
+  document.getElementById('dn-steps').hidden = !hard;
+  document.getElementById('dn-cta').textContent = hard ? '설정에서 허용하기' : '다시 허용하기';
+  document.getElementById('dn-bub').textContent = hard
+    ? '두 번 거절하시면 Android가 안내창을 더 띄우지 않아요. 설정에서 한 번만 바꿔 주시면 돼요.'
+    : '읽을 사진이 없으면 틱이랑 저는 할 수 있는 게 없어요. 사진은 어디에도 올리지 않고, 직접 고르기 전에는 지우지 않아요.';
+  AG.denied.open(0);
+}
+App.actions.retry = function () {
+  if (App.state.denies >= 2) App.go('settings'); else App.dialog('sys-perm');
+};
+
+/* ── system settings ── */
+App.onEnter('settings', function () {
+  var cur = App.state.access === 'all' ? 'all' : App.state.access === 'some' ? 'some' : 'none';
+  document.querySelectorAll('#st-list .st-row').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === cur); });
+});
+App.actions.setPerm = function (el) {
+  document.querySelectorAll('#st-list .st-row').forEach(function (b) { b.classList.toggle('on', b === el); });
+  var v = el.getAttribute('data-v');
+  App.state.access = v;
+  if (v !== 'none') App.state.denies = 0;
+  App.snack(v === 'all' ? '뒤로 가면 Wend로 돌아가요' : v === 'some' ? '돌아가면 사진을 고를 수 있어요' : '허용 안함으로 바뀌었어요');
+};
+
+App.onEnter('perm', function () { AG.perm.open(0); });
+</script>

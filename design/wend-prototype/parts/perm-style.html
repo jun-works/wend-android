@@ -1,0 +1,124 @@
+<style id="perm-style">
+/* ═══ Flow 2 · 사진 접근 권한 ═══════════════════════════════════════════ */
+/* ── shared: the album globe (pale = photos Wend can't see yet, ink = photos it can) ── */
+.ag-stage{position:relative;display:grid;place-items:center;height:268px;margin:0 -24px}
+.ag-stage canvas{width:260px;height:260px;cursor:pointer;touch-action:manipulation}
+.ag-stage::before{content:"";position:absolute;left:50%;top:50%;width:236px;height:236px;margin:-118px 0 0 -118px;border-radius:50%;border:1.5px dashed var(--outline-variant)}
+.ag-cap{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:16px;font:var(--label-m);color:var(--on-surface-variant)}
+.ag-cap span{display:inline-flex;align-items:center;gap:6px}
+.ag-cap i{width:10px;height:10px;border-radius:50%;background:#d6cab9}
+.ag-cap i.ink{background:#3a322b}
+.pm-h{font:700 28px/1.32 var(--font-display);letter-spacing:-.3px;margin-top:4px}
+.pm-h em{font-style:normal;color:var(--primary)}
+.pm-sub{margin-top:10px;color:var(--on-surface-variant);font:var(--body-l)}
+
+/* ── perm: rationale ── */
+#perm .content{padding:0 24px 16px;display:flex;flex-direction:column}
+.why{margin-top:8px}
+.why-row{display:flex;gap:16px;align-items:flex-start;padding:12px 0}
+.why-row+.why-row{border-top:1px solid var(--outline-variant)}
+.why-row .ic{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--surface-container-low);color:var(--on-surface)}
+.why-row .ic .ms{--ms-size:22px}
+.why-row .ic.pin{background:#fbe1d9;color:#a8301b}
+.why-row b{display:block;font:600 15px/1.35 var(--font-body)}
+.why-row span.d{display:block;margin-top:2px;font:var(--body-m);color:var(--on-surface-variant)}
+.pm-pick{display:flex;align-items:center;gap:8px;padding:0 4px 12px;font:var(--body-m);color:var(--on-surface-variant)}
+.pm-pick .ms{--ms-size:18px;color:var(--primary)}
+.pm-pick b{color:var(--on-surface)}
+#perm .bottom-bar,#granted .bottom-bar,#partial .bottom-bar,#denied .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:4px}
+
+/* ── system UI (Android permission dialog / photo picker / settings) — deliberately NOT Wend's type & colour ── */
+.sysui{font-family:system-ui,"Apple SD Gothic Neo",sans-serif}
+.sys-tag{display:inline-flex;align-items:center;gap:4px;font:500 11px/1 system-ui,sans-serif;color:#5f6368;background:#eceff1;padding:4px 8px;border-radius:6px}
+.sys-tag .ms{--ms-size:14px}
+.dialog.sys{background:#f3f3f6;color:#1b1b1f;border-radius:28px;padding:24px;max-width:340px}
+.dialog.sys .sys-tag{display:flex;width:max-content;margin:0 auto 14px}
+.dialog.sys .d-icon{color:#4659a8;margin-bottom:14px}
+.dialog.sys .d-title{font:400 20px/1.4 system-ui,"Apple SD Gothic Neo",sans-serif;text-align:center;margin-bottom:20px;color:#1b1b1f}
+.dialog.sys .d-title b{font-weight:700}
+.sys-btns{display:flex;flex-direction:column;gap:4px}
+.sys-btns button{min-height:48px;border:0;border-radius:24px;background:#dfe1f2;color:#2b3a7a;font:500 15px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif;text-align:center;cursor:pointer}
+.sys-btns button:first-child{border-radius:24px 24px 6px 6px}
+.sys-btns button:last-child{border-radius:6px 6px 24px 24px}
+.sys-btns button:not(:first-child):not(:last-child){border-radius:6px}
+
+#picker{--screen-bg:#fbfbfe}
+#picker .top-app-bar{background:#fbfbfe;color:#1b1b1f}
+#picker .top-app-bar .title{font:400 20px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif}
+#picker .content{padding:0 0 16px}
+.pk-tabs{display:flex;gap:8px;padding:4px 16px 12px}
+.pk-tabs span{padding:8px 16px;border-radius:18px;font:500 14px/1 system-ui,sans-serif;color:#44464f;background:#eceef6}
+.pk-tabs span.on{background:#dfe1f2;color:#2b3a7a}
+.pk-sec{font:500 14px/1 system-ui,sans-serif;color:#44464f;padding:16px 16px 10px}
+.pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px}
+.pk-grid button{position:relative;aspect-ratio:1;border:0;padding:0;cursor:pointer;overflow:hidden;border-radius:2px;transition:border-radius .2s,transform .2s}
+.pk-grid button .ck{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);display:grid;place-items:center;color:#fff}
+.pk-grid button .ck .ms{--ms-size:18px;opacity:0}
+.pk-grid button.sel{transform:scale(.88);border-radius:14px}
+.pk-grid button.sel .ck{background:#4659a8;border-color:#4659a8}
+.pk-grid button.sel .ck .ms{opacity:1}
+.pk-grid button .vid{position:absolute;right:6px;bottom:6px;font:600 11px/1 system-ui,sans-serif;color:#fff;display:flex;align-items:center;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.pk-grid button .vid .ms{--ms-size:14px}
+#picker .bottom-bar{background:#fbfbfe;justify-content:space-between;align-items:center}
+#picker .pk-count{font:500 14px/1 system-ui,sans-serif;color:#44464f}
+#picker .pk-allow{min-height:40px;padding:0 24px;border:0;border-radius:20px;background:#4659a8;color:#fff;font:500 14px/1 system-ui,sans-serif;cursor:pointer}
+#picker .pk-allow:disabled{background:#e3e3e8;color:#76777f;cursor:default}
+
+/* photo tiles: one consistent flat "scene" treatment, no stock photos */
+.p-sea{background:linear-gradient(180deg,#f7c58a 0 36%,#ef8a5b 36% 44%,#2f7fd8 44%)}
+.p-dusk{background:linear-gradient(180deg,#3b3a6b,#c96f6a 70%,#f1b37d)}
+.p-forest{background:linear-gradient(180deg,#cfe3d6 0 30%,#2bae8e 30% 62%,#1f6f5a 62%)}
+.p-city{background:linear-gradient(180deg,#24305e 0 55%,#f2b33d 55% 58%,#3d4a7a 58%)}
+.p-food{background:radial-gradient(circle at 50% 55%,#f6efe2 0 30%,#e2553a 31% 36%,#efe3cf 37%)}
+.p-sky{background:linear-gradient(180deg,#9fd0f2,#e9f4fb 70%,#b9d7a1 70%)}
+.p-snow{background:linear-gradient(180deg,#dfe8f2 0 50%,#ffffff 50%)}
+.p-cafe{background:linear-gradient(135deg,#8a5a3c,#d9b38c)}
+.p-shot{background:#eef0f4;background-image:linear-gradient(#c9ced8,#c9ced8),linear-gradient(#c9ced8,#c9ced8),linear-gradient(#f2b33d,#f2b33d);background-size:70% 7px,50% 7px,40% 7px;background-position:16% 30%,16% 48%,16% 66%;background-repeat:no-repeat}
+.p-doc{background:linear-gradient(135deg,#e9d6a8,#9bc7a7)}
+
+/* ── result screens ── */
+#granted .content,#partial .content,#denied .content{padding:8px 24px 16px;display:flex;flex-direction:column}
+.res-rows{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.res-row{display:flex;align-items:center;gap:12px;padding:10px 0;font:var(--body-l)}
+.res-row .ms{--ms-size:22px;color:var(--on-surface-variant)}
+.res-row .n{margin-left:auto;font:600 17px/1 var(--font-body)}
+.res-row.pin .ms{color:#a8301b}
+.res-row+.res-row{border-top:1px solid var(--outline-variant)}
+
+/* partial: a cut trip, shown as a strip of 12 days of photos with only 3 visible */
+.cut{margin-top:12px;padding:16px;border-radius:var(--card-radius);background:var(--surface-container-lowest);box-shadow:0 1px 0 var(--outline-variant)}
+.cut-t{font:600 14px/1.3 var(--font-body);display:flex;align-items:center;gap:6px}
+.cut-t .ms{--ms-size:18px;color:#a8301b}
+.cut-strip{display:flex;gap:4px;margin:14px 0 8px}
+.cut-strip i{flex:1;height:28px;border-radius:6px;background:#e2d9cb}
+.cut-strip i.on{background:#3a322b}
+.cut-legend{display:flex;justify-content:space-between;font:var(--body-s);color:var(--on-surface-variant)}
+.cut p{margin-top:10px;font:var(--body-m);color:var(--on-surface-variant)}
+.cut p b{color:var(--on-surface)}
+
+/* denied: Pin speaks for the rule, same chat look as the guide */
+.dn-say{display:flex;gap:10px;align-items:flex-start;margin-top:12px}
+.dn-say svg{width:44px;height:44px;flex:none}
+.dn-say .bub{max-width:290px}
+.dn-steps{margin-top:16px;padding:14px 16px;border-radius:16px;background:var(--surface-container-low);font:var(--body-m);color:var(--on-surface-variant)}
+.dn-steps b{color:var(--on-surface)}
+.dn-steps .ms{--ms-size:16px;vertical-align:-3px}
+
+/* settings (system) */
+#settings{--screen-bg:#fbfbfe}
+#settings .top-app-bar{background:#fbfbfe;color:#1b1b1f}
+#settings .top-app-bar .title{font:400 22px/1.2 system-ui,"Apple SD Gothic Neo",sans-serif}
+#settings .content{padding:0 0 24px;font-family:system-ui,"Apple SD Gothic Neo",sans-serif;color:#1b1b1f}
+.st-app{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 0 20px}
+.st-app .logo{width:56px;height:56px;border-radius:16px;background:#f6f1e9;display:grid;place-items:center;box-shadow:0 0 0 1px #e3e3e8}
+.st-app .logo svg{width:40px;height:40px}
+.st-app b{font:400 20px/1 system-ui,sans-serif}
+.st-sec{padding:16px 24px 8px;font:500 14px/1 system-ui,sans-serif;color:#4659a8}
+.st-row{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 24px;border:0;background:none;text-align:left;cursor:pointer;font:400 16px/1.3 system-ui,"Apple SD Gothic Neo",sans-serif;color:#1b1b1f}
+.st-row .rd{width:20px;height:20px;border-radius:50%;border:2px solid #44464f;flex:none;display:grid;place-items:center}
+.st-row.on .rd{border-color:#4659a8}
+.st-row.on .rd::after{content:"";width:10px;height:10px;border-radius:50%;background:#4659a8}
+.st-row small{display:block;font:400 13px/1.35 system-ui,sans-serif;color:#44464f;margin-top:2px}
+.st-foot{padding:16px 24px;font:400 14px/1.45 system-ui,sans-serif;color:#44464f;display:flex;gap:12px}
+.st-foot .ms{--ms-size:20px;flex:none}
+</style>

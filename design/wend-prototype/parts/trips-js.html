@@ -1,0 +1,98 @@
+<script id="trips-js">
+/* ═══ Flow 4 · 여행 목록 (메인) ═══════════════════════════════════════
+   Signature: the globe from the analysis stays with you. It sits big above the list, then shrinks into the app bar as
+   you scroll — and keeps turning so the trip you're looking at faces front in its colour while the others step back.
+   Tap a cluster on the globe and the list jumps to that trip. One globe, one list, the same trips. */
+var TRIP_PHOTOS = {   // stand-in photos per trip (same swatches as the photo picker)
+  '전주': ['p-food', 'p-forest', 'p-cafe'], '오사카': ['p-city', 'p-food', 'p-dusk'], '성수동': ['p-cafe', 'p-food', 'p-city'],
+  '강릉': ['p-sea', 'p-snow', 'p-cafe'], '도쿄': ['p-city', 'p-dusk', 'p-food'], '부산': ['p-sea', 'p-food', 'p-city'], '제주': ['p-sea', 'p-dusk', 'p-forest'],
+};
+TG.list = TripGlobe('tg-list', 'trips');
+var TR = { data: null, focus: -1 };
+
+function tripCard(t, k) {
+  var ph = TRIP_PHOTOS[t.place] || ['p-sky', 'p-food', 'p-city'];
+  return '<button class="tc" data-action="openTrip" data-links="trip" data-k="' + k + '" style="--c:' + t.c + '" aria-label="' + t.place + ' 여행, ' + t.date + ', ' + t.n + '장">' +
+    '<span class="tc-ph"><i class="' + ph[0] + '"></i><i class="' + ph[1] + '"></i><i class="more ' + ph[2] + '"><b>+' + fmt(Math.max(0, t.n - 3)) + '</b></i></span>' +
+    '<span class="tc-row"><i class="tk-dot" style="--c:' + t.c + '"></i><span class="tc-main"><b>' + t.place + '</b><span>' + t.date + ' · ' + t.days + '</span></span>' +
+    '<span class="tc-n num">' + fmt(t.n) + '장</span></span></button>';
+}
+function renderTrips() {
+  var data = TR.data = analysisData(), trips = data.trips, sum = trips.reduce(function (a, t) { return a + t.n; }, 0);
+  TG.list.setup(data); TG.list.set(1);
+  document.getElementById('tr-sum').innerHTML = trips.length
+    ? '여행 <b>' + trips.length + '</b>개 · 사진 <b>' + fmt(sum) + '</b>장'
+    : '아직 찾은 여행이 없어요';
+  document.getElementById('tr-hint').hidden = !trips.length;
+  var html = '';
+  if (data.partial) html += '<div class="tr-part"><span class="ms fill">photo_library</span><span>고르신 사진에서 찾은 여행만 보여요.</span>' +
+    '<button class="btn tonal" data-dialog="sys-more">모두 허용</button></div>';
+  if (!trips.length) {
+    html += '<div class="tr-empty"><b>여행이 생기면 여기에 모여요</b>위치 태그를 켜고 찍은 사진이 쌓이면 틱과 핀이 여행을 찾아 드릴게요.</div>';
+  } else {
+    var year = null;
+    trips.map(function (t, k) { return k; }).reverse().forEach(function (k) {
+      var t = trips[k], y = t.date.slice(0, 4);
+      if (y !== year) {
+        year = y;
+        var cnt = trips.filter(function (x) { return x.date.slice(0, 4) === y; }).length;
+        html += '<div class="tr-year"><b>' + y + '</b><span>여행 ' + cnt + '개</span></div>';
+      }
+      html += tripCard(t, k);
+    });
+  }
+  var left = data.total - sum;
+  if (left > 0) html += '<button class="tr-left" data-action="openLeft"><span class="ms">photo_library</span><span>여행에 담기지 않은 사진·영상 <b class="num">' + fmt(left) + '</b>개</span><span class="ms">chevron_right</span></button>';
+  document.getElementById('tr-list').innerHTML = html;
+  TR.focus = -1; placeGlobe();
+}
+
+/* scroll → globe size/position (header ↔ app bar) and which trip faces front */
+function placeGlobe() {
+  var scr = document.getElementById('trips'), sc = document.getElementById('tr-scroll'), cv = document.getElementById('tg-list');
+  var sr = scr.getBoundingClientRect(), k = scr.offsetWidth / sr.width;
+  var a = document.getElementById('tr-slot').getBoundingClientRect(), b = document.getElementById('tr-dock').getBoundingClientRect();
+  var f = Math.max(0, Math.min(1, sc.scrollTop / 170)); f = f * f * (3 - 2 * f);
+  var x = (a.left + (b.left - a.left) * f - sr.left) * k, y = (a.top + (b.top - a.top) * f - sr.top) * k, size = 200 + (40 - 200) * f;
+  cv.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (size / 200).toFixed(3) + ')';
+  cv.classList.toggle('docked', f > .7);
+  document.getElementById('tr-slot').style.opacity = Math.max(0, 1 - f * 2.5).toFixed(2);   // the dashed orbit stays behind, so fade it
+  // focus: the first card whose bottom is below the app bar + a little; at the very top, the newest trip
+  var cards = document.querySelectorAll('#tr-list .tc'), line = b.bottom + 24, pick = -1;
+  for (var i = 0; i < cards.length; i++) { if (cards[i].getBoundingClientRect().bottom > line) { pick = +cards[i].getAttribute('data-k'); break; } }
+  if (sc.scrollTop < 40 && cards.length) pick = +cards[0].getAttribute('data-k');
+  if (pick !== TR.focus) {
+    TR.focus = pick;
+    TG.list.focus(pick, App.shot);
+    cards.forEach(function (c) { c.classList.toggle('on', +c.getAttribute('data-k') === pick); });
+  }
+}
+var trRaf = 0;
+document.getElementById('tr-scroll').addEventListener('scroll', function () {
+  if (trRaf) return; trRaf = requestAnimationFrame(function () { trRaf = 0; placeGlobe(); });
+}, { passive: true });
+window.addEventListener('resize', function () { if (App.current() === 'trips') placeGlobe(); });
+
+/* globe taps: a cluster → its trip card; the docked globe → back to the top */
+document.getElementById('tg-list').addEventListener('click', function (e) {
+  if (!this.classList.contains('docked')) return;
+  e.stopImmediatePropagation();
+  document.getElementById('tr-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+}, true);
+TG.list.pick(function (k) {
+  var sc = document.getElementById('tr-scroll'), card = document.querySelector('#tr-list .tc[data-k="' + k + '"]');
+  if (!card) return;
+  var top = sc.scrollTop + card.getBoundingClientRect().top - document.getElementById('tr-dock').getBoundingClientRect().bottom - 28;
+  sc.scrollTo({ top: Math.max(180, top), behavior: 'smooth' });
+});
+
+App.onEnter('trips', function () { renderTrips(); App.after(0, placeGlobe); });
+/* the list is home: arriving here clears the first-run screens from the back stack */
+App.actions.openTrips = function () {
+  App.go('trips');
+  setTimeout(function () { if (App.current() === 'trips') App.stack = ['trips']; }, 0);
+  return false;
+};
+App.actions.openLeft = function () { App.go('left'); return false; };
+App.actions.openSettings = function () { App.go('prefs'); return false; };
+</script>

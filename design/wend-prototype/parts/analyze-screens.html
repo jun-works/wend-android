@@ -1,0 +1,57 @@
+    <!-- ═══ Flow 3 · 분석 중 ═══ -->
+
+    <!-- 11 · 분석 중 -->
+    <section class="screen" id="analyze" data-title="여행 찾는 중" data-no-up data-links="found">
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px"><span class="nk-slot">여행자</span>님의 여행을<br><em>찾고 있어요</em></h1>
+        <div class="an-status" id="an-status" aria-live="polite"></div>
+        <div class="ag-stage" style="height:252px">
+          <canvas id="tg-run" style="filter:url(#goo-c);width:244px;height:244px" width="488" height="488" aria-label="사진 방울들이 색을 띠며 여행별 덩어리로 뭉치는 애니메이션" data-js></canvas>
+        </div>
+        <div class="an-read"><span>읽은 사진</span><span class="bar"><i id="an-bar"></i></span><span class="num" id="an-count">0 / 2,554</span></div>
+        <div class="an-found-t">찾은 여행 <b id="an-n">0</b></div>
+        <div class="tks" id="an-list" data-links="nofound"><div class="an-empty" id="an-empty">아직 찾는 중이에요</div></div>
+        <div class="an-note"><span class="ms">phonelink_lock</span>이 휴대폰 안에서만 읽어요. 사진은 어디에도 올리지 않아요.</div>
+      </div>
+    </section>
+
+    <!-- 12 · 찾기 완료 -->
+    <section class="screen" id="found" data-title="여행 찾기 완료" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px" id="fd-h">여행 <em>7개</em>를<br>찾았어요</h1>
+        <p class="fd-sub" id="fd-sub"></p>
+        <div class="ag-stage">
+          <canvas id="tg-done" style="filter:url(#goo-c)" width="424" height="424" aria-label="여행마다 다른 색 덩어리로 뭉친 지구본" data-js></canvas>
+        </div>
+        <div class="tks" id="fd-list"></div>
+        <div class="fd-cut" id="fd-cut" hidden><span class="ms fill">content_cut</span><span>고른 사진만 보면 한 여행이 여러 개로 나뉘어 보일 수 있어요. 모든 사진을 허용하면 이어서 찾아 드려요.</span></div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" data-action="openTrips" data-links="trips">여행 보러 가기</button>
+        <button class="btn text block" id="fd-more" data-dialog="sys-more" hidden>모든 사진 허용하기</button>
+      </div>
+    </section>
+
+    <!-- 13 · 여행을 하나도 못 찾음 -->
+    <section class="screen" id="nofound" data-title="여행 없음" data-no-up>
+      <div class="content">
+        <h1 class="pm-h" style="margin-top:24px">아직 여행을<br>찾지 못했어요</h1>
+        <p class="fd-sub" id="nf-sub"></p>
+        <div class="ag-stage" style="height:224px">
+          <canvas id="tg-none" style="filter:url(#goo-c);width:212px;height:212px" width="424" height="424" aria-label="색이 들지 않은 회색 방울만 남은 지구본" data-js></canvas>
+        </div>
+        <div class="dn-say">
+          <svg class="bot b2" aria-hidden="true"><use href="#bot-pin"/></svg>
+          <div class="col"><div class="who" style="font:600 12px/1 var(--font-body);color:var(--on-surface-variant);margin:6px 0 8px 4px">핀 · 장소 담당</div>
+            <div class="bub" id="nf-bub"></div></div>
+        </div>
+        <div class="dn-steps" id="nf-steps">
+          <span class="ms">photo_camera</span> 카메라 <span class="ms">chevron_right</span> 설정 <span class="ms">chevron_right</span> <b>위치 태그</b> 켜기
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <button class="btn block lg" id="nf-cta" data-action="openTrips" data-links="trips">확인했어요</button>
+        <button class="btn block lg" id="nf-more" data-dialog="sys-more" hidden>모든 사진 허용하기</button>
+        <button class="btn text block" id="nf-skip" data-action="openTrips" hidden>이대로 둘러볼게요</button>
+      </div>
+    </section>
