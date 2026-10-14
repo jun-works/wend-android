@@ -18,6 +18,7 @@ import app.wend.sea.feature.permission.PartialScreen
 import app.wend.sea.feature.permission.PermScreen
 import app.wend.sea.feature.splash.SplashDestination
 import app.wend.sea.feature.splash.SplashScreen
+import app.wend.sea.feature.trips.TripsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable data object SplashRoute
@@ -31,6 +32,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object AnalyzeRoute
 @Serializable data object FoundRoute
 @Serializable data object NoFoundRoute
+@Serializable data object TripsRoute
 
 @Composable
 fun WendNavHost() {
@@ -49,6 +51,7 @@ fun WendNavHost() {
                         SplashDestination.Analyzing -> AnalyzeRoute
                         SplashDestination.Found -> FoundRoute
                         SplashDestination.NoFound -> NoFoundRoute
+                        SplashDestination.Trips -> TripsRoute
                     }
                     navController.navigate(first) {
                         popUpTo(SplashRoute) { inclusive = true }
@@ -118,9 +121,21 @@ fun WendNavHost() {
                 onFailed = navController::showMediaResult,
             )
         }
-        composable<FoundRoute> { FoundScreen(onReanalyze = { navController.reanalyze(FoundRoute) }) }
-        composable<NoFoundRoute> { NoFoundScreen(onReanalyze = { navController.reanalyze(NoFoundRoute) }) }
+        composable<FoundRoute> {
+            FoundScreen(onReanalyze = { navController.reanalyze(FoundRoute) }, onOpenTrips = navController::openTripsAsHome)
+        }
+        composable<NoFoundRoute> {
+            NoFoundScreen(onReanalyze = { navController.reanalyze(NoFoundRoute) }, onOpenTrips = navController::openTripsAsHome)
+        }
+        composable<TripsRoute> { TripsScreen(onReanalyze = { navController.reanalyze(TripsRoute) }) }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
+    }
+}
+
+/** 목록이 홈: 첫 실행 화면(온보딩·권한·분석)은 뒤로 가기 기록에서 지운다 */
+private fun NavController.openTripsAsHome() {
+    navigate(TripsRoute) {
+        popUpTo(graph.id) { inclusive = true }
     }
 }
 

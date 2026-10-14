@@ -33,12 +33,15 @@ sealed interface ResultEvent {
 
     /** 모든 사진을 허용해서 처음부터 다시 찾는다 */
     data object Reanalyze : ResultEvent
+
+    /** 결과를 봤으니 목록(홈)으로 */
+    data object OpenTrips : ResultEvent
 }
 
 /** 찾기 완료 · 여행 없음 화면이 같이 쓴다 */
 @HiltViewModel
 class ResultViewModel @Inject constructor(
-    userRepository: UserRepository,
+    private val userRepository: UserRepository,
     private val mediaRepository: MediaRepository,
     private val analysisRepository: AnalysisRepository,
     private val resultHandler: PermissionResultHandler,
@@ -61,7 +64,14 @@ class ResultViewModel @Inject constructor(
     }
 
     fun onBrowse() {
-        _events.trySend(ResultEvent.ShowMessage("다음 단계(여행 목록)는 곧 이어서 만들어요"))
+        viewModelScope.launch {
+            userRepository.markAnalysisResultSeen()
+            _events.send(ResultEvent.OpenTrips)
+        }
+    }
+
+    fun onTripClick() {
+        _events.trySend(ResultEvent.ShowMessage("다음 단계(여행 상세)는 곧 이어서 만들어요"))
     }
 
     /** 권한 안내창 결과: 모두 허용이 되면 처음부터 다시 찾는다 */

@@ -60,8 +60,10 @@ import app.wend.sea.feature.permission.rememberMediaPermissionRequest
 @Composable
 fun NoFoundScreen(
     onReanalyze: () -> Unit,
+    onOpenTrips: () -> Unit,
     viewModel: ResultViewModel = hiltViewModel(),
 ) {
+    val currentOnOpenTrips by rememberUpdatedState(onOpenTrips)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val summary = uiState.summary
     val partial = summary?.partial == true
@@ -87,6 +89,7 @@ fun NoFoundScreen(
             when (event) {
                 is ResultEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
                 ResultEvent.Reanalyze -> currentOnReanalyze()
+                ResultEvent.OpenTrips -> currentOnOpenTrips()
             }
         }
     }

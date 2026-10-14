@@ -1,6 +1,8 @@
 package app.wend.sea.feature.analysis
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,8 +48,10 @@ import app.wend.sea.feature.permission.rememberMediaPermissionRequest
 @Composable
 fun FoundScreen(
     onReanalyze: () -> Unit,
+    onOpenTrips: () -> Unit,
     viewModel: ResultViewModel = hiltViewModel(),
 ) {
+    val currentOnOpenTrips by rememberUpdatedState(onOpenTrips)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val summary = uiState.summary
     val partial = summary?.partial == true
@@ -69,6 +73,7 @@ fun FoundScreen(
             when (event) {
                 is ResultEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
                 ResultEvent.Reanalyze -> currentOnReanalyze()
+                ResultEvent.OpenTrips -> currentOnOpenTrips()
             }
         }
     }
@@ -144,7 +149,15 @@ fun FoundScreen(
                 description = "여행마다 다른 색 덩어리로 뭉친 지구본",
             )
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                trips.reversed().take(3).forEach { TripTicket(it) }
+                trips.reversed().take(3).forEach { trip ->
+                    TripTicket(
+                        trip,
+                        Modifier.clip(RoundedCornerShape(16.dp)).clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                            viewModel.onTripClick()
+                        },
+                    )
+                }
             }
             if (trips.size > 3) {
                 Text(

@@ -31,9 +31,12 @@ enum class SplashDestination {
     /** 여행을 찾는 중(앱을 닫았다 다시 열었을 때) */
     Analyzing,
 
-    /** 여행 찾기를 마쳤음 → 찾기 완료 / 여행 없음 */
+    /** 여행 찾기를 마쳤고 결과를 아직 안 봄 → 찾기 완료 / 여행 없음 */
     Found,
     NoFound,
+
+    /** 결과를 봤음 → 여행 목록(홈) */
+    Trips,
 }
 
 @HiltViewModel
@@ -50,13 +53,15 @@ class SplashViewModel @Inject constructor(
             userRepository.onboardingDone,
             analysisRepository.state,
             analysisRepository.summary,
-        ) { nickname, onboarded, analysis, summary ->
+            userRepository.analysisResultSeen,
+        ) { nickname, onboarded, analysis, summary, seen ->
             val access = mediaRepository.currentAccess()
             when {
                 nickname.isNullOrBlank() -> SplashDestination.Nickname
                 !onboarded -> SplashDestination.Globe
                 access == MediaAccess.None -> SplashDestination.Permission
                 analysis is AnalysisState.Running -> SplashDestination.Analyzing
+                summary != null && seen -> SplashDestination.Trips
                 summary != null -> if (summary.tripCount > 0) SplashDestination.Found else SplashDestination.NoFound
                 access == MediaAccess.All -> SplashDestination.Granted
                 else -> SplashDestination.Partial

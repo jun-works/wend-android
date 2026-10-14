@@ -1,8 +1,6 @@
 package app.wend.sea.core.designsystem.component
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
@@ -87,6 +87,15 @@ private class TripSim {
     var scatter = 0f
     var t = 0f
 
+    /** 보고 있는 여행 — 그 덩어리를 앞으로 돌리고 나머지 여행은 흐리게 */
+    var focus = -1
+    private var focusAmount = 0f
+
+    // 덩어리 중심의 화면 위치(탭으로 여행 고르기)
+    private var projX = FloatArray(0)
+    private var projY = FloatArray(0)
+    private var projZ = FloatArray(0)
+
     init {
         val rnd = Seeded(23)
         val golden = (PI * (3 - sqrt(5.0))).toFloat()
@@ -113,6 +122,9 @@ private class TripSim {
         val visible = if (partial) maxOf(12, (N * .16f).roundToInt()) else N
         lit.fill(false)
         (0 until N).sortedBy { pick[it] }.take(visible).forEach { lit[it] = true }
+        projX = FloatArray(trips.size)
+        projY = FloatArray(trips.size)
+        projZ = FloatArray(trips.size)
         val reach = if (partial) .55f else .86f
         for (i in 0 until N) {
             trip[i] = -1
@@ -130,8 +142,34 @@ private class TripSim {
 
     fun tick(dt: Float, p: Float) {
         t += dt
-        rot += dt * if (p >= 1f) .2f else .32f
+        val f = focus
+        if (f in tripC.indices) {
+            // 최단 방향으로 그 덩어리를 앞으로
+            val want = kotlin.math.atan2(tripC[f][0], tripC[f][2])
+            var dr = want - rot
+            dr = kotlin.math.atan2(sin(dr), cos(dr))
+            rot += dr * min(1f, dt * 3.2f)
+        } else {
+            rot += dt * if (p >= 1f) .2f else .32f
+        }
+        focusAmount += ((if (f >= 0) 1f else 0f) - focusAmount) * min(1f, dt * 3f)
         scatter *= exp(ln(.12f) * dt)
+    }
+
+    /** 탭 위치에 가장 가까운 앞쪽 덩어리 */
+    fun pick(x: Float, y: Float, sizePx: Float): Int? {
+        var best: Int? = null
+        var bestD = (sizePx * .16f) * (sizePx * .16f)
+        for (k in projX.indices) {
+            val dx = projX[k] - x
+            val dy = projY[k] - y
+            val d = dx * dx + dy * dy
+            if (projZ[k] > -.1f && d < bestD) {
+                bestD = d
+                best = k
+            }
+        }
+        return best
     }
 
     private fun clamp(x: Float) = x.coerceIn(0f, 1f)
@@ -182,6 +220,9 @@ private class TripSim {
                     else -> base
                 }
             }
+            if (k >= 0 && k != focus && focusAmount > 0f) {
+                for (j in 0..2) rgb[j] += (Dim[j] - rgb[j]) * .62f * focusAmount // 다른 여행은 물러남
+            }
             val f = min(.8f, (1 - depth) * .6f)
             px[i] = c + x * radius * rr
             py[i] = c + y * radius * rr
@@ -203,6 +244,15 @@ private class TripSim {
             order[b + 1] = idx
         }
         for (i in order) drawCircle(Color(pc[i].toULong()), radius = pr[i], center = Offset(px[i], py[i]))
+        tripC.forEachIndexed { k, v ->
+            val x = v[0] * cr - v[2] * sr
+            var z = v[0] * sr + v[2] * cr
+            val y = v[1] * ca - z * sa
+            z = v[1] * sa + z * ca
+            projX[k] = c + x * radius
+            projY[k] = c + y * radius
+            projZ[k] = z
+        }
     }
 }
 
@@ -218,8 +268,13 @@ fun TripGlobe(
     size: Dp,
     description: String,
     modifier: Modifier = Modifier,
+    focus: () -> Int = { -1 },
+    /** 지구본을 누르면: 누른 곳의 여행(없으면 null). 주지 않으면 방울만 흩어진다. */
+    onClick: ((trip: Int?) -> Unit)? = null,
 ) {
     val sim = remember { TripSim() }
+    val currentFocus by rememberUpdatedState(focus)
+    val currentOnClick by rememberUpdatedState(onClick)
     val reducedMotion = rememberReducedMotion()
     val haptic = LocalHapticFeedback.current
     val currentProgress by rememberUpdatedState(progress)
@@ -235,6 +290,7 @@ fun TripGlobe(
                 if (last != 0L && now - last < FRAME_INTERVAL_NS) return@withFrameNanos
                 val dt = if (last == 0L) .016f else min(.05f, (now - last) / 1e9f)
                 last = now
+                sim.focus = currentFocus()
                 sim.tick(dt, currentProgress())
                 frame = now
             }
@@ -246,13 +302,14 @@ fun TripGlobe(
             .size(size)
             .gooey(blurSigma = 6.dp, keepColors = true)
             .semantics { contentDescription = description }
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClickLabel = "방울 흩뜨리기",
-            ) {
-                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                sim.scatter = 1.1f
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                    val picked = sim.pick(offset.x, offset.y, this.size.width.toFloat())
+                    val click = currentOnClick
+                    if (click != null) click(picked)
+                    if (click == null || picked == null) sim.scatter = 1.1f
+                }
             },
     ) {
         frame // 프레임마다 다시 그리도록 읽기

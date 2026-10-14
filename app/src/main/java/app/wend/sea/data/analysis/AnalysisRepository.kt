@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import app.wend.sea.data.AnalysisSummary
+import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.UserRepository
 import app.wend.sea.data.local.TripDao
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -62,6 +63,13 @@ class AnalysisRepository @Inject constructor(
     val summary: Flow<AnalysisSummary?> = userRepository.analysisSummary
 
     suspend fun trips(): List<Trip> = tripDao.trips().map { Trip(it.number, it.start, it.end, it.mediaCount) }
+
+    /** 여행마다 카드에 보일 사진 3장: 첫 장 · 가운데 장 · 마지막 장 */
+    suspend fun covers(): Map<Int, List<MediaThumbnail>> =
+        tripDao.allMedia().groupBy { it.tripNumber }.mapValues { (_, media) ->
+            listOf(0, media.size / 2, media.lastIndex).distinct().filter { it in media.indices }
+                .map { MediaThumbnail(media[it].mediaId, media[it].video) }
+        }
 
     private companion object {
         const val WORK_NAME = "trip-analysis"

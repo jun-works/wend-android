@@ -50,8 +50,16 @@ class UserRepository @Inject constructor(
         )
     }
 
+    /** 이번 분석 결과(찾기 완료 / 여행 없음)를 보고 목록으로 넘어갔는지 — 보기 전이면 다음 실행 때 결과 화면부터 */
+    val analysisResultSeen: Flow<Boolean> = dataStore.data.map { it[KEY_ANALYSIS_SEEN] ?: false }
+
+    suspend fun markAnalysisResultSeen() {
+        dataStore.edit { it[KEY_ANALYSIS_SEEN] = true }
+    }
+
     suspend fun saveAnalysisSummary(summary: AnalysisSummary) {
         dataStore.edit {
+            it[KEY_ANALYSIS_SEEN] = false
             it[KEY_ANALYSIS_TOTAL] = summary.total
             it[KEY_ANALYSIS_INCLUDED] = summary.included
             it[KEY_ANALYSIS_TRIPS] = summary.tripCount
@@ -88,5 +96,6 @@ class UserRepository @Inject constructor(
         val KEY_ANALYSIS_INCLUDED = intPreferencesKey("analysis_included")
         val KEY_ANALYSIS_TRIPS = intPreferencesKey("analysis_trips")
         val KEY_ANALYSIS_PARTIAL = booleanPreferencesKey("analysis_partial")
+        val KEY_ANALYSIS_SEEN = booleanPreferencesKey("analysis_seen")
     }
 }
