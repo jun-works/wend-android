@@ -1,6 +1,21 @@
 package app.wend.sea.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import app.wend.sea.core.designsystem.component.TripReveal
+import app.wend.sea.core.designsystem.component.tripColor
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,7 +53,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object FoundRoute
 @Serializable data object NoFoundRoute
 @Serializable data object TripsRoute
-@Serializable data class TripRoute(val number: Int)
+/** [x]·[y] 는 상세가 퍼져 나올 카드 방울 중심(화면 좌표), 없으면 -1 */
+@Serializable data class TripRoute(val number: Int, val x: Float = -1f, val y: Float = -1f)
 @Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int)
 @Serializable data object LicensesRoute
 
@@ -129,7 +145,10 @@ fun WendNavHost() {
                 onFailed = navController::showMediaResult,
             )
         }
-        composable<FoundRoute> {
+        composable<FoundRoute>(
+            exitTransition = { if (targetState.destination.hasRoute<TripRoute>()) ExitTransition.KeepUntilTransitionsFinished else null },
+            popEnterTransition = { if (initialState.destination.hasRoute<TripRoute>()) EnterTransition.None else null },
+        ) {
             FoundScreen(
                 onReanalyze = { navController.reanalyze(FoundRoute) },
                 onOpenTrips = navController::openTripsAsHome,
@@ -139,21 +158,50 @@ fun WendNavHost() {
         composable<NoFoundRoute> {
             NoFoundScreen(onReanalyze = { navController.reanalyze(NoFoundRoute) }, onOpenTrips = navController::openTripsAsHome)
         }
-        composable<TripsRoute> {
+        composable<TripsRoute>(
+            // 여행 상세가 카드 방울에서 퍼지는 동안 목록은 그대로 아래에 남는다
+            exitTransition = { if (targetState.destination.hasRoute<TripRoute>()) ExitTransition.KeepUntilTransitionsFinished else null },
+            popEnterTransition = { if (initialState.destination.hasRoute<TripRoute>()) EnterTransition.None else null },
+        ) {
             TripsScreen(
                 onReanalyze = { navController.reanalyze(TripsRoute) },
-                onTripClick = { navController.navigate(TripRoute(it)) },
+                onTripClick = { number, origin -> navController.navigate(TripRoute(number, origin.x, origin.y)) },
                 // 설정 화면이 생기기 전까지는 라이선스로 바로 간다
                 onSettingsClick = { navController.navigate(LicensesRoute) },
             )
         }
         composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
-        composable<TripRoute> { entry ->
-            val number = entry.toRoute<TripRoute>().number
-            TripDetailScreen(
-                onBack = { navController.popBackStack() },
-                onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
-            )
+        composable<TripRoute>(
+            // 목록 ↔ 상세: 겹쳐 흐리게 바꾸지 않고, 상세가 카드 방울에서 퍼지고(아래 TripReveal) 방울로 오므라든다
+            enterTransition = { if (initialState.destination.hasRoute<ViewerRoute>()) null else EnterTransition.None },
+            popExitTransition = { if (targetState.destination.hasRoute<ViewerRoute>()) null else ExitTransition.KeepUntilTransitionsFinished },
+        ) { entry ->
+            val route = entry.toRoute<TripRoute>()
+            val number = route.number
+            // 처음 열 때만 퍼지고(사진 크게 보기에서 돌아올 때는 아님), 목록으로 돌아갈 때만 오므라든다
+            var revealed by rememberSaveable { mutableStateOf(false) }
+            val anim by transition.animateFloat(transitionSpec = { tween(520, easing = FastOutSlowInEasing) }, label = "tripReveal") {
+                if (it == EnterExitState.Visible) 1f else 0f
+            }
+            val leavingToList = transition.targetState == EnterExitState.PostExit &&
+                navController.currentBackStackEntry?.destination?.hasRoute<ViewerRoute>() != true
+            val progress = when {
+                leavingToList -> anim
+                transition.targetState == EnterExitState.PostExit -> 1f
+                !revealed -> anim
+                else -> 1f
+            }
+            LaunchedEffect(anim) { if (anim >= 1f) revealed = true }
+            TripReveal(
+                progress = progress,
+                origin = if (route.x >= 0f) Offset(route.x, route.y) else null,
+                color = tripColor(number),
+            ) {
+                TripDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
+                )
+            }
         }
         composable<ViewerRoute> {
             ViewerScreen(

@@ -120,7 +120,8 @@ private val CardCountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = 
 @Composable
 fun TripsScreen(
     onReanalyze: () -> Unit,
-    onTripClick: (number: Int) -> Unit,
+    /** [origin] 은 카드 색 방울의 화면 좌표 — 상세가 그 방울에서 퍼져 나온다 */
+    onTripClick: (number: Int, origin: Offset) -> Unit,
     onSettingsClick: () -> Unit,
     viewModel: TripsViewModel = hiltViewModel(),
 ) {
@@ -252,9 +253,9 @@ fun TripsScreen(
                                 focused = trip.number == focusNumber,
                                 glowToken = uiState.renamedToken.takeIf { uiState.renamed == trip.number },
                                 onRename = { renaming = trip.number },
-                                onClick = {
+                                onClick = { origin ->
                                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                    onTripClick(trip.number)
+                                    onTripClick(trip.number, origin)
                                 },
                             )
                         }
@@ -383,7 +384,8 @@ private fun YearHeader(year: Int, count: Int) {
 
 /** 시안 `.tc`: 사진 3장(큰 1 + 작은 2, 마지막에 "+나머지") · 색 방울 · 이름 · 기간 · 장수. 보고 있으면 여행 색 테두리 */
 @Composable
-private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean, glowToken: Long?, onRename: () -> Unit, onClick: () -> Unit) {
+private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean, glowToken: Long?, onRename: () -> Unit, onClick: (origin: Offset) -> Unit) {
+    var dotCenter by remember { mutableStateOf(Offset.Unspecified) }
     val colors = MaterialTheme.colorScheme
     val color = tripColor(trip.number)
     val shape = RoundedCornerShape(20.dp)
@@ -396,7 +398,7 @@ private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean,
             .paperCard(shape, colors.surfaceContainerLowest)
             .border(BorderStroke(2.dp, border), shape)
             .clip(shape)
-            .clickable(onClickLabel = "${trip.name} 열기", onClick = onClick),
+            .clickable(onClickLabel = "${trip.name} 열기", onClick = { onClick(dotCenter) }),
     ) {
         Row(Modifier.fillMaxWidth().height(124.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             Cover(covers.getOrNull(0), Modifier.weight(2f).fillMaxHeight())
@@ -418,7 +420,13 @@ private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(Modifier.padding(horizontal = 2.dp).size(22.dp).graphicsLayer { scaleX = dotScale; scaleY = dotScale }) {
+            Box(
+                Modifier
+                    .padding(horizontal = 2.dp)
+                    .size(22.dp)
+                    .onGloballyPositioned { dotCenter = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f) }
+                    .graphicsLayer { scaleX = dotScale; scaleY = dotScale },
+            ) {
                 Box(Modifier.size(22.dp).background(color, CircleShape))
                 Box(Modifier.offset(x = 19.dp, y = (-5).dp).size(10.dp).background(color, CircleShape))
             }

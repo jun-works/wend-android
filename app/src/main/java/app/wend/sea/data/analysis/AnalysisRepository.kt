@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.ZoneId
 import java.util.Locale
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -95,9 +97,29 @@ class AnalysisRepository @Inject constructor(
         return entities.map { Trip(it.number, it.start, it.end, it.mediaCount, title(it, cities, locale), userNames[it.number]) }
     }
 
+    /**
+     * 여행 상세는 장소 묶기·지명 찾기로 0.5초쯤 걸려서, 목록이 뜰 때 미리 읽어 두고(prefetch) 열 때 바로 쓴다.
+     * 여행 행(장수·기간·도시)이나 사용자 이름, 언어가 바뀌면 다시 계산한다.
+     */
+    private val detailLock = Mutex()
+    private val detailCache = HashMap<Int, CachedDetail>()
+    private var namesVersion = 0
+
+    private data class CachedDetail(val entity: TripEntity, val namesVersion: Int, val locale: Locale, val detail: TripDetail)
+
+    /** 목록에 보이는 여행들의 상세를 미리 읽는다 */
+    suspend fun prefetchTripDetails(numbers: List<Int>) = numbers.forEach { tripDetail(it) }
+
     /** 여행 하나와, 그 사진들을 장소 단위로 나눈 것 */
-    suspend fun tripDetail(number: Int): TripDetail? {
-        val entity = tripDao.trip(number) ?: return null
+    suspend fun tripDetail(number: Int): TripDetail? = detailLock.withLock {
+        val entity = tripDao.trip(number) ?: return@withLock null
+        val locale = locale()
+        detailCache[number]?.takeIf { it.entity == entity && it.namesVersion == namesVersion && it.locale == locale }?.let { return@withLock it.detail }
+        loadTripDetail(entity).also { if (it != null) detailCache[number] = CachedDetail(entity, namesVersion, locale, it) }
+    }
+
+    private suspend fun loadTripDetail(entity: TripEntity): TripDetail? {
+        val number = entity.number
         val keys = tripDao.media(number).map { it.video to it.mediaId }
         val points = mediaRepository.points(keys)
         val places = withContext(Dispatchers.Default) { PlaceGrouper().group(points) }
@@ -131,11 +153,13 @@ class AnalysisRepository @Inject constructor(
     /** 여행 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
     suspend fun renameTrip(number: Int, name: String?) {
         tripDao.setName(UserNameEntity.KIND_TRIP, tripDao.media(number).map { it.video to it.mediaId }, name)
+        detailLock.withLock { namesVersion++ }
     }
 
     /** 장소(그 사진들) 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
     suspend fun renamePlace(media: List<Pair<Boolean, Long>>, name: String?) {
         tripDao.setName(UserNameEntity.KIND_PLACE, media, name)
+        detailLock.withLock { namesVersion++ }
     }
 
     /** 도시를 붙이기 전에 찾은 여행(앱 업데이트 전 분석 결과)에 도시를 찾아 저장한다 */

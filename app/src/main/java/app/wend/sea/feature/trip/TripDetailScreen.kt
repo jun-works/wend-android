@@ -1,5 +1,8 @@
 package app.wend.sea.feature.trip
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -158,6 +161,12 @@ fun TripDetailScreen(
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxSize()) {
             WendTopAppBar(onBack = onBack, title = { Text(trip?.name.orEmpty()) })
+            // 다 읽기 전에는 빈 지도·"0곳" 같은 빈 내용을 그리지 않는다
+            if (trip == null) return@Column
+            // 다 읽으면 지도와 내용이 부드럽게 나타난다(툭 바뀌지 않게)
+            val fadeIn = remember { Animatable(0f) }
+            LaunchedEffect(Unit) { fadeIn.animateTo(1f, tween(260)) }
+            val contentAlpha = fadeIn.value
             // 지도는 위에 고정
             TripMap(
                 places = places,
@@ -168,11 +177,12 @@ fun TripDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MapHeight)
+                    .graphicsLayer { alpha = contentAlpha }
                     .drawBehind {
                         drawLine(Color(0xFFD6CAB9), Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
                     },
             )
-            LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 32.dp), modifier = Modifier.fillMaxSize()) {
+            LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 32.dp), modifier = Modifier.fillMaxSize().graphicsLayer { alpha = contentAlpha }) {
                 item(key = "sum") {
                     Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp)) {
                         EditableName(

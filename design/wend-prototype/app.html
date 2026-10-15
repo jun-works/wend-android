@@ -801,6 +801,8 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .cl-note .ms{--ms-size:18px}
 #clean .bottom-bar,#best .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:0}
 .btn.danger{background:var(--error);color:var(--on-error)}
+/* the screen under a trip reveal stays visible (shell hides inactive screens) */
+.screen.under{visibility:visible}
 </style>
 
 <style id="left-style">
@@ -1266,7 +1268,7 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
     <!-- 15 · 여행 상세 -->
     <section class="screen" id="trip" data-title="여행 상세">
       <header class="top-app-bar">
-        <button class="icon-btn" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
+        <button class="icon-btn" data-action="tripBack" data-back aria-label="뒤로"><span class="ms">arrow_back</span></button>
         <h1 class="title" id="tp-title">부산</h1>
       </header>
       <div class="content" id="tp-scroll">
@@ -3016,10 +3018,54 @@ App.onEnter('trip', function () {
   drawRoute(TP.L, TP.intro);
 });
 
+/* 여행 = 색 방울: the card's dot swells into a circle of the trip colour that fills the screen, the colour lifts
+   inside it and the trip shows through; back reverses it into the dot. (Same as the app: TripReveal) */
+var REVEAL_MS = 520;
+function revealTrip(origin, color, opening, done) {
+  var trip = document.getElementById('trip'), list = document.getElementById(App.stack[App.stack.length - (opening ? 2 : 2)] || 'trips');
+  var w = trip.offsetWidth, h = trip.offsetHeight, x = origin ? origin[0] : w / 2, y = origin ? origin[1] : h / 2;
+  var far = Math.max(Math.hypot(x, y), Math.hypot(w - x, y), Math.hypot(x, h - y), Math.hypot(w - x, h - y));
+  ['anim-push-in', 'anim-push-out', 'anim-pop-in', 'anim-pop-out'].forEach(function (c) { trip.classList.remove(c); if (list) list.classList.remove(c); });
+  if (list) {   // keep the list visible underneath while the circle grows / shrinks (the shell hides it after 320ms)
+    list.hidden = false; list.classList.add('under');
+    App.after(330, function () { if (list.classList.contains('under')) list.hidden = false; });
+  }
+  var tint = document.createElement('div');
+  tint.style.cssText = 'position:absolute;inset:0;z-index:50;pointer-events:none;background:' + color;
+  trip.appendChild(tint);
+  var small = 'circle(11px at ' + x + 'px ' + y + 'px)', big = 'circle(' + far + 'px at ' + x + 'px ' + y + 'px)';
+  var ms = App.reducedMotion ? 1 : REVEAL_MS, ease = 'cubic-bezier(.4,0,.2,1)';
+  trip.animate([{ clipPath: opening ? small : big }, { clipPath: opening ? big : small }], { duration: ms, easing: ease, fill: 'forwards' });
+  tint.animate(opening ? [{ opacity: 1 }, { opacity: 1, offset: .4 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1, offset: .6 }, { opacity: 1 }], { duration: ms, easing: ease, fill: 'forwards' });
+  App.after(ms, function () {
+    tint.remove();
+    if (list) list.classList.remove('under');
+    if (opening) { trip.getAnimations().forEach(function (a) { a.cancel(); }); if (list && !list.classList.contains('active')) list.hidden = true; }
+    if (done) done();
+  });
+}
+App.actions.tripBack = function () {
+  if (App.shot || !App.state.tripReveal) return;   // plain back (data-back)
+  var r = App.state.tripReveal; App.state.tripReveal = null;
+  revealTrip(r.origin, r.color, false, function () {
+    App.back();
+    var trip = document.getElementById('trip');
+    ['anim-pop-in', 'anim-pop-out'].forEach(function (c) { document.querySelectorAll('.' + c).forEach(function (e) { e.classList.remove(c); }); });
+    trip.getAnimations().forEach(function (a) { a.cancel(); });
+  });
+  return false;
+};
+
 /* only the Busan trip has sample data in the prototype */
 App.actions.openTrip = function (el) {
   var k = +el.getAttribute('data-k'), t = analysisData().trips[k];
-  if (t && t.key === '부산' && !analysisData().partial) { App.go('trip'); return false; }
+  if (t && t.key === '부산' && !analysisData().partial) {
+    var dot = el.querySelector('.tk-dot'), dev = document.getElementById('trips').getBoundingClientRect(), origin = null;
+    if (dot) { var r = dot.getBoundingClientRect(), s = document.getElementById('trips').offsetWidth / dev.width; origin = [(r.left + r.width / 2 - dev.left) * s, (r.top + r.height / 2 - dev.top) * s]; }
+    App.go('trip');
+    if (!App.shot) { App.state.tripReveal = { origin: origin, color: t.c }; revealTrip(origin, t.c, true); }
+    return false;
+  }
   App.snack('시안에서는 부산 여행만 열어 볼 수 있어요');
   return false;
 };

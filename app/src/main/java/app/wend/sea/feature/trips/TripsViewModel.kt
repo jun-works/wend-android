@@ -81,6 +81,8 @@ class TripsViewModel @Inject constructor(
                     summary = analysisRepository.summary.firstOrNull(),
                 )
             }
+            // 최근 여행(목록 위쪽)의 상세를 미리 읽어 두어, 열 때 방울이 걷히자마자 내용이 보이게
+            analysisRepository.prefetchTripDetails(trips.takeLast(3).reversed().map { it.number })
         }
     }
 
