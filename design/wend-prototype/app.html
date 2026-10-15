@@ -873,6 +873,12 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .vw-act .ms{--ms-size:24px}
 .vw-act.on .ms{color:#f2b33d}
 .vw-act.warn{color:#ffb4a8}
+/* 여행에서 빼기: 70% 동안 둥글게 줄며 그날 색으로 물들고, 남은 30% 동안 방울이 떨어지며 사라짐 (0.8s) */
+.vw-slide i.out{animation:vw-out .8s cubic-bezier(.4,0,.2,1) forwards;overflow:hidden}
+.vw-slide i.out::after{content:"";position:absolute;inset:0;background:var(--d);animation:vw-tint .8s forwards}
+@keyframes vw-out{0%{transform:none;clip-path:circle(75% at 50% 50%)}70%{transform:scale(.18);clip-path:circle(37.5% at 50% 50%);opacity:1}100%{transform:translateY(220px) scale(.18);clip-path:circle(37.5% at 50% 50%);opacity:0}}
+@keyframes vw-tint{0%{opacity:0}70%{opacity:1}100%{opacity:1}}
+#viewer.leaving .top-app-bar,#viewer.leaving .vw-count,#viewer.leaving .bottom-bar{opacity:0;transition:opacity .8s}
 </style>
 
 <style id="prefs-style">
@@ -3440,13 +3446,23 @@ App.actions.vwBest = function () {
   App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
 };
 App.actions.vwOut = function () {
-  var it = vwCur();
+  var it = vwCur(), v = App.state.vw;
+  if (v.leaving) return false;
+  /* the photo turns into a drop of its day colour and falls away — leaving the trip, back to the loose photos */
+  var slide = document.querySelectorAll('#vw-track .vw-slide i')[v.i];
+  v.leaving = true;
+  document.getElementById('viewer').classList.add('leaving');
+  if (slide) { slide.style.setProperty('--d', it.col || '#e2553a'); slide.classList.add('out'); }
+  App.after(App.reducedMotion ? 0 : 820, function () { v.leaving = false; document.getElementById('viewer').classList.remove('leaving'); vwOutDone(it); });
+  return false;
+};
+function vwOutDone(it) {
   App.state.removed[it.s]++;
   TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; });
   leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
   App.back();
   App.after(320, function () { App.snack('여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요'); });
-};
+}
 App.actions.vwShare = function () { App.snack('Android 공유 시트가 열려요'); };
 App.actions.vwTrash = function () {
   App.state.trashCtx = 'viewer';

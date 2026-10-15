@@ -10,7 +10,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -62,6 +67,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -133,6 +145,12 @@ fun ViewerScreen(
         }
     }
 
+    // 여행에서 빼기: 사진이 그날 색 방울로 줄어들어 떨어져 나간다(0~1)
+    val removing = remember { Animatable(0f) }
+    var removingItem by remember { mutableStateOf<ViewerItem?>(null) }
+    val scope = rememberCoroutineScope()
+    val chrome = Modifier.graphicsLayer { alpha = 1f - removing.value }
+
     Box(Modifier.fillMaxSize().background(ViewerBg)) {
         if (!uiState.loaded) return@Box
         val items = uiState.items
@@ -160,17 +178,20 @@ fun ViewerScreen(
         }
 
         Column(Modifier.fillMaxSize()) {
-            ViewerTopBar(current, uiState.placeName, uiState.day, onBack)
+            Box(chrome) { ViewerTopBar(current, uiState.placeName, uiState.day, onBack) }
             HorizontalPager(
                 state = pager,
-                userScrollEnabled = !zoomed,
+                userScrollEnabled = !zoomed && removingItem == null,
                 beyondViewportPageCount = 1,
                 key = { items[it].media.mediaId * 2 + if (items[it].media.video) 1 else 0 },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             ) { page ->
+                val item = items[page]
                 ZoomableMedia(
-                    item = items[page],
+                    item = item,
                     active = page == pager.currentPage,
+                    removeProgress = if (removingItem == item) removing.value else 0f,
+                    dayColor = dayTextColor(uiState.day),
                     onZoomChange = { if (page == pager.currentPage) zoomed = it },
                     onPlay = {
                         val intent = Intent(Intent.ACTION_VIEW).setDataAndType(items[page].media.uri, "video/*")
@@ -183,14 +204,14 @@ fun ViewerScreen(
                 "${pager.currentPage + 1} / ${items.size}",
                 style = MaterialTheme.typography.labelMedium,
                 color = Color(0xFFE9E1D4),
-                modifier = Modifier
+                modifier = chrome
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 6.dp, bottom = 10.dp)
                     .background(ViewerInk.copy(alpha = .12f), CircleShape)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
             Row(
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(top = 6.dp, bottom = 8.dp),
+                modifier = chrome.fillMaxWidth().navigationBarsPadding().padding(top = 6.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 ViewerAction(Icons.Outlined.StarOutline, "베스트샷으로") {
@@ -198,8 +219,14 @@ fun ViewerScreen(
                     viewModel.onBestShot()
                 }
                 ViewerAction(Icons.Outlined.RemoveCircleOutline, "여행에서 빼기") {
+                    if (removingItem != null) return@ViewerAction
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                    viewModel.onRemoveFromTrip(current)
+                    val item = current
+                    removingItem = item
+                    scope.launch {
+                        removing.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
+                        viewModel.onRemoveFromTrip(item)
+                    }
                 }
                 ViewerAction(Icons.Outlined.Share, "공유") {
                     val intent = Intent(Intent.ACTION_SEND)
@@ -292,7 +319,14 @@ private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerI
  * 확대 중에는 옆으로 넘기지 않고 사진을 움직인다.
  */
 @Composable
-private fun ZoomableMedia(item: ViewerItem, active: Boolean, onZoomChange: (Boolean) -> Unit, onPlay: () -> Unit) {
+private fun ZoomableMedia(
+    item: ViewerItem,
+    active: Boolean,
+    removeProgress: Float,
+    dayColor: Color,
+    onZoomChange: (Boolean) -> Unit,
+    onPlay: () -> Unit,
+) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -351,29 +385,47 @@ private fun ZoomableMedia(item: ViewerItem, active: Boolean, onZoomChange: (Bool
             },
         contentAlignment = Alignment.Center,
     ) {
-        val transform = Modifier
-            .fillMaxSize()
-            .padding(vertical = 12.dp)
-            .graphicsLayer {
+        // 빼기: 앞 70% 동안 사진이 둥글게 줄며 그날 색으로 물들고, 남은 30% 동안 방울이 아래로 떨어지며 사라진다
+        val morph = (removeProgress / .7f).coerceIn(0f, 1f)
+        val fall = ((removeProgress - .7f) / .3f).coerceIn(0f, 1f)
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(vertical = 12.dp)
+                .graphicsLayer {
+                    val s = 1f - morph * .82f
+                    scaleX = s
+                    scaleY = s
+                    translationY = fall * 220.dp.toPx()
+                    alpha = 1f - fall
+                    if (morph > 0f) {
+                        shape = DropShape(morph)
+                        clip = true
+                    }
+                },
+        ) {
+            val zoom = Modifier.fillMaxSize().graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 translationX = offset.x
                 translationY = offset.y
             }
-        AsyncImage(
-            // 넘겨 보는 동안은 화면 크기로(빠르고 가볍게), 영상은 Android 가 만든 첫 장면
-            model = if (item.media.video) item.media else item.media.uri,
-            contentDescription = if (item.media.video) "영상" else "사진",
-            contentScale = ContentScale.Fit,
-            modifier = transform,
-        )
-        // 확대하면 이 장만 원본 해상도로 불러와 위에 겹친다 — 확대해도 원본만큼 선명하게
-        if (!item.media.video && scale > 1f) {
-            val context = LocalContext.current
-            val original = remember(item) {
-                ImageRequest.Builder(context).data(item.media.uri).size(CoilSize.ORIGINAL).build()
+            AsyncImage(
+                // 넘겨 보는 동안은 화면 크기로(빠르고 가볍게), 영상은 Android 가 만든 첫 장면
+                model = if (item.media.video) item.media else item.media.uri,
+                contentDescription = if (item.media.video) "영상" else "사진",
+                contentScale = if (morph > 0f) ContentScale.Crop else ContentScale.Fit,
+                modifier = zoom,
+            )
+            // 확대하면 이 장만 원본 해상도로 불러와 위에 겹친다 — 확대해도 원본만큼 선명하게
+            if (!item.media.video && scale > 1f) {
+                val context = LocalContext.current
+                val original = remember(item) {
+                    ImageRequest.Builder(context).data(item.media.uri).size(CoilSize.ORIGINAL).build()
+                }
+                AsyncImage(model = original, contentDescription = null, contentScale = ContentScale.Fit, modifier = zoom)
             }
-            AsyncImage(model = original, contentDescription = null, contentScale = ContentScale.Fit, modifier = transform)
+            if (morph > 0f) Box(Modifier.fillMaxSize().background(dayColor.copy(alpha = morph)))
         }
         if (item.media.video && scale == 1f) {
             Box(
@@ -385,5 +437,16 @@ private fun ZoomableMedia(item: ViewerItem, active: Boolean, onZoomChange: (Bool
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = ViewerInk, modifier = Modifier.size(36.dp)) }
         }
+    }
+}
+
+/** 빼기 때 사진을 자르는 원: 처음엔 사진 전체를 덮는 원, 끝엔 짧은 변에 맞는 원(세로 사진도 타원이 아닌 방울이 되게) */
+private class DropShape(private val t: Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val full = kotlin.math.hypot(size.width, size.height) / 2
+        val small = minOf(size.width, size.height) / 2
+        val r = full + (small - full) * t
+        val c = Offset(size.width / 2, size.height / 2)
+        return Outline.Generic(Path().apply { addOval(Rect(c, r)) })
     }
 }

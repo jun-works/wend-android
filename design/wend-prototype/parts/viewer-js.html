@@ -79,13 +79,23 @@ App.actions.vwBest = function () {
   App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
 };
 App.actions.vwOut = function () {
-  var it = vwCur();
+  var it = vwCur(), v = App.state.vw;
+  if (v.leaving) return false;
+  /* the photo turns into a drop of its day colour and falls away — leaving the trip, back to the loose photos */
+  var slide = document.querySelectorAll('#vw-track .vw-slide i')[v.i];
+  v.leaving = true;
+  document.getElementById('viewer').classList.add('leaving');
+  if (slide) { slide.style.setProperty('--d', it.col || '#e2553a'); slide.classList.add('out'); }
+  App.after(App.reducedMotion ? 0 : 820, function () { v.leaving = false; document.getElementById('viewer').classList.remove('leaving'); vwOutDone(it); });
+  return false;
+};
+function vwOutDone(it) {
   App.state.removed[it.s]++;
   TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; });
   leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
   App.back();
   App.after(320, function () { App.snack('여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요'); });
-};
+}
 App.actions.vwShare = function () { App.snack('Android 공유 시트가 열려요'); };
 App.actions.vwTrash = function () {
   App.state.trashCtx = 'viewer';
