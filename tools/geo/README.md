@@ -1,5 +1,9 @@
 # Offline base map
 
+Natural-feature labels are bundled separately in `assets/geo/nature.json`. Chinese name corrections,
+sources, remaining source ambiguities and regeneration instructions are in
+[`design/geo/nature/README.md`](../../design/geo/nature/README.md).
+
 `app/src/main/assets/basemap.bin` is built from [Natural Earth](https://www.naturalearthdata.com/) 1:10m data
 (public domain — no attribution required). It lets the trip map show land, sea, lakes, rivers, borders,
 major roads and city points. Each city point carries its GeoNames ID; the app labels it with the same city's name from `assets/geo/cities.db` in the user's language, so map labels match place names (the stored `NAME_KO`/`NAME_EN` are only a fallback) without any network access.
