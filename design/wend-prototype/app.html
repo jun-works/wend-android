@@ -883,6 +883,37 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 #viewer.leaving .top-app-bar,#viewer.leaving .vw-count,#viewer.leaving .bottom-bar{opacity:0;transition:opacity .8s}
 </style>
 
+<style id="place-style">
+/* A stop on Wend's time rail unfolds into a paper contact sheet. */
+#place-photos{--day-ink:#b8391f}
+#place-photos .top-app-bar{border-bottom:1px solid var(--outline-variant)}
+#place-photos .top-app-bar .title{font:600 17px/1.4 var(--font-body)}
+.pg-trip{max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--body-s);color:var(--on-surface-variant);margin-right:8px}
+#place-photos .content{padding:0 0 24px;overscroll-behavior:contain}
+.pg-heading{padding:24px 20px 0}
+.pg-route{display:flex;align-items:center;gap:8px;color:var(--day-ink);font:600 12px/1.5 var(--font-body)}
+.pg-stop{width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:50%;color:white;background:var(--day-ink);font:600 12px/1 var(--font-body)}
+.pg-heading h2{margin:12px 0 6px;font:700 28px/1.4 var(--font-display);overflow-wrap:anywhere}
+.pg-heading p{margin:0;color:var(--on-surface-variant);font:var(--body-m)}
+.pg-caption{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:28px;padding:0 0 12px;border-bottom:1px solid var(--outline-variant)}
+.pg-caption b{font:600 14px/1.5 var(--font-body)}
+.pg-caption>span{font:var(--body-s);color:var(--on-surface-variant)}
+.pg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:12px 16px 0}
+.pg-photo{position:relative;display:block;width:100%;aspect-ratio:1;border:0;padding:0;border-radius:5px;cursor:pointer;overflow:hidden}
+.pg-photo:focus-visible{outline:3px solid var(--primary);outline-offset:1px;z-index:1}
+.pg-photo:active{filter:brightness(.9)}
+.pg-photo .pg-star{position:absolute;left:6px;top:6px;width:24px;height:24px;display:grid;place-items:center;background:var(--surface-container-lowest);color:#7a4f05;border-radius:50%}
+.pg-star .ms{--ms-size:16px}
+.pg-end{text-align:center;padding:20px 16px 0;margin:0;font:var(--body-s);color:var(--on-surface-variant)}
+.tp-grid .tp-more{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;background:rgba(31,26,22,.65)}
+.tp-more strong{font:600 20px/1 var(--font-body)}
+.tp-more small{font:500 11px/1.4 var(--font-body)}
+.photo-flight{position:absolute;z-index:25;pointer-events:none;transform-origin:top left}
+.device.photo-moving>.screens{pointer-events:none}
+.screen.pg-under,.screen.pg-under[hidden]{display:flex!important;visibility:visible;pointer-events:none}
+@media(prefers-reduced-motion:reduce){#place-photos *,#viewer *{animation-duration:0s!important;transition-duration:0s!important}}
+</style>
+
 <style id="prefs-style">
 /* ═══ Flow 7 · 설정 ═══════════════════════════════════════════════════ */
 #prefs .content{padding:4px 0 32px}
@@ -1292,7 +1323,7 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
           <button class="btn tonal" data-go="best"><span class="ms fill">star</span>베스트샷 고르기</button>
           <button class="btn outlined" data-go="clean"><span class="ms">auto_delete</span>사진 정리하기</button>
         </div>
-        <div id="tp-days" data-links="viewer,place-name,place-same"></div>
+        <div id="tp-days" data-links="viewer,place-photos,place-name,place-same"></div>
       </div>
     </section>
 
@@ -1406,6 +1437,24 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
         <div class="vw-count num" id="vw-count">1 / 6</div>
       </div>
       <div class="bottom-bar" id="vw-acts"></div>
+    </section>
+
+    <section class="screen" id="place-photos" data-title="장소 사진">
+      <header class="top-app-bar">
+        <button class="icon-btn" data-back aria-label="여행 상세로 돌아가기"><span class="ms">arrow_back</span></button>
+        <h1 class="title">장소 사진</h1>
+        <span class="pg-trip" id="pg-trip">부산</span>
+      </header>
+      <div class="content" id="pg-scroll">
+        <div class="pg-heading">
+          <div class="pg-route"><span class="pg-stop" id="pg-stop">2</span><span id="pg-day">1일째 · 5월 3일 일요일</span></div>
+          <h2 id="pg-name">감천문화마을</h2>
+          <p id="pg-time">오후 1:40 – 3:30</p>
+          <div class="pg-caption"><b id="pg-count">사진 38장</b><span>촬영 순서대로</span></div>
+        </div>
+        <div class="pg-grid" id="pg-grid" data-links="viewer"></div>
+        <p class="pg-end" id="pg-end">이곳에서 담은 순간을 모두 펼쳤어요</p>
+      </div>
     </section>
 
     <!-- ═══ Flow 7 · 설정 ═══ -->
@@ -2965,10 +3014,11 @@ function drawRoute(L, intro) {
 }
 
 function stopHTML(s, i) {
-  var shown = s.n - App.state.removed[i], more = shown - 6, best = App.state.best[i];
-  var cells = s.ph.map(function (c, k) {
-    var star = App.state.bestDone && k === best ? '<span class="star"><span class="ms fill">star</span></span>' : '';
-    return '<button class="' + c + '" data-action="viewTrip" data-s="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + ' 크게 보기">' + star + (k === 5 && more > 0 ? '<b>+' + more + '</b>' : '') + '</button>';
+  var photos = tripPhotos(i), shown = photos.length, more = shown - 5, best = App.state.best[i];
+  var cells = photos.slice(0, 6).map(function (it, index) {
+    var isMore = index === 5 && shown > 6;
+    var star = App.state.bestDone && it.k === best && !isMore ? '<span class="star"><span class="ms fill">star</span></span>' : '';
+    return '<button class="' + it.c + '" data-action="' + (isMore ? 'openPlacePhotos' : 'viewTrip') + '" data-s="' + i + '" data-k="' + it.k + '" aria-label="' + s.place + (isMore ? ' 사진 ' + shown + '장 전체 보기' : ' 사진 ' + (index + 1) + ' 크게 보기') + '">' + star + (isMore ? '<b class="tp-more"><strong>+' + more + '</strong><small>전체 보기</small></b>' : '') + '</button>';
   }).join('');
   return '<div class="tp-stop" data-i="' + i + '" style="--d:' + DAYT[s.d] + '"><span class="no">' + (i + 1) + '</span>' +
     '<h3><button class="tp-rename" data-action="askPlaceName" data-i="' + i + '" aria-label="장소 이름 바꾸기, 지금 이름 ' + s.place + '"><span>' + s.place + '</span><span class="ms">edit</span></button></h3><div class="when">' + s.when + ' · ' + shown + '장</div><div class="tp-grid">' + cells + '</div></div>';
@@ -3428,13 +3478,13 @@ function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '�
 function openViewer(ctx, a, b) {
   var items, i = 0;
   if (ctx === 'trip') {
-    var st = BUSAN.stops[a], start = st.when.split(' – ')[0];
-    items = st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin(start, k * 7), place: st.place, col: DAYC[st.d], s: a, k: k }; });
-    i = b;
+    items = tripPhotos(a);
+    i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
   } else {
     items = []; LEFT.forEach(function (g) { g.items.forEach(function (it) { items.push({ c: it.c, d: it.d, t: it.t, place: it.place, id: it.id }); }); });
     items.forEach(function (it, n) { if (it.id === a) i = n; });
   }
+  if (!items.length) return;
   App.state.vw = { ctx: ctx, items: items, i: i };
   App.go('viewer');
 }
@@ -3474,11 +3524,11 @@ App.onEnter('viewer', function () {
   if (!App.state.vw) openViewerState();
   vwSlides(); vwHeader();
   var tr = document.getElementById('vw-track');
-  App.after(0, function () { tr.scrollLeft = App.state.vw.i * tr.clientWidth; });
+  tr.scrollLeft = App.state.vw.i * tr.clientWidth;
 });
-function openViewerState() { var st = BUSAN.stops[1]; App.state.vw = { ctx: 'trip', i: 0, items: st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin('오후 1:40', k * 7), place: st.place, col: DAYC[st.d], s: 1, k: k }; }) }; }
+function openViewerState() { App.state.vw = { ctx: 'trip', i: 0, items: tripPhotos(1) }; }
 document.getElementById('vw-track').addEventListener('scroll', function () {
-  var v = App.state.vw; if (!v) return;
+  var v = App.state.vw; if (!v || App.current() !== 'viewer' || !this.clientWidth) return;
   var i = Math.round(this.scrollLeft / this.clientWidth);
   if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
 }, { passive: true });
@@ -3503,7 +3553,7 @@ App.actions.vwOut = function () {
   return false;
 };
 function vwOutDone(it) {
-  App.state.removed[it.s]++;
+  forgetTripPhoto(it);
   TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; });
   leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
   App.back();
@@ -3526,9 +3576,181 @@ App.actions.trashOk = function (el) {
   App.state.trashCtx = null;
   var it = vwCur();
   TOTAL_ALL--;
-  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; }); }
+  if (App.state.vw.ctx === 'trip') { forgetTripPhoto(it); TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; }); }
   else leftRemove([it.id]);
   App.after(320, function () { App.snack('1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
+};
+</script>
+
+<script id="place-js">
+/* Prototype media uses the existing colour studies, with stable identities for every photo.
+   One visit = one album (two visits to 부산역 remain separate). */
+App.state.photoExcluded = {};
+function tripPhotos(stop) {
+  var s = BUSAN.stops[stop], times = s.when.split(' – '), start = times[0];
+  function minutes(t) { var hm = t.split(' ')[1].split(':'); return (+hm[0] % 12 + (t.indexOf('오후') === 0 ? 12 : 0)) * 60 + +hm[1]; }
+  var span = times[1] ? minutes(times[1].indexOf('오') === 0 ? times[1] : start.split(' ')[0] + ' ' + times[1]) - minutes(start) : 0;
+  var items = [];
+  for (var k = 0; k < s.n; k++) {
+    if (App.state.photoExcluded[stop + ':' + k]) continue;
+    items.push({ c: s.ph[k % s.ph.length], d: TRIP_DATES[s.d], t: addMin(start, Math.round(Math.max(0, span) * k / Math.max(1, s.n - 1))), place: s.place, col: DAYC[s.d], s: stop, k: k });
+  }
+  // Bulk cleanup in the existing prototype only records counts; trim those examples from the end.
+  return items.slice(0, Math.max(0, s.n - App.state.removed[stop]));
+}
+function forgetTripPhoto(it) {
+  var key = it.s + ':' + it.k;
+  if (App.state.photoExcluded[key]) return;
+  App.state.photoExcluded[key] = true;
+  App.state.removed[it.s]++;
+}
+
+var PG = { stop: 1, fresh: true, finish: null };
+function renderPlacePhotos() {
+  var stop = PG.stop, s = BUSAN.stops[stop], items = tripPhotos(stop), scroll = document.getElementById('pg-scroll');
+  var saved = PG.fresh ? 0 : scroll.scrollTop;
+  document.getElementById('place-photos').style.setProperty('--day-ink', DAYT[s.d]);
+  document.getElementById('pg-trip').textContent = unesc(busanTrip().place);
+  document.getElementById('pg-stop').textContent = stop + 1;
+  document.getElementById('pg-day').textContent = BUSAN.days[s.d].label + ' · ' + BUSAN.days[s.d].date;
+  document.getElementById('pg-name').textContent = unesc(s.place);
+  document.getElementById('pg-time').textContent = s.when;
+  document.getElementById('pg-count').textContent = '사진 ' + items.length + '장';
+  document.getElementById('pg-grid').innerHTML = items.map(function (it, index) {
+    var star = App.state.bestDone && App.state.best[stop] === it.k;
+    return '<button class="pg-photo ' + it.c + '" data-action="viewPlacePhoto" data-s="' + stop + '" data-k="' + it.k + '" aria-label="' + s.place + ', 사진 ' + (index + 1) + ', ' + it.t + (star ? ', 베스트샷' : '') + ', 크게 보기">' +
+      (star ? '<span class="pg-star"><span class="ms fill">star</span></span>' : '') + '</button>';
+  }).join('');
+  document.getElementById('pg-end').textContent = items.length ? '이곳에서 담은 순간을 모두 펼쳤어요' : '이 장소에 남아 있는 사진이 없어요';
+  scroll.scrollTop = saved;
+  PG.fresh = false;
+}
+App.onEnter('place-photos', renderPlacePhotos);
+
+/* Motion shares the actual tile bounds. Coordinates are in device dp even when the preview is scaled. */
+function photoBounds(el) {
+  if (!el) return null;
+  var r = el.getBoundingClientRect(), dev = document.querySelector('.device'), d = dev.getBoundingClientRect(), scale = dev.offsetWidth / d.width;
+  return { x: (r.left - d.left) * scale, y: (r.top - d.top) * scale, w: r.width * scale, h: r.height * scale };
+}
+function clearPhotoMotion() { if (PG.finish) PG.finish(); }
+function clearScreenSlide(id) {
+  var el = document.getElementById(id);
+  ['anim-push-in', 'anim-push-out', 'anim-pop-in', 'anim-pop-out'].forEach(function (c) { el.classList.remove(c); });
+}
+function photoMotion(fromId, toId, run) {
+  clearPhotoMotion();
+  var from = document.getElementById(fromId), to = document.getElementById(toId), dev = document.querySelector('.device');
+  [fromId, toId].forEach(clearScreenSlide);
+  if (App.shot || App.reducedMotion) return;
+  var animations = [], nodes = [], restores = [], finished = false;
+  dev.classList.add('photo-moving');
+  from.classList.add('pg-under');
+  function finish() {
+    if (finished) return; finished = true;
+    animations.forEach(function (a) { a.cancel(); }); nodes.forEach(function (n) { n.remove(); });
+    restores.forEach(function (restore) { restore(); });
+    from.classList.remove('pg-under'); from.style.zIndex = ''; to.style.zIndex = '';
+    if (!from.classList.contains('active')) from.hidden = true;
+    dev.classList.remove('photo-moving'); PG.finish = null;
+  }
+  PG.finish = finish;
+  function animate(el, frames, ms, delay) { animations.push(el.animate(frames, { duration: ms, delay: delay || 0, easing: 'cubic-bezier(.2,0,0,1)', fill: 'both' })); }
+  run(from, to, animate, nodes, restores);
+  App.after(460, finish);
+}
+function albumClip(r) {
+  var dev = document.querySelector('.device');
+  return 'inset(' + r.y + 'px ' + Math.max(0, dev.clientWidth - r.x - r.w) + 'px ' + Math.max(0, dev.clientHeight - r.y - r.h) + 'px ' + r.x + 'px round 14px)';
+}
+function unfoldPlace(origin, closing) {
+  if (!origin) return;
+  photoMotion(closing ? 'place-photos' : 'trip', closing ? 'trip' : 'place-photos', function (from, to, animate) {
+    var album = closing ? from : to;
+    album.style.zIndex = '2'; (closing ? to : from).style.zIndex = '1';
+    var small = albumClip(origin), full = 'inset(0px 0px 0px 0px round 0px)';
+    animate(album, [{ clipPath: closing ? full : small }, { clipPath: closing ? small : full }], 420);
+    if (!closing) {
+      document.querySelectorAll('#pg-grid button').forEach(function (tile, i) {
+        if (i < 12) animate(tile, [{ opacity: 0, transform: 'translateY(16px) scale(.96)' }, { opacity: 1, transform: 'none' }], 240, 90 + Math.floor(i / 3) * 30);
+      });
+    } else animate(album, [{ opacity: 1 }, { opacity: 1, offset: .7 }, { opacity: 0 }], 420);
+  });
+}
+function flyPhoto(origin, destination, colorClass, closing, parent) {
+  if (!origin || !destination) return;
+  photoMotion(closing ? 'viewer' : parent, closing ? parent : 'viewer', function (from, to, animate, nodes, restores) {
+    from.style.zIndex = '1'; to.style.zIndex = '2';
+    animate(to, [{ opacity: 0 }, { opacity: 1 }], 280);
+    // The flying image owns the photo until it lands; avoid a second full-size image behind it.
+    var picture = document.querySelectorAll('#vw-track .vw-slide i')[App.state.vw.i];
+    if (picture) {
+      picture.style.visibility = 'hidden';
+      var restore = function () { picture.style.visibility = ''; };
+      restores.push(restore);
+      if (!closing) App.after(400, restore);
+    }
+    var flying = document.createElement('div'); flying.className = 'photo-flight ' + colorClass;
+    flying.style.cssText = 'left:' + destination.x + 'px;top:' + destination.y + 'px;width:' + destination.w + 'px;height:' + destination.h + 'px';
+    document.querySelector('.device').appendChild(flying); nodes.push(flying);
+    var transform = 'translate(' + (origin.x - destination.x) + 'px,' + (origin.y - destination.y) + 'px) scale(' + origin.w / destination.w + ',' + origin.h / destination.h + ')';
+    animate(flying, [{ transform: transform, borderRadius: closing ? '0px' : '8px' }, { transform: 'none', borderRadius: closing ? '5px' : '0px' }], 400);
+    // Keep the shared image opaque until the destination is ready, so it never dims at landing.
+  });
+}
+App.actions.openPlacePhotos = function (el) {
+  clearPhotoMotion();
+  var origin = photoBounds(el);
+  PG.stop = +el.getAttribute('data-s'); PG.fresh = true;
+  App.go('place-photos'); unfoldPlace(origin, false);
+  return false;
+};
+function viewPhotoFromTile(el) {
+  clearPhotoMotion();
+  var origin = photoBounds(el), parent = App.current(), keyboard = el.matches(':focus-visible');
+  openViewer('trip', +el.getAttribute('data-s'), +el.getAttribute('data-k'));
+  App.state.vw.keyboard = keyboard;
+  clearScreenSlide('viewer'); clearScreenSlide(parent);
+  var v = App.state.vw, slide = document.querySelectorAll('#vw-track .vw-slide i')[v.i];
+  flyPhoto(origin, photoBounds(slide), vwCur().c, false, parent);
+  return false;
+}
+App.actions.viewTrip = viewPhotoFromTile;
+App.actions.viewPlacePhoto = viewPhotoFromTile;
+
+/* Use the same return path for the app bar, Escape, and the shell's Android edge-back gesture.
+   Re-rendering restores the scroll offset, then reveals the LAST viewed tile when the pager moved. */
+var placeBaseBack = App.back;
+App.back = function () {
+  if (document.querySelector('.overlays .open')) return placeBaseBack();
+  if (App.current() === 'viewer' && App.state.vw && App.state.vw.leaving) return false;
+  clearPhotoMotion();
+  var current = App.current(), parent = App.stack[App.stack.length - 2];
+  if (current === 'viewer' && (parent === 'place-photos' || parent === 'trip')) {
+    var it = vwCur(), origin = photoBounds(document.querySelectorAll('#vw-track .vw-slide i')[App.state.vw.i]);
+    var result = placeBaseBack();
+    clearScreenSlide(parent); clearScreenSlide('viewer');
+    var selector = parent === 'place-photos' ? '#pg-grid' : '#tp-days';
+    var target = document.querySelector(selector + ' [data-s="' + it.s + '"][data-k="' + it.k + '"]');
+    if (target && target.dataset.action !== 'openPlacePhotos' && !App.state.photoExcluded[it.s + ':' + it.k]) {
+      // Only scroll the gallery's own container; the detail keeps its sticky map and reading position.
+      if (parent === 'place-photos') {
+        var container = document.getElementById('pg-scroll'), r = target.getBoundingClientRect(), c = container.getBoundingClientRect();
+        if (r.top < c.top || r.bottom > c.bottom) container.scrollTop += r.top - c.top - (c.height - r.height) / 2;
+      }
+      flyPhoto(origin, photoBounds(target), it.c, true, parent);
+      if (App.state.vw.keyboard) target.focus({ preventScroll: true });
+    }
+    return result;
+  }
+  if (current === 'place-photos' && parent === 'trip') {
+    var result = placeBaseBack();
+    clearScreenSlide('trip'); clearScreenSlide('place-photos');
+    var more = document.querySelector('#tp-days [data-action="openPlacePhotos"][data-s="' + PG.stop + '"]');
+    if (more) { unfoldPlace(photoBounds(more), true); more.focus({ preventScroll: true }); }
+    return result;
+  }
+  return placeBaseBack();
 };
 </script>
 

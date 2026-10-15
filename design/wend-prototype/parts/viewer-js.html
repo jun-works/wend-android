@@ -15,13 +15,13 @@ function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '�
 function openViewer(ctx, a, b) {
   var items, i = 0;
   if (ctx === 'trip') {
-    var st = BUSAN.stops[a], start = st.when.split(' – ')[0];
-    items = st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin(start, k * 7), place: st.place, col: DAYC[st.d], s: a, k: k }; });
-    i = b;
+    items = tripPhotos(a);
+    i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
   } else {
     items = []; LEFT.forEach(function (g) { g.items.forEach(function (it) { items.push({ c: it.c, d: it.d, t: it.t, place: it.place, id: it.id }); }); });
     items.forEach(function (it, n) { if (it.id === a) i = n; });
   }
+  if (!items.length) return;
   App.state.vw = { ctx: ctx, items: items, i: i };
   App.go('viewer');
 }
@@ -61,11 +61,11 @@ App.onEnter('viewer', function () {
   if (!App.state.vw) openViewerState();
   vwSlides(); vwHeader();
   var tr = document.getElementById('vw-track');
-  App.after(0, function () { tr.scrollLeft = App.state.vw.i * tr.clientWidth; });
+  tr.scrollLeft = App.state.vw.i * tr.clientWidth;
 });
-function openViewerState() { var st = BUSAN.stops[1]; App.state.vw = { ctx: 'trip', i: 0, items: st.ph.map(function (c, k) { return { c: c, d: TRIP_DATES[st.d], t: addMin('오후 1:40', k * 7), place: st.place, col: DAYC[st.d], s: 1, k: k }; }) }; }
+function openViewerState() { App.state.vw = { ctx: 'trip', i: 0, items: tripPhotos(1) }; }
 document.getElementById('vw-track').addEventListener('scroll', function () {
-  var v = App.state.vw; if (!v) return;
+  var v = App.state.vw; if (!v || App.current() !== 'viewer' || !this.clientWidth) return;
   var i = Math.round(this.scrollLeft / this.clientWidth);
   if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
 }, { passive: true });
@@ -90,7 +90,7 @@ App.actions.vwOut = function () {
   return false;
 };
 function vwOutDone(it) {
-  App.state.removed[it.s]++;
+  forgetTripPhoto(it);
   TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; });
   leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
   App.back();
@@ -113,7 +113,7 @@ App.actions.trashOk = function (el) {
   App.state.trashCtx = null;
   var it = vwCur();
   TOTAL_ALL--;
-  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; }); }
+  if (App.state.vw.ctx === 'trip') { forgetTripPhoto(it); TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; }); }
   else leftRemove([it.id]);
   App.after(320, function () { App.snack('1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
 };

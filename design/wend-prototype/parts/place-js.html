@@ -1,0 +1,171 @@
+<script id="place-js">
+/* Prototype media uses the existing colour studies, with stable identities for every photo.
+   One visit = one album (two visits to 부산역 remain separate). */
+App.state.photoExcluded = {};
+function tripPhotos(stop) {
+  var s = BUSAN.stops[stop], times = s.when.split(' – '), start = times[0];
+  function minutes(t) { var hm = t.split(' ')[1].split(':'); return (+hm[0] % 12 + (t.indexOf('오후') === 0 ? 12 : 0)) * 60 + +hm[1]; }
+  var span = times[1] ? minutes(times[1].indexOf('오') === 0 ? times[1] : start.split(' ')[0] + ' ' + times[1]) - minutes(start) : 0;
+  var items = [];
+  for (var k = 0; k < s.n; k++) {
+    if (App.state.photoExcluded[stop + ':' + k]) continue;
+    items.push({ c: s.ph[k % s.ph.length], d: TRIP_DATES[s.d], t: addMin(start, Math.round(Math.max(0, span) * k / Math.max(1, s.n - 1))), place: s.place, col: DAYC[s.d], s: stop, k: k });
+  }
+  // Bulk cleanup in the existing prototype only records counts; trim those examples from the end.
+  return items.slice(0, Math.max(0, s.n - App.state.removed[stop]));
+}
+function forgetTripPhoto(it) {
+  var key = it.s + ':' + it.k;
+  if (App.state.photoExcluded[key]) return;
+  App.state.photoExcluded[key] = true;
+  App.state.removed[it.s]++;
+}
+
+var PG = { stop: 1, fresh: true, finish: null };
+function renderPlacePhotos() {
+  var stop = PG.stop, s = BUSAN.stops[stop], items = tripPhotos(stop), scroll = document.getElementById('pg-scroll');
+  var saved = PG.fresh ? 0 : scroll.scrollTop;
+  document.getElementById('place-photos').style.setProperty('--day-ink', DAYT[s.d]);
+  document.getElementById('pg-trip').textContent = unesc(busanTrip().place);
+  document.getElementById('pg-stop').textContent = stop + 1;
+  document.getElementById('pg-day').textContent = BUSAN.days[s.d].label + ' · ' + BUSAN.days[s.d].date;
+  document.getElementById('pg-name').textContent = unesc(s.place);
+  document.getElementById('pg-time').textContent = s.when;
+  document.getElementById('pg-count').textContent = '사진 ' + items.length + '장';
+  document.getElementById('pg-grid').innerHTML = items.map(function (it, index) {
+    var star = App.state.bestDone && App.state.best[stop] === it.k;
+    return '<button class="pg-photo ' + it.c + '" data-action="viewPlacePhoto" data-s="' + stop + '" data-k="' + it.k + '" aria-label="' + s.place + ', 사진 ' + (index + 1) + ', ' + it.t + (star ? ', 베스트샷' : '') + ', 크게 보기">' +
+      (star ? '<span class="pg-star"><span class="ms fill">star</span></span>' : '') + '</button>';
+  }).join('');
+  document.getElementById('pg-end').textContent = items.length ? '이곳에서 담은 순간을 모두 펼쳤어요' : '이 장소에 남아 있는 사진이 없어요';
+  scroll.scrollTop = saved;
+  PG.fresh = false;
+}
+App.onEnter('place-photos', renderPlacePhotos);
+
+/* Motion shares the actual tile bounds. Coordinates are in device dp even when the preview is scaled. */
+function photoBounds(el) {
+  if (!el) return null;
+  var r = el.getBoundingClientRect(), dev = document.querySelector('.device'), d = dev.getBoundingClientRect(), scale = dev.offsetWidth / d.width;
+  return { x: (r.left - d.left) * scale, y: (r.top - d.top) * scale, w: r.width * scale, h: r.height * scale };
+}
+function clearPhotoMotion() { if (PG.finish) PG.finish(); }
+function clearScreenSlide(id) {
+  var el = document.getElementById(id);
+  ['anim-push-in', 'anim-push-out', 'anim-pop-in', 'anim-pop-out'].forEach(function (c) { el.classList.remove(c); });
+}
+function photoMotion(fromId, toId, run) {
+  clearPhotoMotion();
+  var from = document.getElementById(fromId), to = document.getElementById(toId), dev = document.querySelector('.device');
+  [fromId, toId].forEach(clearScreenSlide);
+  if (App.shot || App.reducedMotion) return;
+  var animations = [], nodes = [], restores = [], finished = false;
+  dev.classList.add('photo-moving');
+  from.classList.add('pg-under');
+  function finish() {
+    if (finished) return; finished = true;
+    animations.forEach(function (a) { a.cancel(); }); nodes.forEach(function (n) { n.remove(); });
+    restores.forEach(function (restore) { restore(); });
+    from.classList.remove('pg-under'); from.style.zIndex = ''; to.style.zIndex = '';
+    if (!from.classList.contains('active')) from.hidden = true;
+    dev.classList.remove('photo-moving'); PG.finish = null;
+  }
+  PG.finish = finish;
+  function animate(el, frames, ms, delay) { animations.push(el.animate(frames, { duration: ms, delay: delay || 0, easing: 'cubic-bezier(.2,0,0,1)', fill: 'both' })); }
+  run(from, to, animate, nodes, restores);
+  App.after(460, finish);
+}
+function albumClip(r) {
+  var dev = document.querySelector('.device');
+  return 'inset(' + r.y + 'px ' + Math.max(0, dev.clientWidth - r.x - r.w) + 'px ' + Math.max(0, dev.clientHeight - r.y - r.h) + 'px ' + r.x + 'px round 14px)';
+}
+function unfoldPlace(origin, closing) {
+  if (!origin) return;
+  photoMotion(closing ? 'place-photos' : 'trip', closing ? 'trip' : 'place-photos', function (from, to, animate) {
+    var album = closing ? from : to;
+    album.style.zIndex = '2'; (closing ? to : from).style.zIndex = '1';
+    var small = albumClip(origin), full = 'inset(0px 0px 0px 0px round 0px)';
+    animate(album, [{ clipPath: closing ? full : small }, { clipPath: closing ? small : full }], 420);
+    if (!closing) {
+      document.querySelectorAll('#pg-grid button').forEach(function (tile, i) {
+        if (i < 12) animate(tile, [{ opacity: 0, transform: 'translateY(16px) scale(.96)' }, { opacity: 1, transform: 'none' }], 240, 90 + Math.floor(i / 3) * 30);
+      });
+    } else animate(album, [{ opacity: 1 }, { opacity: 1, offset: .7 }, { opacity: 0 }], 420);
+  });
+}
+function flyPhoto(origin, destination, colorClass, closing, parent) {
+  if (!origin || !destination) return;
+  photoMotion(closing ? 'viewer' : parent, closing ? parent : 'viewer', function (from, to, animate, nodes, restores) {
+    from.style.zIndex = '1'; to.style.zIndex = '2';
+    animate(to, [{ opacity: 0 }, { opacity: 1 }], 280);
+    // The flying image owns the photo until it lands; avoid a second full-size image behind it.
+    var picture = document.querySelectorAll('#vw-track .vw-slide i')[App.state.vw.i];
+    if (picture) {
+      picture.style.visibility = 'hidden';
+      var restore = function () { picture.style.visibility = ''; };
+      restores.push(restore);
+      if (!closing) App.after(400, restore);
+    }
+    var flying = document.createElement('div'); flying.className = 'photo-flight ' + colorClass;
+    flying.style.cssText = 'left:' + destination.x + 'px;top:' + destination.y + 'px;width:' + destination.w + 'px;height:' + destination.h + 'px';
+    document.querySelector('.device').appendChild(flying); nodes.push(flying);
+    var transform = 'translate(' + (origin.x - destination.x) + 'px,' + (origin.y - destination.y) + 'px) scale(' + origin.w / destination.w + ',' + origin.h / destination.h + ')';
+    animate(flying, [{ transform: transform, borderRadius: closing ? '0px' : '8px' }, { transform: 'none', borderRadius: closing ? '5px' : '0px' }], 400);
+    // Keep the shared image opaque until the destination is ready, so it never dims at landing.
+  });
+}
+App.actions.openPlacePhotos = function (el) {
+  clearPhotoMotion();
+  var origin = photoBounds(el);
+  PG.stop = +el.getAttribute('data-s'); PG.fresh = true;
+  App.go('place-photos'); unfoldPlace(origin, false);
+  return false;
+};
+function viewPhotoFromTile(el) {
+  clearPhotoMotion();
+  var origin = photoBounds(el), parent = App.current(), keyboard = el.matches(':focus-visible');
+  openViewer('trip', +el.getAttribute('data-s'), +el.getAttribute('data-k'));
+  App.state.vw.keyboard = keyboard;
+  clearScreenSlide('viewer'); clearScreenSlide(parent);
+  var v = App.state.vw, slide = document.querySelectorAll('#vw-track .vw-slide i')[v.i];
+  flyPhoto(origin, photoBounds(slide), vwCur().c, false, parent);
+  return false;
+}
+App.actions.viewTrip = viewPhotoFromTile;
+App.actions.viewPlacePhoto = viewPhotoFromTile;
+
+/* Use the same return path for the app bar, Escape, and the shell's Android edge-back gesture.
+   Re-rendering restores the scroll offset, then reveals the LAST viewed tile when the pager moved. */
+var placeBaseBack = App.back;
+App.back = function () {
+  if (document.querySelector('.overlays .open')) return placeBaseBack();
+  if (App.current() === 'viewer' && App.state.vw && App.state.vw.leaving) return false;
+  clearPhotoMotion();
+  var current = App.current(), parent = App.stack[App.stack.length - 2];
+  if (current === 'viewer' && (parent === 'place-photos' || parent === 'trip')) {
+    var it = vwCur(), origin = photoBounds(document.querySelectorAll('#vw-track .vw-slide i')[App.state.vw.i]);
+    var result = placeBaseBack();
+    clearScreenSlide(parent); clearScreenSlide('viewer');
+    var selector = parent === 'place-photos' ? '#pg-grid' : '#tp-days';
+    var target = document.querySelector(selector + ' [data-s="' + it.s + '"][data-k="' + it.k + '"]');
+    if (target && target.dataset.action !== 'openPlacePhotos' && !App.state.photoExcluded[it.s + ':' + it.k]) {
+      // Only scroll the gallery's own container; the detail keeps its sticky map and reading position.
+      if (parent === 'place-photos') {
+        var container = document.getElementById('pg-scroll'), r = target.getBoundingClientRect(), c = container.getBoundingClientRect();
+        if (r.top < c.top || r.bottom > c.bottom) container.scrollTop += r.top - c.top - (c.height - r.height) / 2;
+      }
+      flyPhoto(origin, photoBounds(target), it.c, true, parent);
+      if (App.state.vw.keyboard) target.focus({ preventScroll: true });
+    }
+    return result;
+  }
+  if (current === 'place-photos' && parent === 'trip') {
+    var result = placeBaseBack();
+    clearScreenSlide('trip'); clearScreenSlide('place-photos');
+    var more = document.querySelector('#tp-days [data-action="openPlacePhotos"][data-s="' + PG.stop + '"]');
+    if (more) { unfoldPlace(photoBounds(more), true); more.focus({ preventScroll: true }); }
+    return result;
+  }
+  return placeBaseBack();
+};
+</script>

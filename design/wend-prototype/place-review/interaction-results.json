@@ -1,0 +1,30 @@
+{
+  "passed": [
+    "6 photos: every tile opens a photo directly",
+    "ordinary detail tile opens correct photo",
+    "direct viewer returns to trip",
+    "overflow count includes all 33 photos hidden behind the tile",
+    "overflow opens all 38 photos in this visit",
+    "place name is carried into album",
+    "album is pushed above trip",
+    "album opens the selected photo with full place count",
+    "viewer pages beyond the six preview photos",
+    "viewer system back returns to album",
+    "best-shot change appears on the same album photo",
+    "last viewed photo is visible on return after paging",
+    "back without paging preserves gallery scroll",
+    "album app-bar back preserves trip reading position",
+    "reopening album starts at its header",
+    "remove from trip returns to album and removes exact photo",
+    "album count updates after removal",
+    "back dismisses confirmation without leaving viewer",
+    "trash confirmation removes exact photo and updates album",
+    "same-name station on another day keeps its own photos",
+    "renamed place is decoded and shown safely",
+    "long place name wraps without horizontal overflow",
+    "reduced motion keeps navigation and leaves no overlays",
+    "rapid back during opening cleans animation state",
+    "no runtime errors"
+  ],
+  "errors": []
+}

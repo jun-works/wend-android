@@ -79,10 +79,11 @@ function drawRoute(L, intro) {
 }
 
 function stopHTML(s, i) {
-  var shown = s.n - App.state.removed[i], more = shown - 6, best = App.state.best[i];
-  var cells = s.ph.map(function (c, k) {
-    var star = App.state.bestDone && k === best ? '<span class="star"><span class="ms fill">star</span></span>' : '';
-    return '<button class="' + c + '" data-action="viewTrip" data-s="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + ' 크게 보기">' + star + (k === 5 && more > 0 ? '<b>+' + more + '</b>' : '') + '</button>';
+  var photos = tripPhotos(i), shown = photos.length, more = shown - 5, best = App.state.best[i];
+  var cells = photos.slice(0, 6).map(function (it, index) {
+    var isMore = index === 5 && shown > 6;
+    var star = App.state.bestDone && it.k === best && !isMore ? '<span class="star"><span class="ms fill">star</span></span>' : '';
+    return '<button class="' + it.c + '" data-action="' + (isMore ? 'openPlacePhotos' : 'viewTrip') + '" data-s="' + i + '" data-k="' + it.k + '" aria-label="' + s.place + (isMore ? ' 사진 ' + shown + '장 전체 보기' : ' 사진 ' + (index + 1) + ' 크게 보기') + '">' + star + (isMore ? '<b class="tp-more"><strong>+' + more + '</strong><small>전체 보기</small></b>' : '') + '</button>';
   }).join('');
   return '<div class="tp-stop" data-i="' + i + '" style="--d:' + DAYT[s.d] + '"><span class="no">' + (i + 1) + '</span>' +
     '<h3><button class="tp-rename" data-action="askPlaceName" data-i="' + i + '" aria-label="장소 이름 바꾸기, 지금 이름 ' + s.place + '"><span>' + s.place + '</span><span class="ms">edit</span></button></h3><div class="when">' + s.when + ' · ' + shown + '장</div><div class="tp-grid">' + cells + '</div></div>';
