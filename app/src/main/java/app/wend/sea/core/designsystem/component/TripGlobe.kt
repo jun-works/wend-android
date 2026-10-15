@@ -23,6 +23,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.wend.sea.core.designsystem.theme.OrbColors
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -34,7 +39,13 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 private const val N = 280
-private const val FRAME_INTERVAL_NS = 1_000_000_000L / 60 - 2_000_000L // vsync 오차 여유
+private const val BUSY_INTERVAL_NS = 1_000_000_000L / 60 - 2_000_000L // vsync 오차 여유
+private const val SPIN_INTERVAL_MS = 1000L / 30 - 4
+private const val REST_PAUSE_MS = 4_500L
+private const val BREATH_MS = 1_600L
+private const val MOTION_BUSY = 0
+private const val MOTION_SPIN = 1
+private const val MOTION_REST = 2
 private val Paper = floatArrayOf(246f, 241f, 233f)
 private val Ghost = floatArrayOf(214f, 202f, 185f)
 private val Ink = floatArrayOf(58f, 50f, 43f)
@@ -140,20 +151,35 @@ private class TripSim {
         }
     }
 
+    /**
+     * 지금 움직임의 크기(발열 줄이기): [MOTION_BUSY] 누름·돌아가는 중, [MOTION_SPIN] 혼자 천천히 도는 중,
+     * [MOTION_REST] 덩어리를 앞으로 돌려 놓고 숨쉬기(±3%)만 하는 중.
+     */
+    var motion = MOTION_BUSY
+        private set
+
     fun tick(dt: Float, p: Float) {
         t += dt
         val f = focus
+        var turning = 0f
         if (f in tripC.indices) {
             // 최단 방향으로 그 덩어리를 앞으로
             val want = kotlin.math.atan2(tripC[f][0], tripC[f][2])
             var dr = want - rot
             dr = kotlin.math.atan2(sin(dr), cos(dr))
             rot += dr * min(1f, dt * 3.2f)
+            turning = kotlin.math.abs(dr)
         } else {
             rot += dt * if (p >= 1f) .2f else .32f
         }
-        focusAmount += ((if (f >= 0) 1f else 0f) - focusAmount) * min(1f, dt * 3f)
+        val focusTarget = if (f >= 0) 1f else 0f
+        focusAmount += (focusTarget - focusAmount) * min(1f, dt * 3f)
         scatter *= exp(ln(.12f) * dt)
+        motion = when {
+            p < 1f || scatter > .01f || turning > .002f || kotlin.math.abs(focusTarget - focusAmount) > .01f -> MOTION_BUSY
+            f !in tripC.indices -> MOTION_SPIN
+            else -> MOTION_REST
+        }
     }
 
     /** 탭 위치에 가장 가까운 앞쪽 덩어리 */
@@ -279,6 +305,8 @@ fun TripGlobe(
     val haptic = LocalHapticFeedback.current
     val currentProgress by rememberUpdatedState(progress)
     var frame by remember { mutableLongStateOf(0L) }
+    // 멈춰 있는 지구본을 다시 깨우는 신호(누름)
+    var wake by remember { mutableIntStateOf(0) }
 
     remember(trips, partial) { sim.setup(trips, partial) }
 
@@ -287,12 +315,42 @@ fun TripGlobe(
         var last = 0L
         while (true) {
             withFrameNanos { now ->
-                if (last != 0L && now - last < FRAME_INTERVAL_NS) return@withFrameNanos
+                // 움직이는 중에도 120Hz 화면에서 초당 60번까지만
+                if (sim.motion == MOTION_BUSY && last != 0L && now - last < BUSY_INTERVAL_NS) return@withFrameNanos
                 val dt = if (last == 0L) .016f else min(.05f, (now - last) / 1e9f)
                 last = now
                 sim.focus = currentFocus()
                 sim.tick(dt, currentProgress())
                 frame = now
+            }
+            // 매 장면 goo 흐림을 다시 계산해서 발열이 크다: 혼자 돌 때는 초당 30번,
+            // 덩어리를 앞으로 돌려 놓고 멈추면 그리지 않고 기다리다가, 가끔(4.5초마다) 한 번 숨쉰다(1.6초).
+            // 보는 여행이 바뀌거나 누르면 바로 다시 움직인다.
+            when (sim.motion) {
+                MOTION_REST -> {
+                    val at = Triple(currentFocus(), currentProgress(), wake)
+                    val changed = withTimeoutOrNull(REST_PAUSE_MS) {
+                        snapshotFlow { Triple(currentFocus(), currentProgress(), wake) }.first { it != at }
+                    }
+                    last = 0L
+                    if (changed == null) {
+                        // 한 번 숨쉬기: 초당 30번으로 1.6초
+                        val until = System.nanoTime() + BREATH_MS * 1_000_000L
+                        while (System.nanoTime() < until && sim.motion == MOTION_REST) {
+                            withFrameNanos { now ->
+                                val dt = if (last == 0L) .033f else min(.05f, (now - last) / 1e9f)
+                                last = now
+                                sim.focus = currentFocus()
+                                sim.tick(dt, currentProgress())
+                                frame = now
+                            }
+                            delay(SPIN_INTERVAL_MS)
+                        }
+                        last = 0L
+                    }
+                }
+                MOTION_SPIN -> delay(SPIN_INTERVAL_MS)
+                else -> Unit
             }
         }
     }
@@ -305,6 +363,7 @@ fun TripGlobe(
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                    wake++
                     val picked = sim.pick(offset.x, offset.y, this.size.width.toFloat())
                     val click = currentOnClick
                     if (click != null) click(picked)

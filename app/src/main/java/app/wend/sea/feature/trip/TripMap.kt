@@ -20,6 +20,8 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -124,8 +126,16 @@ fun TripMap(
     glow: RenameGlow = RenameGlow(),
 ) {
     val reduced = rememberReducedMotion()
-    val clock = rememberAmbientClock()
     val currentTarget by rememberUpdatedState(target)
+    // 핀은 걸어가는 동안(스크롤)과 그 뒤 잠깐만 숨쉰다 — 가만히 읽는 동안 숨쉬기로 계속 다시 그리면 발열이 크다
+    var pinAwake by remember { mutableStateOf(true) }
+    var lastMove by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) { snapshotFlow { currentTarget() }.collect { lastMove = System.nanoTime(); pinAwake = true } }
+    LaunchedEffect(lastMove) {
+        delay(PIN_AWAKE_MS)
+        pinAwake = false
+    }
+    val clock = rememberAmbientClock(active = pinAwake)
 
     BoxWithConstraints(
         modifier
@@ -452,3 +462,6 @@ private fun Modifier.renamePulse(active: Boolean, token: Long, color: Color): Mo
         if (v < 1f) drawCircle(color.copy(alpha = 1f - v), radius = size.minDimension / 2 + 8.dp.toPx() * v, style = Stroke(2.dp.toPx()))
     }
 }
+
+/** 마지막으로 걸어간 뒤 핀이 숨쉬는 시간 */
+private const val PIN_AWAKE_MS = 4_000L

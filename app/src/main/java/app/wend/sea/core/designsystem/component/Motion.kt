@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
@@ -25,22 +26,22 @@ fun rememberReducedMotion(): Boolean {
  * 애니메이션 끄기 설정이면 0 에 멈춰 있다.
  */
 @Composable
-fun rememberAmbientClock(fps: Int = 30): State<Float> {
+fun rememberAmbientClock(fps: Int = 30, active: Boolean = true): State<Float> {
     val clock = remember { mutableFloatStateOf(0f) }
     val reduced = rememberReducedMotion()
-    LaunchedEffect(reduced, fps) {
-        if (reduced) return@LaunchedEffect
-        val interval = 1_000_000_000L / fps - 2_000_000L // vsync 오차 여유
+    // 멈추면(active = false) 그 시각에 멈췄다가 다시 이어 간다
+    LaunchedEffect(reduced, fps, active) {
+        if (reduced || !active) return@LaunchedEffect
+        // 그 사이에는 화면 갱신(120Hz)마다 깨어나 확인하지 않고 쉰다 — 깨어나는 것만으로도 CPU 를 쓴다
+        val sleepMs = (1000L / fps - 4).coerceAtLeast(1)
         var start = 0L
-        var last = 0L
+        val from = clock.floatValue
         while (true) {
             withFrameNanos { now ->
                 if (start == 0L) start = now
-                if (now - last >= interval) {
-                    last = now
-                    clock.floatValue = (now - start) / 1e9f
-                }
+                clock.floatValue = from + (now - start) / 1e9f
             }
+            delay(sleepMs)
         }
     }
     return clock
