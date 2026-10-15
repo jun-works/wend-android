@@ -57,6 +57,13 @@ data class UserNameEntity(
 @Entity(tableName = "excluded_media", primaryKeys = ["mediaId", "video"])
 data class ExcludedMediaEntity(val mediaId: Long, val video: Boolean)
 
+/**
+ * 사용자가 고른 베스트샷(사진만) — design/BEST_SHOT.md. 같은 장면 묶음마다 한 장. 다시 분석해도 그대로 둔다.
+ * 장면은 화면을 열 때마다 계산하므로, 사진 id 만 저장하고 장면에는 묶지 않는다.
+ */
+@Entity(tableName = "best_shot", primaryKeys = ["mediaId"])
+data class BestShotEntity(val mediaId: Long)
+
 /** 여행마다 사진에 붙은 이름과 그 장수 */
 data class TripNameCount(val tripNumber: Int, val name: String, val count: Int)
 
@@ -133,6 +140,22 @@ interface TripDao {
     suspend fun removeFromTrip(tripNumber: Int, mediaId: Long, video: Boolean, exclude: Boolean) {
         if (exclude) exclude(ExcludedMediaEntity(mediaId, video))
         if (deleteTripMedia(tripNumber, mediaId, video) > 0) decrementCount(tripNumber)
+    }
+
+    @Query("SELECT mediaId FROM best_shot")
+    suspend fun bestShots(): List<Long>
+
+    @Query("DELETE FROM best_shot WHERE mediaId IN (:ids)")
+    suspend fun deleteBestShots(ids: List<Long>)
+
+    @Upsert
+    suspend fun insertBestShots(items: List<BestShotEntity>)
+
+    /** [scope] 사진들의 베스트샷을 지우고 [picks] 로 바꾼다 */
+    @Transaction
+    suspend fun replaceBestShots(scope: List<Long>, picks: List<Long>) {
+        scope.chunked(500).forEach { deleteBestShots(it) }
+        insertBestShots(picks.map { BestShotEntity(it) })
     }
 
     /** 새 분석 결과로 통째로 바꾼다 */

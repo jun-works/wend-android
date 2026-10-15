@@ -6,8 +6,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class, MediaFeatureEntity::class],
-    version = 8,
+    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class, MediaFeatureEntity::class, BestShotEntity::class],
+    version = 9,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
@@ -69,6 +69,13 @@ abstract class WendDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP TABLE IF EXISTS `media_feature`")
                 db.execSQL(CREATE_MEDIA_FEATURE)
+            }
+        }
+
+        /** 8 → 9: 사용자가 고른 베스트샷 */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `best_shot` (`mediaId` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))")
             }
         }
     }

@@ -75,6 +75,8 @@ data class TripDetailUiState(
     val lonScale: Double = 1.0,
     val pending: PendingRename? = null,
     val glow: RenameGlow = RenameGlow(),
+    /** 사용자가 고른 베스트샷(사진 id) — 사진에 별 */
+    val best: Set<Long> = emptySet(),
 ) {
     val places: List<PlaceUi> get() = days.flatMap { it.places }
 }
@@ -102,7 +104,7 @@ class TripDetailViewModel @Inject constructor(
     private val number: Int = checkNotNull(savedStateHandle["number"])
 
     companion object {
-        /** 사진 크게 보기가 돌려주는 결과(여행이 바뀜). 빈 문자열이면 안내 없이 다시 읽기만 */
+        /** 사진 크게 보기·베스트샷 화면이 돌려주는 결과(여행이 바뀜, 네비게이션 항목의 savedStateHandle). 빈 문자열이면 안내 없이 다시 읽기만 */
         const val VIEWER_RESULT = "viewerResult"
     }
 
@@ -114,15 +116,15 @@ class TripDetailViewModel @Inject constructor(
 
     init {
         load()
-        // 사진 크게 보기에서 여행을 바꾸고 돌아오면(빼기·휴지통) 다시 읽고, 안내가 있으면 띄운다
-        viewModelScope.launch {
-            savedStateHandle.getStateFlow<String?>(VIEWER_RESULT, null).collect { message ->
-                if (message == null) return@collect
-                savedStateHandle[VIEWER_RESULT] = null
-                load()
-                if (message.isNotEmpty()) _events.send(TripDetailEvent.ShowMessage(message))
-            }
-        }
+    }
+
+    /**
+     * 크게 보기·베스트샷 화면에서 여행을 바꾸고 돌아왔다(빼기·휴지통·베스트샷) — 다시 읽고, 안내가 있으면 띄운다.
+     * 결과는 네비게이션 항목의 savedStateHandle 로 오는데, 그건 이 ViewModel 의 SavedStateHandle 과 다른 객체라 NavHost 가 넘겨준다.
+     */
+    fun onResult(message: String) {
+        load()
+        if (message.isNotEmpty()) _events.trySend(TripDetailEvent.ShowMessage(message))
     }
 
     private fun load() {
@@ -154,7 +156,8 @@ class TripDetailViewModel @Inject constructor(
             val days = dates.mapIndexed { d, date ->
                 DayUi(d, ChronoUnit.DAYS.between(firstDate, date).toInt() + 1, date, ui.filter { it.day == d })
             }
-            _uiState.update { it.copy(trip = trip, days = days, lonScale = lonScale) }
+            val best = analysisRepository.bestShots()
+            _uiState.update { it.copy(trip = trip, days = days, lonScale = lonScale, best = best) }
         }
     }
 
@@ -238,7 +241,6 @@ class TripDetailViewModel @Inject constructor(
         viewModelScope.launch { changed.forEach { analysisRepository.renamePlace(it.media, it.userName) } }
     }
 
-    fun onBestShots() = comingSoon("베스트샷 고르기")
     fun onCleanUp() = comingSoon("사진 정리하기")
 
     private fun comingSoon(what: String) {

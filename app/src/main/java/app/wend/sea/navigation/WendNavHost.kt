@@ -19,10 +19,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.navigation.NavDestination
+import androidx.navigation.NavBackStackEntry
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberUpdatedState
 import app.wend.sea.core.designsystem.component.AlbumUnfold
 import app.wend.sea.core.designsystem.component.LocalNavAnimatedScope
 import app.wend.sea.core.designsystem.component.LocalSharedTransitionScope
 import app.wend.sea.core.designsystem.component.PhotoEasing
+import app.wend.sea.feature.trip.BestShotScreen
 import app.wend.sea.feature.trip.PlacePhotosScreen
 import app.wend.sea.feature.trip.PlacePhotosViewModel
 import androidx.compose.runtime.Composable
@@ -79,9 +84,10 @@ import kotlinx.serialization.Serializable
 /** [x]·[y]·[w]·[h] 는 앨범이 펼쳐질 `+N / 전체 보기` 타일 자리(화면 좌표), 없으면 -1 */
 @Serializable data class PlacePhotosRoute(val trip: Int, val place: Int, val x: Float = -1f, val y: Float = -1f, val w: Float = -1f, val h: Float = -1f)
 @Serializable data object LicensesRoute
+@Serializable data class BestShotRoute(val trip: Int)
 
 /** 상세 위에 겹쳐 열리는 화면(상세는 아래에 그대로 남고, 돌아와도 다시 퍼지지 않는다) */
-private fun NavDestination.overTrip() = hasRoute<ViewerRoute>() || hasRoute<PlacePhotosRoute>()
+private fun NavDestination.overTrip() = hasRoute<ViewerRoute>() || hasRoute<PlacePhotosRoute>() || hasRoute<BestShotRoute>()
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -228,13 +234,17 @@ fun WendNavHost() {
                 origin = if (route.x >= 0f) Offset(route.x, route.y) else null,
                 color = tripColor(number),
             ) {
+                val viewModel: TripDetailViewModel = hiltViewModel()
+                entry.OnResult<String>(TripDetailViewModel.VIEWER_RESULT) { viewModel.onResult(it) }
                 CompositionLocalProvider(LocalNavAnimatedScope provides this) {
                     TripDetailScreen(
+                        viewModel = viewModel,
                         onBack = { navController.popBackStack() },
                         onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
                         onOpenPlace = { place, tile ->
                             navController.navigate(PlacePhotosRoute(number, place, tile.left, tile.top, tile.width, tile.height))
                         },
+                        onBestShots = { navController.navigate(BestShotRoute(number)) },
                     )
                 }
             }
@@ -275,8 +285,12 @@ fun WendNavHost() {
                 closing = closing,
                 modifier = Modifier.graphicsLayer { alpha = if (ready) 1f else 0f },
             ) {
+                val viewModel: PlacePhotosViewModel = hiltViewModel()
+                entry.OnResult<String>(TripDetailViewModel.VIEWER_RESULT) { viewModel.onResult(it) }
+                entry.OnResult<Long>(PlacePhotosViewModel.LAST_VIEWED) { viewModel.showLastViewed(it) }
                 CompositionLocalProvider(LocalNavAnimatedScope provides this) {
                     PlacePhotosScreen(
+                        viewModel = viewModel,
                         onBack = { navController.popBackStack() },
                         onPhotoClick = { place, index -> navController.navigate(ViewerRoute(route.trip, place, index, album = true)) },
                         onReady = { ready = true },
@@ -305,9 +319,36 @@ fun WendNavHost() {
                 )
             }
         }
+        composable<BestShotRoute> {
+            BestShotScreen(
+                onBack = { navController.popBackStack() },
+                onDone = { count ->
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        TripDetailViewModel.VIEWER_RESULT,
+                        "베스트샷 ${count}장을 골랐어요. 사진에 별이 붙어 있어요",
+                    )
+                    navController.popBackStack()
+                },
+            )
+        }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }
     }
+    }
+}
+
+/**
+ * 위에 열렸던 화면이 이 항목의 savedStateHandle 에 남긴 결과를 한 번 받는다.
+ * 항목의 savedStateHandle 은 그 화면 ViewModel 의 SavedStateHandle 과 다른 객체라, ViewModel 이 직접 지켜볼 수 없다.
+ */
+@Composable
+private fun <T : Any> NavBackStackEntry.OnResult(key: String, onResult: (T) -> Unit) {
+    val value by savedStateHandle.getStateFlow<T?>(key, null).collectAsStateWithLifecycle()
+    val current by rememberUpdatedState(onResult)
+    LaunchedEffect(value) {
+        val v = value ?: return@LaunchedEffect
+        savedStateHandle[key] = null
+        current(v)
     }
 }
 

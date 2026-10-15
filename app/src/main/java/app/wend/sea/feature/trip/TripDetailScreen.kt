@@ -57,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -118,6 +119,7 @@ fun TripDetailScreen(
     onPhotoClick: (place: Int, index: Int) -> Unit,
     /** `+N / 전체 보기` 타일 — [tile] 은 타일 자리(화면 좌표), 앨범이 그 자리에서 펼쳐진다 */
     onOpenPlace: (place: Int, tile: Rect) -> Unit,
+    onBestShots: () -> Unit,
     viewModel: TripDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -241,7 +243,7 @@ fun TripDetailScreen(
                         FilledTonalButton(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                viewModel.onBestShots()
+                                onBestShots()
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp),
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp),
@@ -263,6 +265,7 @@ fun TripDetailScreen(
                         item(key = "place-${place.index}") {
                             PlaceSection(
                                 place,
+                                best = uiState.best,
                                 glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places },
                                 onRename = { renaming = place.index },
                                 onPhotoClick = { index ->
@@ -384,7 +387,7 @@ private fun DayHeader(day: DayUi) {
 
 /** 시안 `.tp-stop`: 왼쪽 타임라인 + 번호, 이름, 시간대 · 장수, 사진 6칸(+n) */
 @Composable
-private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: (index: Int) -> Unit, onOpenAll: (tile: Rect) -> Unit) {
+private fun PlaceSection(place: PlaceUi, best: Set<Long>, glowToken: Long?, onRename: () -> Unit, onPhotoClick: (index: Int) -> Unit, onOpenAll: (tile: Rect) -> Unit) {
     val colors = MaterialTheme.colorScheme
     val rail = colors.outlineVariant
     val surface = colors.surface
@@ -425,7 +428,7 @@ private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.offset(y = (-7).dp),
             )
-            PhotoGrid(place.name, place.photos, count = place.count, onClick = onPhotoClick, onOpenAll = onOpenAll, modifier = Modifier.padding(top = 3.dp))
+            PhotoGrid(place.name, place.photos, count = place.count, best = best, onClick = onPhotoClick, onOpenAll = onOpenAll, modifier = Modifier.padding(top = 3.dp))
         }
     }
 }
@@ -439,6 +442,8 @@ private fun PhotoGrid(
     placeName: String,
     photos: List<MediaThumbnail>,
     count: Int,
+    /** 사용자가 고른 베스트샷(사진 id) — 별 */
+    best: Set<Long>,
     onClick: (index: Int) -> Unit,
     onOpenAll: (tile: Rect) -> Unit,
     modifier: Modifier = Modifier,
@@ -466,7 +471,9 @@ private fun PhotoGrid(
                                         .clickable(role = Role.Button) { onOpenAll(bounds) }
                                     else -> Modifier
                                         .background(MaterialTheme.colorScheme.surfaceContainer)
-                                        .semantics { contentDescription = "$placeName 사진 ${index + 1} 크게 보기" }
+                                        .semantics {
+                                            contentDescription = "$placeName 사진 ${index + 1}" + (if (photo.isBest(best)) ", 베스트샷" else "") + " 크게 보기"
+                                        }
                                         .clickable(role = Role.Button) { onClick(index) }
                                 },
                             ),
@@ -478,6 +485,7 @@ private fun PhotoGrid(
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize().then(if (isMore) Modifier else Modifier.sharedPhoto(PhotoKey(photo.key, album = false))),
                             )
+                            if (!isMore && photo.isBest(best)) BestStar(Modifier.padding(5.dp))
                             if (isMore) {
                                 Column(
                                     Modifier.fillMaxSize().background(Color(0xA61F1A16)),
@@ -493,6 +501,22 @@ private fun PhotoGrid(
                 }
             }
         }
+    }
+}
+
+private fun MediaThumbnail.isBest(best: Set<Long>) = !video && mediaId in best
+
+/** 시안 `.tp-grid .star`: 사진 왼쪽 위 흰 원 + 노란 별 */
+@Composable
+internal fun BestStar(modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(24.dp)
+            .shadow(1.5.dp, CircleShape)
+            .background(Color(0xFFFFFDF9), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Rounded.Star, contentDescription = null, tint = Color(0xFFD18A0C), modifier = Modifier.size(16.dp))
     }
 }
 

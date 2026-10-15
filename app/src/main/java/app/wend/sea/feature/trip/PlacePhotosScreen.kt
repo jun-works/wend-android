@@ -24,7 +24,10 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -158,6 +161,7 @@ fun PlacePhotosScreen(
             ) {
                 item(key = "head", span = { GridItemSpan(maxLineSpan) }) { Heading(uiState) }
                 itemsIndexed(uiState.photos, key = { _, it -> it.media.key }) { index, photo ->
+                    val isBest = !photo.media.video && photo.media.mediaId in uiState.best
                     val delay = 90f + (index / 3) * 30f
                     Box(
                         Modifier
@@ -173,7 +177,8 @@ fun PlacePhotosScreen(
                             .clip(RoundedCornerShape(5.dp))
                             .background(colors.surfaceContainer)
                             .semantics {
-                                contentDescription = "${uiState.name}, 사진 ${index + 1}" + (photo.takenAt?.let { ", ${time(it)}" } ?: "") + ", 크게 보기"
+                                contentDescription = "${uiState.name}, 사진 ${index + 1}" + (photo.takenAt?.let { ", ${time(it)}" } ?: "") +
+                                    (if (isBest) ", 베스트샷" else "") + ", 크게 보기"
                             }
                             .clickable(role = Role.Button) { onPhotoClick(uiState.place, index) },
                     ) {
@@ -183,6 +188,7 @@ fun PlacePhotosScreen(
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize().sharedPhoto(PhotoKey(photo.media.key, album = true)).clip(RoundedCornerShape(5.dp)),
                         )
+                        if (isBest) PlaceStar(Modifier.padding(6.dp))
                     }
                 }
                 item(key = "end", span = { GridItemSpan(maxLineSpan) }) {
@@ -197,6 +203,14 @@ fun PlacePhotosScreen(
             }
         }
         SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
+    }
+}
+
+/** 시안 `.pg-star`: 사진 왼쪽 위 원 + 별 */
+@Composable
+private fun PlaceStar(modifier: Modifier = Modifier) {
+    Box(modifier.size(24.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest, CircleShape), contentAlignment = Alignment.Center) {
+        Icon(Icons.Rounded.Star, contentDescription = null, tint = Color(0xFF7A4F05), modifier = Modifier.size(16.dp))
     }
 }
 

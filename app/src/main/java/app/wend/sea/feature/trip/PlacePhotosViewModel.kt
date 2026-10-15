@@ -37,6 +37,8 @@ data class PlacePhotosUiState(
     val end: Long = 0,
     /** 촬영 순서대로 */
     val photos: List<PlacePhoto> = emptyList(),
+    /** 사용자가 고른 베스트샷(사진 id) — 별 */
+    val best: Set<Long> = emptySet(),
 )
 
 /**
@@ -61,25 +63,32 @@ class PlacePhotosViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlacePhotosUiState())
     val uiState: StateFlow<PlacePhotosUiState> = _uiState.asStateFlow()
 
-    val lastViewed: StateFlow<Long?> = savedStateHandle.getStateFlow(LAST_VIEWED, null)
+    private val _lastViewed = MutableStateFlow<Long?>(null)
+    val lastViewed: StateFlow<Long?> = _lastViewed.asStateFlow()
 
     private val _messages = Channel<String>(Channel.BUFFERED)
     val messages = _messages.receiveAsFlow()
 
     init {
         load()
-        viewModelScope.launch {
-            savedStateHandle.getStateFlow<String?>(TripDetailViewModel.VIEWER_RESULT, null).collect { message ->
-                if (message == null) return@collect
-                savedStateHandle[TripDetailViewModel.VIEWER_RESULT] = null
-                load()
-                if (message.isNotEmpty()) _messages.send(message)
-            }
-        }
+    }
+
+    /**
+     * 크게 보기에서 돌아왔다. 결과는 네비게이션 항목의 savedStateHandle 로 오는데,
+     * 그건 이 ViewModel 의 SavedStateHandle 과 다른 객체라 NavHost 가 넘겨준다.
+     */
+    fun onResult(message: String) {
+        load()
+        if (message.isNotEmpty()) _messages.trySend(message)
+    }
+
+    /** 크게 보기에서 마지막으로 본 사진 — 그 사진이 보이게 한다 */
+    fun showLastViewed(key: Long) {
+        _lastViewed.value = key
     }
 
     fun consumeLastViewed() {
-        savedStateHandle[LAST_VIEWED] = null
+        _lastViewed.value = null
     }
 
     private fun load() {
@@ -114,6 +123,7 @@ class PlacePhotosViewModel @Inject constructor(
                 start = p.start,
                 end = p.end,
                 photos = p.media.map { PlacePhoto(MediaThumbnail(it.id, it.video), it.takenAt) },
+                best = analysisRepository.bestShots(),
             )
         }
     }

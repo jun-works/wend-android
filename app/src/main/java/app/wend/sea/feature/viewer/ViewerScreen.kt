@@ -44,6 +44,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.rounded.Star
+import app.wend.sea.feature.trip.StarGold
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -146,6 +148,10 @@ fun ViewerScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is ViewerEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                is ViewerEvent.BestChanged -> {
+                    currentOnTripChanged("")
+                    snackbarHostState.showSnackbar(event.message)
+                }
                 ViewerEvent.Removed -> {
                     currentOnTripChanged("여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요")
                     currentOnBack()
@@ -204,6 +210,7 @@ fun ViewerScreen(
                     // 보고 있는 장만 썸네일과 같이 움직인다(옆 장이 다른 썸네일로 날아가지 않게)
                     sharedKey = if (page == pager.currentPage) PhotoKey(item.media.key, uiState.album) else null,
                     removeProgress = if (removingItem == item) removing.value else 0f,
+                    best = !item.media.video && item.media.mediaId in uiState.best,
                     dayColor = dayTextColor(uiState.day),
                     onZoomChange = { if (page == pager.currentPage) zoomed = it },
                     onPlay = {
@@ -227,9 +234,14 @@ fun ViewerScreen(
                 modifier = chrome.fillMaxWidth().navigationBarsPadding().padding(top = 6.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
-                ViewerAction(Icons.Outlined.StarOutline, "베스트샷으로") {
+                val isBest = !current.media.video && current.media.mediaId in uiState.best
+                ViewerAction(
+                    if (isBest) Icons.Rounded.Star else Icons.Outlined.StarOutline,
+                    if (isBest) "베스트샷" else "베스트샷으로",
+                    iconTint = if (isBest) StarGold else ViewerInk,
+                ) {
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                    viewModel.onBestShot()
+                    viewModel.onBestShot(current)
                 }
                 ViewerAction(Icons.Outlined.RemoveCircleOutline, "여행에서 빼기") {
                     if (removingItem != null) return@ViewerAction
@@ -311,7 +323,7 @@ private fun ViewerTopBar(item: ViewerItem, placeName: String, day: Int, onBack: 
 
 /** 시안 .vw-act: 아이콘 위 · 글자 아래, 최소 76×56 */
 @Composable
-private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerInk, onClick: () -> Unit) {
+private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerInk, iconTint: Color = tint, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .widthIn(min = 76.dp)
@@ -322,7 +334,7 @@ private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerI
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(24.dp))
         Text(label, style = MaterialTheme.typography.labelMedium, color = tint)
     }
 }
@@ -337,6 +349,8 @@ private fun ZoomableMedia(
     active: Boolean,
     sharedKey: PhotoKey?,
     removeProgress: Float,
+    /** 베스트샷이면 사진 왼쪽 위에 "★ 베스트샷" */
+    best: Boolean,
     dayColor: Color,
     onZoomChange: (Boolean) -> Unit,
     onPlay: () -> Unit,
@@ -459,6 +473,7 @@ private fun ZoomableMedia(
                         }
                         AsyncImage(model = original, contentDescription = null, contentScale = scaleMode, modifier = Modifier.fillMaxSize())
                     }
+                    if (best && scale == 1f && morph == 0f) BestChip(Modifier.align(Alignment.TopStart).padding(12.dp))
                 }
             }
             if (morph > 0f) Box(Modifier.fillMaxSize().background(dayColor.copy(alpha = morph)))
@@ -475,6 +490,24 @@ private fun ZoomableMedia(
         }
     }
 }
+
+/** 시안 `.vw-slide .star`: 사진 왼쪽 위 "★ 베스트샷" 알약 */
+@Composable
+private fun BestChip(modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .background(Color(0xFFFFFDF9), CircleShape)
+            .padding(start = 8.dp, end = 10.dp, top = 6.dp, bottom = 6.dp)
+            .semantics { contentDescription = "베스트샷" },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(Icons.Rounded.Star, contentDescription = null, tint = Color(0xFFD18A0C), modifier = Modifier.size(16.dp))
+        Text("베스트샷", style = BestChipStyle, color = Color(0xFF7A4F05))
+    }
+}
+
+private val BestChipStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 12.sp, lineHeightStyle = CssLineHeight)
 
 /** 빼기 때 사진을 자르는 원: 처음엔 사진 전체를 덮는 원, 끝엔 짧은 변에 맞는 원(세로 사진도 타원이 아닌 방울이 되게) */
 private class DropShape(private val t: Float) : Shape {

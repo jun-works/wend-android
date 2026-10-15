@@ -43,6 +43,12 @@ data class Trip(
 /** 여행 상세: 장소들과, 장소마다 자동 이름(가장 가까운 도시의 사용자 언어 이름, 없으면 null)과 사용자가 바꾼 이름 */
 data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>, val placeUserNames: List<String?>)
 
+/** 같은 장면을 여러 번 찍은 사진 묶음 하나. [start] 는 첫 사진 촬영 시각 */
+data class SimilarScene(val start: Long, val photos: List<MediaThumbnail>)
+
+/** 장소마다 장면 묶음. [pending] 이면 아직 값을 계산하지 않은 사진이 있다(뒤에서 계산 중) */
+data class SimilarScenes(val places: List<List<SimilarScene>>, val pending: Boolean)
+
 sealed interface AnalysisState {
     /** 분석을 시작한 적 없음 */
     data object Idle : AnalysisState
@@ -150,21 +156,36 @@ class AnalysisRepository @Inject constructor(
 
     /**
      * 장소마다 같은 장면을 여러 번 찍은 사진 묶음(design/BEST_SHOT.md) — 2장 이상인 장면만, 순서는 [TripDetail.places] 와 같다.
-     * 묶음이 없는 장소는 빈 목록. 값을 아직 계산하지 않은 사진은 빠진다.
+     * 묶음이 없는 장소는 빈 목록. 값을 아직 계산하지 않은 사진은 빠지고 [SimilarScenes.pending] 이 참.
      */
-    suspend fun similarScenes(detail: TripDetail): List<List<List<MediaThumbnail>>> {
-        val hashes = featureDao.features(detail.places.flatMap { p -> p.media.filter { !it.video }.map { it.id } })
-            .associate { it.mediaId to it.hash }
+    suspend fun similarScenes(detail: TripDetail): SimilarScenes {
+        val photoIds = detail.places.flatMap { p -> p.media.filter { !it.video }.map { it.id } }
+        val hashes = featureDao.features(photoIds).associate { it.mediaId to it.hash }
         val grouper = SceneGrouper()
-        return withContext(Dispatchers.Default) {
+        val places = withContext(Dispatchers.Default) {
             detail.places.map { place ->
                 val shots = place.media.mapNotNull { m ->
                     val hash = hashes[m.id]?.takeIf { !m.video } ?: return@mapNotNull null
                     SceneShot(m.id, m.takenAt ?: return@mapNotNull null, hash)
                 }
-                grouper.group(shots).map { scene -> scene.map { MediaThumbnail(it.id, video = false) } }
+                grouper.group(shots).map { scene -> SimilarScene(scene.first().takenAt, scene.map { MediaThumbnail(it.id, video = false) }) }
             }
         }
+        return SimilarScenes(places, pending = photoIds.any { it !in hashes })
+    }
+
+    /** 사용자가 고른 베스트샷(사진 id) */
+    suspend fun bestShots(): Set<Long> = tripDao.bestShots().toSet()
+
+    /** [scope] 사진들(베스트샷 화면에 보인 장면들)의 베스트샷을 [picks] 로 바꾼다 */
+    suspend fun saveBestShots(scope: List<Long>, picks: List<Long>) = tripDao.replaceBestShots(scope, picks)
+
+    /** 크게 보기에서 고른 한 장 — 그 사진이 속한 장면의 베스트샷을 바꾼다. 장면에 속하지 않으면 그 사진만 */
+    suspend fun setBestShot(number: Int, media: MediaThumbnail) {
+        if (media.video) return
+        val detail = tripDetail(number) ?: return
+        val scene = similarScenes(detail).places.flatten().firstOrNull { s -> s.photos.any { it == media } }
+        tripDao.replaceBestShots(scene?.photos?.map { it.mediaId } ?: listOf(media.mediaId), listOf(media.mediaId))
     }
 
     /** 사진 한 장을 여행에서 뺀다. 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
@@ -200,12 +221,16 @@ class AnalysisRepository @Inject constructor(
 
     private fun locale(): Locale = context.resources.configuration.locales[0]
 
-    /** 여행마다 카드에 보일 사진 3장: 첫 장 · 가운데 장 · 마지막 장 */
-    suspend fun covers(): Map<Int, List<MediaThumbnail>> =
-        tripDao.allMedia().groupBy { it.tripNumber }.mapValues { (_, media) ->
-            listOf(0, media.size / 2, media.lastIndex).distinct().filter { it in media.indices }
-                .map { MediaThumbnail(media[it].mediaId, media[it].video) }
+    /** 여행마다 카드에 보일 사진 3장: 고른 베스트샷 먼저, 그다음 첫 장 · 가운데 장 · 마지막 장 */
+    suspend fun covers(): Map<Int, List<MediaThumbnail>> {
+        val best = tripDao.bestShots().toSet()
+        return tripDao.allMedia().groupBy { it.tripNumber }.mapValues { (_, media) ->
+            val auto = listOf(0, media.size / 2, media.lastIndex).distinct().filter { it in media.indices }.map { media[it] }
+            // 사용자가 고른 베스트샷이 대표 사진 — 모자라면 첫 장 · 가운데 장 · 마지막 장으로 채운다
+            (media.filter { !it.video && it.mediaId in best } + auto).distinct().take(3)
+                .map { MediaThumbnail(it.mediaId, it.video) }
         }
+    }
 
     private companion object {
         const val WORK_NAME = "trip-analysis"

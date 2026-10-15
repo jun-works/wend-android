@@ -32,6 +32,8 @@ data class ViewerUiState(
     val day: Int = 0,
     /** 장소 사진 화면에서 열었는지(사진이 날아올 썸네일이 그 화면에 있다) */
     val album: Boolean = false,
+    /** 사용자가 고른 베스트샷(사진 id) */
+    val best: Set<Long> = emptySet(),
 )
 
 sealed interface ViewerEvent {
@@ -39,6 +41,9 @@ sealed interface ViewerEvent {
 
     /** 여행에서 뺐다 — 화면을 닫고 상세에서 알린다 */
     data object Removed : ViewerEvent
+
+    /** 베스트샷을 바꿨다 — 상세·장소 사진이 별을 다시 그린다 */
+    data class BestChanged(val message: String) : ViewerEvent
 }
 
 /**
@@ -71,7 +76,8 @@ class ViewerViewModel @Inject constructor(
             val detail = analysisRepository.tripDetail(trip) ?: return@launch
             val p = detail.places.getOrNull(place) ?: return@launch
             val ratios = mediaRepository.aspectRatios(p.media.map { it.video to it.id })
-            build(detail, ratios)?.let { _uiState.value = it }
+            val best = analysisRepository.bestShots()
+            build(detail, ratios)?.let { _uiState.value = it.copy(best = best) }
         }
     }
 
@@ -90,8 +96,19 @@ class ViewerViewModel @Inject constructor(
         )
     }
 
-    fun onBestShot() {
-        _events.trySend(ViewerEvent.ShowMessage("다음 단계(베스트샷 고르기)는 곧 이어서 만들어요"))
+    /** 이 사진을 베스트샷으로 — 같은 장면에서 고른 다른 사진은 내려온다 */
+    fun onBestShot(item: ViewerItem) {
+        if (item.media.video) {
+            _events.trySend(ViewerEvent.ShowMessage("영상은 베스트샷으로 고를 수 없어요"))
+            return
+        }
+        if (item.media.mediaId in _uiState.value.best) return
+        viewModelScope.launch {
+            analysisRepository.setBestShot(trip, item.media)
+            val best = analysisRepository.bestShots()
+            _uiState.update { it.copy(best = best) }
+            _events.send(ViewerEvent.BestChanged("이 사진을 ${_uiState.value.placeName}의 베스트샷으로 골랐어요"))
+        }
     }
 
     /** 여행에서 빼기: 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
