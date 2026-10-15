@@ -75,6 +75,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
+import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
+import app.wend.sea.core.designsystem.component.PhotoKey
+import app.wend.sea.core.designsystem.component.key
+import app.wend.sea.core.designsystem.component.rememberThumbnail
+import app.wend.sea.core.designsystem.component.sharedPhoto
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.analysis.name
@@ -95,14 +106,18 @@ private val DayStyle = serif(19, 1.2)
 private val PlaceStyle = serif(17, 1.3)
 private val TimeFormat = DateTimeFormatter.ofPattern("a h:mm", Locale.KOREAN)
 
-private fun time(t: Long): String = Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).format(TimeFormat)
-private fun PlaceUi.whenText(): String = if (end - start < 60_000) time(start) else "${time(start)} – ${time(end)}"
+internal fun time(t: Long): String = Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).format(TimeFormat)
+/** 장소에 머문 시간대 "오후 1:40 – 3:30"(1분 안이면 한 시각) */
+internal fun whenText(start: Long, end: Long): String = if (end - start < 60_000) time(start) else "${time(start)} – ${time(end)}"
+private fun PlaceUi.whenText(): String = whenText(start, end)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TripDetailScreen(
     onBack: () -> Unit,
     onPhotoClick: (place: Int, index: Int) -> Unit,
+    /** `+N / 전체 보기` 타일 — [tile] 은 타일 자리(화면 좌표), 앨범이 그 자리에서 펼쳐진다 */
+    onOpenPlace: (place: Int, tile: Rect) -> Unit,
     viewModel: TripDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -174,8 +189,13 @@ fun TripDetailScreen(
             // 다 읽기 전에는 빈 지도·"0곳" 같은 빈 내용을 그리지 않는다
             if (trip == null) return@Column
             // 다 읽으면 지도와 내용이 부드럽게 나타난다(툭 바뀌지 않게)
-            val fadeIn = remember { Animatable(0f) }
-            LaunchedEffect(Unit) { fadeIn.animateTo(1f, tween(260)) }
+            // 크게 보기·장소 사진에서 돌아올 때는 다시 흐려졌다 나타나지 않는다
+            var faded by rememberSaveable { mutableStateOf(false) }
+            val fadeIn = remember { Animatable(if (faded) 1f else 0f) }
+            LaunchedEffect(Unit) {
+                fadeIn.animateTo(1f, tween(260))
+                faded = true
+            }
             val contentAlpha = fadeIn.value
             // 지도는 위에 고정
             TripMap(
@@ -241,10 +261,19 @@ fun TripDetailScreen(
                     stickyHeader(key = "day-${day.day}") { DayHeader(day) }
                     day.places.forEach { place ->
                         item(key = "place-${place.index}") {
-                            PlaceSection(place, glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places }, onRename = { renaming = place.index }, onPhotoClick = { index ->
-                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                onPhotoClick(place.index, index)
-                            })
+                            PlaceSection(
+                                place,
+                                glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places },
+                                onRename = { renaming = place.index },
+                                onPhotoClick = { index ->
+                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                    onPhotoClick(place.index, index)
+                                },
+                                onOpenAll = { tile ->
+                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                    onOpenPlace(place.index, tile)
+                                },
+                            )
                         }
                     }
                 }
@@ -355,7 +384,7 @@ private fun DayHeader(day: DayUi) {
 
 /** 시안 `.tp-stop`: 왼쪽 타임라인 + 번호, 이름, 시간대 · 장수, 사진 6칸(+n) */
 @Composable
-private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: (index: Int) -> Unit) {
+private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: (index: Int) -> Unit, onOpenAll: (tile: Rect) -> Unit) {
     val colors = MaterialTheme.colorScheme
     val rail = colors.outlineVariant
     val surface = colors.surface
@@ -396,30 +425,67 @@ private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.offset(y = (-7).dp),
             )
-            PhotoGrid(place.photos, more = place.count - 6, onClick = onPhotoClick, modifier = Modifier.padding(top = 3.dp))
+            PhotoGrid(place.name, place.photos, count = place.count, onClick = onPhotoClick, onOpenAll = onOpenAll, modifier = Modifier.padding(top = 3.dp))
         }
     }
 }
 
-/** 3열 정사각 사진. 6칸째에 "+나머지" */
+/**
+ * 3열 정사각 사진. 7장 이상이면 앞 5장 + 6칸째는 "+나머지 / 전체 보기"(시안 ㉑ — 총 38장이면 +33),
+ * 누르면 그 장소의 전체 사진으로 간다. 일반 사진은 크게 보기로 바로 간다.
+ */
 @Composable
-private fun PhotoGrid(photos: List<MediaThumbnail>, more: Int, onClick: (index: Int) -> Unit, modifier: Modifier = Modifier) {
+private fun PhotoGrid(
+    placeName: String,
+    photos: List<MediaThumbnail>,
+    count: Int,
+    onClick: (index: Int) -> Unit,
+    onOpenAll: (tile: Rect) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val hasMore = count > 6
     Column(modifier.clip(RoundedCornerShape(14.dp)), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         photos.chunked(3).forEachIndexed { row, rowPhotos ->
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 (0 until 3).forEach { col ->
+                    val index = row * 3 + col
                     val photo = rowPhotos.getOrNull(col)
+                    val isMore = hasMore && index == 5
+                    var bounds by remember { mutableStateOf(Rect.Zero) }
                     Box(
                         Modifier
                             .weight(1f)
                             .aspectRatio(1f)
-                            .then(if (photo != null) Modifier.background(MaterialTheme.colorScheme.surfaceContainer).clickable { onClick(row * 3 + col) } else Modifier),
+                            .then(
+                                when {
+                                    photo == null -> Modifier
+                                    isMore -> Modifier
+                                        .onGloballyPositioned { bounds = it.boundsInRoot() }
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .semantics { contentDescription = "$placeName 사진 ${formatCount(count)}장 전체 보기" }
+                                        .clickable(role = Role.Button) { onOpenAll(bounds) }
+                                    else -> Modifier
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .semantics { contentDescription = "$placeName 사진 ${index + 1} 크게 보기" }
+                                        .clickable(role = Role.Button) { onClick(index) }
+                                },
+                            ),
                     ) {
                         if (photo != null) {
-                            AsyncImage(model = photo, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                            if (row == 1 && col == 2 && more > 0) {
-                                Box(Modifier.fillMaxSize().background(Color(0x731F1A16)), contentAlignment = Alignment.Center) {
-                                    Text("+${formatCount(more)}", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = Color.White)
+                            AsyncImage(
+                                model = rememberThumbnail(photo),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().then(if (isMore) Modifier else Modifier.sharedPhoto(PhotoKey(photo.key, album = false))),
+                            )
+                            if (isMore) {
+                                Column(
+                                    Modifier.fillMaxSize().background(Color(0xA61F1A16)),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    Text("+${formatCount(count - 5)}", style = MoreCountStyle, color = Color.White)
+                                    Text("전체 보기", style = MoreLabelStyle, color = Color.White)
                                 }
                             }
                         }
@@ -429,3 +495,6 @@ private fun PhotoGrid(photos: List<MediaThumbnail>, more: Int, onClick: (index: 
         }
     }
 }
+
+private val MoreCountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 20.sp, lineHeightStyle = CssLineHeight)
+private val MoreLabelStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 15.4.sp, lineHeightStyle = CssLineHeight)

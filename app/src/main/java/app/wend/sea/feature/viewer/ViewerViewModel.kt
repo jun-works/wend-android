@@ -3,8 +3,10 @@ package app.wend.sea.feature.viewer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
+import app.wend.sea.data.analysis.TripDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,8 +19,8 @@ import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
 
-/** 크게 볼 사진 한 장. [takenAt] 은 촬영 시각(ms), 없으면 null */
-data class ViewerItem(val media: MediaThumbnail, val takenAt: Long?)
+/** 크게 볼 사진 한 장. [takenAt] 은 촬영 시각(ms), 없으면 null. [ratio] 는 가로/세로(모르면 null) */
+data class ViewerItem(val media: MediaThumbnail, val takenAt: Long?, val ratio: Float? = null)
 
 data class ViewerUiState(
     val loaded: Boolean = false,
@@ -28,6 +30,8 @@ data class ViewerUiState(
     val placeName: String = "",
     /** 장소의 날짜 순번(0부터) — 날짜 색 */
     val day: Int = 0,
+    /** 장소 사진 화면에서 열었는지(사진이 날아올 썸네일이 그 화면에 있다) */
+    val album: Boolean = false,
 )
 
 sealed interface ViewerEvent {
@@ -45,12 +49,14 @@ sealed interface ViewerEvent {
 class ViewerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
+    private val mediaRepository: MediaRepository,
 ) : ViewModel() {
 
     /** 네비게이션 인자(ViewerRoute) */
     private val trip: Int = checkNotNull(savedStateHandle["trip"])
     private val place: Int = checkNotNull(savedStateHandle["place"])
     private val index: Int = checkNotNull(savedStateHandle["index"])
+    private val album: Boolean = savedStateHandle["album"] ?: false
 
     private val _uiState = MutableStateFlow(ViewerUiState())
     val uiState: StateFlow<ViewerUiState> = _uiState.asStateFlow()
@@ -59,20 +65,29 @@ class ViewerViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        // 썸네일에서 사진이 날아오려면 첫 그림부터 사진이 있어야 한다 — 상세가 읽어 둔 것으로 바로 채운다
+        analysisRepository.cachedTripDetail(trip)?.let { build(it, emptyMap()) }?.let { _uiState.value = it }
         viewModelScope.launch {
             val detail = analysisRepository.tripDetail(trip) ?: return@launch
             val p = detail.places.getOrNull(place) ?: return@launch
-            val zone = ZoneId.systemDefault()
-            fun dateOf(t: Long) = Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
-            val dates = detail.places.map { dateOf(it.start) }.distinct()
-            _uiState.value = ViewerUiState(
-                loaded = true,
-                items = p.media.map { ViewerItem(MediaThumbnail(it.id, it.video), it.takenAt) },
-                startIndex = index.coerceIn(0, (p.media.size - 1).coerceAtLeast(0)),
-                placeName = detail.placeUserNames[place] ?: detail.placeCities[place] ?: "장소 ${place + 1}",
-                day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0),
-            )
+            val ratios = mediaRepository.aspectRatios(p.media.map { it.video to it.id })
+            build(detail, ratios)?.let { _uiState.value = it }
         }
+    }
+
+    private fun build(detail: TripDetail, ratios: Map<Pair<Boolean, Long>, Float>): ViewerUiState? {
+        val p = detail.places.getOrNull(place) ?: return null
+        val zone = ZoneId.systemDefault()
+        fun dateOf(t: Long) = Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
+        val dates = detail.places.map { dateOf(it.start) }.distinct()
+        return ViewerUiState(
+            loaded = true,
+            items = p.media.map { ViewerItem(MediaThumbnail(it.id, it.video), it.takenAt, ratios[it.video to it.id]) },
+            startIndex = index.coerceIn(0, (p.media.size - 1).coerceAtLeast(0)),
+            placeName = detail.placeUserNames[place] ?: detail.placeCities[place] ?: "장소 ${place + 1}",
+            day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0),
+            album = album,
+        )
     }
 
     fun onBestShot() {

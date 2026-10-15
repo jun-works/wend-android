@@ -6,6 +6,25 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.remember
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.navigation.NavDestination
+import app.wend.sea.core.designsystem.component.AlbumUnfold
+import app.wend.sea.core.designsystem.component.LocalNavAnimatedScope
+import app.wend.sea.core.designsystem.component.LocalSharedTransitionScope
+import app.wend.sea.core.designsystem.component.PhotoEasing
+import app.wend.sea.feature.trip.PlacePhotosScreen
+import app.wend.sea.feature.trip.PlacePhotosViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,12 +74,22 @@ import kotlinx.serialization.Serializable
 @Serializable data object TripsRoute
 /** [x]·[y] 는 상세가 퍼져 나올 카드 방울 중심(화면 좌표), 없으면 -1 */
 @Serializable data class TripRoute(val number: Int, val x: Float = -1f, val y: Float = -1f)
-@Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int)
+/** [album] 이면 장소 사진 화면에서 열었다 */
+@Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int, val album: Boolean = false)
+/** [x]·[y]·[w]·[h] 는 앨범이 펼쳐질 `+N / 전체 보기` 타일 자리(화면 좌표), 없으면 -1 */
+@Serializable data class PlacePhotosRoute(val trip: Int, val place: Int, val x: Float = -1f, val y: Float = -1f, val w: Float = -1f, val h: Float = -1f)
 @Serializable data object LicensesRoute
 
+/** 상세 위에 겹쳐 열리는 화면(상세는 아래에 그대로 남고, 돌아와도 다시 퍼지지 않는다) */
+private fun NavDestination.overTrip() = hasRoute<ViewerRoute>() || hasRoute<PlacePhotosRoute>()
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun WendNavHost() {
     val navController = rememberNavController()
+    // 썸네일 ↔ 크게 보기에서 사진이 같이 움직이도록 앱 전체를 감싼다
+    SharedTransitionLayout {
+    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
     NavHost(navController = navController, startDestination = SplashRoute) {
         composable<SplashRoute> {
             SplashScreen(
@@ -172,9 +201,11 @@ fun WendNavHost() {
         }
         composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
         composable<TripRoute>(
-            // 목록 ↔ 상세: 겹쳐 흐리게 바꾸지 않고, 상세가 카드 방울에서 퍼지고(아래 TripReveal) 방울로 오므라든다
-            enterTransition = { if (initialState.destination.hasRoute<ViewerRoute>()) null else EnterTransition.None },
-            popExitTransition = { if (targetState.destination.hasRoute<ViewerRoute>()) null else ExitTransition.KeepUntilTransitionsFinished },
+            // 목록 ↔ 상세: 겹쳐 흐리게 바꾸지 않고, 상세가 카드 방울에서 퍼지고(아래 TripReveal) 방울로 오므라든다.
+            // 크게 보기·장소 사진은 상세 위에 열리고 닫힌다 — 상세는 아래에 그대로 둔다
+            enterTransition = { EnterTransition.None },
+            exitTransition = { if (targetState.destination.overTrip()) ExitTransition.KeepUntilTransitionsFinished else null },
+            popExitTransition = { ExitTransition.KeepUntilTransitionsFinished },
         ) { entry ->
             val route = entry.toRoute<TripRoute>()
             val number = route.number
@@ -184,7 +215,7 @@ fun WendNavHost() {
                 if (it == EnterExitState.Visible) 1f else 0f
             }
             val leavingToList = transition.targetState == EnterExitState.PostExit &&
-                navController.currentBackStackEntry?.destination?.hasRoute<ViewerRoute>() != true
+                navController.currentBackStackEntry?.destination?.overTrip() != true
             val progress = when {
                 leavingToList -> anim
                 transition.targetState == EnterExitState.PostExit -> 1f
@@ -197,19 +228,86 @@ fun WendNavHost() {
                 origin = if (route.x >= 0f) Offset(route.x, route.y) else null,
                 color = tripColor(number),
             ) {
-                TripDetailScreen(
+                CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                    TripDetailScreen(
+                        onBack = { navController.popBackStack() },
+                        onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
+                        onOpenPlace = { place, tile ->
+                            navController.navigate(PlacePhotosRoute(number, place, tile.left, tile.top, tile.width, tile.height))
+                        },
+                    )
+                }
+            }
+        }
+        composable<PlacePhotosRoute>(
+            // 시안 ㉑: 타일 자리에서 종이 앨범이 펼쳐지고(아래 AlbumUnfold) 그 자리로 접힌다. 크게 보기는 그 위에 열린다
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.KeepUntilTransitionsFinished },
+            popExitTransition = { ExitTransition.KeepUntilTransitionsFinished },
+        ) { entry ->
+            val route = entry.toRoute<PlacePhotosRoute>()
+            // 처음 열 때만 펼치고(크게 보기에서 돌아올 때는 아님), 상세로 돌아갈 때만 접는다
+            var unfolded by rememberSaveable { mutableStateOf(false) }
+            // 펼칠 때는 상세를 아래에 붙잡아 두는 시간만(사진을 읽고 그리는 동안 + 펼치기), 접을 때는 접히는 값
+            val anim by transition.animateFloat(
+                transitionSpec = { if (targetState == EnterExitState.Visible) tween(800, easing = LinearEasing) else tween(420, easing = PhotoEasing) },
+                label = "albumUnfold",
+            ) { if (it == EnterExitState.Visible) 1f else 0f }
+            val closing = transition.targetState == EnterExitState.PostExit &&
+                navController.currentBackStackEntry?.destination?.hasRoute<ViewerRoute>() != true
+            // 펼치기는 사진을 읽고 그리드를 처음 그린 뒤에 시작한다 — 첫 그리기가 무거워(한 프레임 ~120ms)
+            // 펼치는 도중에 그리면 그만큼 건너뛰어 보인다. 그전에는 앨범을 숨겨 빈 종이가 비치지 않게 한다
+            var ready by remember { mutableStateOf(unfolded) }
+            val unfold = remember { Animatable(if (unfolded) 1f else 0f) }
+            LaunchedEffect(ready) {
+                if (!ready || unfolded) return@LaunchedEffect
+                unfold.animateTo(1f, tween(420, easing = PhotoEasing))
+                unfolded = true
+            }
+            val progress = when {
+                closing -> anim
+                transition.targetState == EnterExitState.PostExit -> 1f
+                else -> unfold.value
+            }
+            AlbumUnfold(
+                progress = progress,
+                origin = if (route.w > 0f) Rect(Offset(route.x, route.y), Size(route.w, route.h)) else null,
+                closing = closing,
+                modifier = Modifier.graphicsLayer { alpha = if (ready) 1f else 0f },
+            ) {
+                CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                    PlacePhotosScreen(
+                        onBack = { navController.popBackStack() },
+                        onPhotoClick = { place, index -> navController.navigate(ViewerRoute(route.trip, place, index, album = true)) },
+                        onReady = { ready = true },
+                    )
+                }
+            }
+        }
+        composable<ViewerRoute>(
+            // 시안 ㉑: 배경은 280ms 에 어두워지고 걷히며, 사진은 썸네일 자리에서 400ms 동안 자라고 돌아간다(sharedPhoto)
+            enterTransition = { fadeIn(tween(280, easing = PhotoEasing)) },
+            popExitTransition = { fadeOut(tween(280, easing = PhotoEasing)) },
+        ) {
+            CompositionLocalProvider(LocalNavAnimatedScope provides this) {
+                ViewerScreen(
                     onBack = { navController.popBackStack() },
-                    onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
+                    onTripChanged = { message ->
+                        val previous = navController.previousBackStackEntry
+                        previous?.savedStateHandle?.set(TripDetailViewModel.VIEWER_RESULT, message)
+                        // 장소 사진에서 열었으면 그 아래 상세도 조용히 다시 읽는다(안내는 장소 사진에서)
+                        val trip = runCatching { navController.getBackStackEntry<TripRoute>() }.getOrNull()
+                        if (trip != null && trip != previous) trip.savedStateHandle[TripDetailViewModel.VIEWER_RESULT] = ""
+                    },
+                    onPageChange = { media ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(PlacePhotosViewModel.LAST_VIEWED, media)
+                    },
                 )
             }
         }
-        composable<ViewerRoute> {
-            ViewerScreen(
-                onBack = { navController.popBackStack() },
-                onTripChanged = { message -> navController.previousBackStackEntry?.savedStateHandle?.set(TripDetailViewModel.VIEWER_RESULT, message) },
-            )
-        }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
+    }
+    }
     }
 }
 

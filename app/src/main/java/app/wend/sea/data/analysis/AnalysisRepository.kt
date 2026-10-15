@@ -102,13 +102,16 @@ class AnalysisRepository @Inject constructor(
      * 여행 행(장수·기간·도시)이나 사용자 이름, 언어가 바뀌면 다시 계산한다.
      */
     private val detailLock = Mutex()
-    private val detailCache = HashMap<Int, CachedDetail>()
+    private val detailCache = java.util.concurrent.ConcurrentHashMap<Int, CachedDetail>()
     private var namesVersion = 0
 
     private data class CachedDetail(val entity: TripEntity, val namesVersion: Int, val locale: Locale, val detail: TripDetail)
 
     /** 목록에 보이는 여행들의 상세를 미리 읽는다 */
     suspend fun prefetchTripDetails(numbers: List<Int>) = numbers.forEach { tripDetail(it) }
+
+    /** 이미 읽어 둔 상세(기다리지 않는다). 화면 첫 그림용 — 바뀌었을 수 있어 [tripDetail] 로 다시 확인한다 */
+    fun cachedTripDetail(number: Int): TripDetail? = detailCache[number]?.detail
 
     /** 여행 하나와, 그 사진들을 장소 단위로 나눈 것 */
     suspend fun tripDetail(number: Int): TripDetail? = detailLock.withLock {

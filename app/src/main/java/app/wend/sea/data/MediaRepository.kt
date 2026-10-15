@@ -82,6 +82,35 @@ class MediaRepository @Inject constructor(
         }
     }
 
+    /**
+     * 사진·영상의 화면에 보이는 가로/세로 비율(돌려 찍은 것은 돌린 뒤). 크기를 모르면 빠진다.
+     * 크게 보기에서 썸네일(정사각 Crop)이 원본 비율로 자라게 할 때 쓴다.
+     */
+    suspend fun aspectRatios(keys: List<Pair<Boolean, Long>>): Map<Pair<Boolean, Long>, Float> = withContext(Dispatchers.IO) {
+        keys.groupBy({ it.first }, { it.second }).flatMap { (video, ids) ->
+            val collection = if (video) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ids.chunked(500).flatMap { chunk ->
+                context.contentResolver.query(
+                    collection,
+                    arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.WIDTH, MediaStore.MediaColumns.HEIGHT, MediaStore.MediaColumns.ORIENTATION),
+                    "${MediaStore.MediaColumns._ID} IN (${chunk.joinToString(",")})",
+                    null,
+                    null,
+                )?.use { cursor ->
+                    buildList {
+                        while (cursor.moveToNext()) {
+                            val w = cursor.getInt(1)
+                            val h = cursor.getInt(2)
+                            if (w <= 0 || h <= 0) continue
+                            val turned = (cursor.getInt(3) / 90) % 2 == 1
+                            add((video to cursor.getLong(0)) to if (turned) h.toFloat() / w else w.toFloat() / h)
+                        }
+                    }
+                } ?: emptyList()
+            }
+        }.toMap()
+    }
+
     /** 볼 수 있는 사진·영상 전체 수(캡처 포함) — "N개 중 M개가 여행에 담겼어요" 의 N */
     suspend fun visibleCount(): Int = withContext(Dispatchers.IO) { allItems().size }
 

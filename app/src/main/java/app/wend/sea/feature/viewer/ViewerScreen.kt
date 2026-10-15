@@ -94,11 +94,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wend.sea.feature.trip.dayTextColor
+import app.wend.sea.core.designsystem.component.PhotoKey
+import app.wend.sea.core.designsystem.component.cacheKey
+import app.wend.sea.core.designsystem.component.key
+import app.wend.sea.core.designsystem.component.sharedPhoto
+import androidx.compose.foundation.layout.aspectRatio
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
 import app.wend.sea.core.designsystem.theme.Surface
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.SingletonImageLoader
+import coil3.memory.MemoryCache
 import coil3.size.Size as CoilSize
 import java.time.Instant
 import java.time.ZoneId
@@ -122,6 +129,8 @@ fun ViewerScreen(
     onBack: () -> Unit,
     /** 여행에서 뺐거나 휴지통으로 옮겨 여행이 바뀌었다 — 상세가 다시 읽는다. [message] 는 상세에서 띄울 안내 */
     onTripChanged: (message: String) -> Unit,
+    /** 지금 보는 사진([MediaThumbnail.key]) — 돌아가면 썸네일 화면이 그 사진을 보여 준다 */
+    onPageChange: (media: Long) -> Unit = {},
     viewModel: ViewerViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -166,6 +175,8 @@ fun ViewerScreen(
         val pager = rememberPagerState(initialPage = uiState.startIndex) { items.size }
         var zoomed by remember { mutableStateOf(false) }
         val current = items[pager.currentPage.coerceIn(0, items.lastIndex)]
+        val currentOnPageChange by rememberUpdatedState(onPageChange)
+        LaunchedEffect(current) { currentOnPageChange(current.media.key) }
 
         var trashing by remember { mutableStateOf<ViewerItem?>(null) }
         val trashLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -190,6 +201,8 @@ fun ViewerScreen(
                 ZoomableMedia(
                     item = item,
                     active = page == pager.currentPage,
+                    // 보고 있는 장만 썸네일과 같이 움직인다(옆 장이 다른 썸네일로 날아가지 않게)
+                    sharedKey = if (page == pager.currentPage) PhotoKey(item.media.key, uiState.album) else null,
                     removeProgress = if (removingItem == item) removing.value else 0f,
                     dayColor = dayTextColor(uiState.day),
                     onZoomChange = { if (page == pager.currentPage) zoomed = it },
@@ -322,6 +335,7 @@ private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerI
 private fun ZoomableMedia(
     item: ViewerItem,
     active: Boolean,
+    sharedKey: PhotoKey?,
     removeProgress: Float,
     dayColor: Color,
     onZoomChange: (Boolean) -> Unit,
@@ -404,26 +418,48 @@ private fun ZoomableMedia(
                     }
                 },
         ) {
-            val zoom = Modifier.fillMaxSize().graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                translationX = offset.x
-                translationY = offset.y
+            // 원본 비율을 알면 사진 자리를 그 비율로 잡고 Crop — 썸네일(정사각 Crop)에서 날아올 때 자르는 범위가 자연스럽게 풀린다
+            // 비율: 목록에서 읽어 둔 썸네일(원본 비율 그대로)에서 바로, 없으면 MediaStore 값
+            val loader = SingletonImageLoader.get(LocalContext.current)
+            val thumbRatio = remember(item) {
+                loader.memoryCache?.get(MemoryCache.Key(item.media.cacheKey))?.image?.let { if (it.width > 0 && it.height > 0) it.width.toFloat() / it.height else null }
             }
-            AsyncImage(
-                // 넘겨 보는 동안은 화면 크기로(빠르고 가볍게), 영상은 Android 가 만든 첫 장면
-                model = if (item.media.video) item.media else item.media.uri,
-                contentDescription = if (item.media.video) "영상" else "사진",
-                contentScale = if (morph > 0f) ContentScale.Crop else ContentScale.Fit,
-                modifier = zoom,
-            )
-            // 확대하면 이 장만 원본 해상도로 불러와 위에 겹친다 — 확대해도 원본만큼 선명하게
-            if (!item.media.video && scale > 1f) {
-                val context = LocalContext.current
-                val original = remember(item) {
-                    ImageRequest.Builder(context).data(item.media.uri).size(CoilSize.ORIGINAL).build()
+            val ratio = (thumbRatio ?: item.ratio)?.takeIf { morph == 0f }
+            val scaleMode = if (ratio != null || morph > 0f) ContentScale.Crop else ContentScale.Fit
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    (if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize())
+                        .sharedPhoto(sharedKey)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            translationX = offset.x
+                            translationY = offset.y
+                        },
+                ) {
+                    val context = LocalContext.current
+                    val request = remember(item) {
+                        // 넘겨 보는 동안은 화면 크기로(빠르고 가볍게), 영상은 Android 가 만든 첫 장면.
+                        // 읽는 동안은 목록에서 이미 읽은 썸네일을 먼저 보여 준다
+                        ImageRequest.Builder(context)
+                            .data(if (item.media.video) item.media else item.media.uri)
+                            .placeholderMemoryCacheKey(item.media.cacheKey)
+                            .build()
+                    }
+                    AsyncImage(
+                        model = request,
+                        contentDescription = if (item.media.video) "영상" else "사진",
+                        contentScale = scaleMode,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    // 확대하면 이 장만 원본 해상도로 불러와 위에 겹친다 — 확대해도 원본만큼 선명하게
+                    if (!item.media.video && scale > 1f) {
+                        val original = remember(item) {
+                            ImageRequest.Builder(context).data(item.media.uri).size(CoilSize.ORIGINAL).build()
+                        }
+                        AsyncImage(model = original, contentDescription = null, contentScale = scaleMode, modifier = Modifier.fillMaxSize())
+                    }
                 }
-                AsyncImage(model = original, contentDescription = null, contentScale = ContentScale.Fit, modifier = zoom)
             }
             if (morph > 0f) Box(Modifier.fillMaxSize().background(dayColor.copy(alpha = morph)))
         }
