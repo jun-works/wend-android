@@ -64,14 +64,6 @@ class CityFinder @Inject constructor(private val dao: CityDao) {
         nearest(lat, lon) { dao.inCells(it) }?.let { (row, km) -> row.toCity(locale, km) }
     }
 
-    /**
-     * 장소 이름: 사용자 언어 이름이 있는 가장 가까운 도시. [MAX_KM] 안에 그런 도시가 없으면
-     * 가장 가까운 도시의 영어 이름, 도시가 아예 없으면 null.
-     */
-    suspend fun placeName(lat: Double, lon: Double, locale: Locale): String? = withContext(Dispatchers.IO) {
-        val local = nearest(lat, lon, accept = { it.localNameOrNull(locale) != null }) { dao.inCells(it) }
-        (local ?: nearest(lat, lon) { dao.inCells(it) })?.first?.localName(locale)
-    }
 
     /** 저장해 둔 도시 id 들의 행 */
     suspend fun byIds(ids: Collection<Long>): Map<Long, CityEntity> = withContext(Dispatchers.IO) {

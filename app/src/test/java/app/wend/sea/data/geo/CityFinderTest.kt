@@ -18,13 +18,6 @@ class CityFinderTest {
 
     private fun name(lat: Double, lon: Double, tag: String) = nearest(lat, lon)?.localName(Locale.forLanguageTag(tag))
 
-    /** CityFinder.placeName 과 같은 순서 */
-    private fun placeName(lat: Double, lon: Double, tag: String): String? = runBlocking {
-        val locale = Locale.forLanguageTag(tag)
-        val fetch: suspend (List<Int>) -> List<CityEntity> = { cells -> cells.flatMap { byCell[it].orEmpty() } }
-        (CityFinder.nearest(lat, lon, accept = { it.localNameOrNull(locale) != null }, fetch = fetch) ?: CityFinder.nearest(lat, lon, fetch = fetch))
-            ?.first?.localName(locale)
-    }
 
     @Test
     fun kyotoStation() {
@@ -44,14 +37,10 @@ class CityFinderTest {
     }
 
     @Test
-    fun placePrefersCityWithLocalName() {
-        // 고비 사막: 가장 가까운 Tsoohor 는 한국어 이름이 없어 26km 떨어진 달란자드가드
-        assertEquals("Tsoohor", name(43.5, 104.1, "ko-KR"))
-        assertEquals("달란자드가드", placeName(43.5, 104.1, "ko-KR"))
-        // 50km 안에 한국어 이름 있는 곳이 없으면 가장 가까운 곳 영어 이름
-        assertEquals("Hwasŏng", placeName(41.2556, 129.4928, "ko-KR"))
-        // 가까운 곳에 한국어 이름이 있으면 그대로
-        assertEquals("교토", placeName(34.985, 135.758, "ko-KR"))
+    fun noLocalNameFallsBackToEnglishOfNearest() {
+        // 한국어 이름이 없는 가장 가까운 곳(날라이흐)은 영어로, 일본어는 있으므로 일본어로 — 고르는 도시는 같다
+        assertEquals("Nalaikh", name(47.77, 107.25, "ko-KR"))
+        assertEquals("ナライフ", name(47.77, 107.25, "ja-JP"))
     }
 
     @Test

@@ -46,7 +46,7 @@ def main(src, out):
             ))
     db.executemany("INSERT INTO city VALUES (?,?,?,?,?,?,?,?,?,?,?)", rows)
     db.execute("CREATE INDEX `index_city_cell` ON `city` (`cell`)")
-    db.execute("PRAGMA user_version = 1")  # CityDatabase version
+    db.execute("PRAGMA user_version = 4")  # CityDatabase version — raise both together when the data changes
     db.commit()
     db.execute("VACUUM")
     db.close()

@@ -10,11 +10,13 @@ Needs: ne_10m_land, ne_10m_lakes, ne_10m_rivers_lake_centerlines, ne_10m_admin_0
 ne_10m_admin_1_states_provinces_lines, ne_10m_roads, ne_10m_populated_places (.geojson).
 
 Format (little endian):
-  "WBM1" · u8 cellDeg · u32 cellCount · cellCount × (i16 latIdx, i16 lonIdx, u32 offset, u32 length)
+  "WBM2" · u8 cellDeg · u32 cellCount · cellCount × (i16 latIdx, i16 lonIdx, u32 offset, u32 length)
   · u32 placeCount · places · cell blobs
   cell blob: for each layer in LAYERS: varint geomCount · geom: varint ringCount · ring: varint n · n × (zigzag Δlat, zigzag Δlon)
     coordinates are round(deg × 1e4); the first point of a ring is relative to the cell's south-west corner.
-  place: i32 lat×1e4 · i32 lon×1e4 · u8 rank · u8 nameLen · utf8 name
+  place: i32 lat×1e4 · i32 lon×1e4 · u8 rank · i32 geonameid (0 = none) · u8 len · utf8 Korean name · u8 len · utf8 English name
+    The app labels a place with the same city's name from assets/geo/cities.db (by geonameid, in the user's language),
+    so map labels and place names agree; the stored names are only the fallback.
 """
 import json
 import math
@@ -127,11 +129,13 @@ def main(src, out_path):
         if not name:
             continue
         raw = name.encode('utf-8')[:255]
+        en = (p.get('NAME_EN') or p.get('NAME') or '').strip().encode('utf-8')[:255]
         lon, lat = f['geometry']['coordinates'][:2]
-        places += struct.pack('<iiBB', round(lat * SCALE), round(lon * SCALE), min(255, int(p.get('SCALERANK') or 10)), len(raw)) + raw
+        places += struct.pack('<iiBiB', round(lat * SCALE), round(lon * SCALE), min(255, int(p.get('SCALERANK') or 10)),
+                              max(0, int(p.get('GEONAMESID') or 0)), len(raw)) + raw + struct.pack('<B', len(en)) + en
     place_count = len(feats)
 
-    header = bytearray(b'WBM1') + struct.pack('<BI', CELL, len(blobs))
+    header = bytearray(b'WBM2') + struct.pack('<BI', CELL, len(blobs))
     index_size = len(blobs) * 12
     base = len(header) + index_size + 4 + len(places)
     offset = base

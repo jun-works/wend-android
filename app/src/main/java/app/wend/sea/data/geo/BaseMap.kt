@@ -25,7 +25,11 @@ enum class MapLayer(val polygon: Boolean) {
 /** 경도·위도 쌍이 번갈아 든 좌표 묶음(다각형이면 바깥 고리 + 구멍들) */
 class MapShape(val rings: List<DoubleArray>)
 
-class MapCity(val latitude: Double, val longitude: Double, val rank: Int, val name: String)
+/**
+ * 기본 지도의 도시 점. [geonameId] 로 도시 데이터(cities.db)의 같은 도시를 찾아 사용자 언어 이름을 쓴다 —
+ * 장소 이름과 지도 글자가 같은 표기가 되게. [name](한국어)·[enName] 은 도시 데이터에 없을 때만.
+ */
+class MapCity(val latitude: Double, val longitude: Double, val rank: Int, val name: String, val geonameId: Long = 0, val enName: String = name)
 
 class MapArea(val shapes: Map<MapLayer, List<MapShape>>, val cities: List<MapCity>)
 
@@ -65,7 +69,7 @@ class BaseMap @Inject constructor(
     private fun load(): ByteBuffer {
         val bytes = context.assets.open("basemap.bin").use { it.readBytes() }
         val b = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        check(bytes.copyOfRange(0, 4).decodeToString() == "WBM1") { "basemap.bin 형식이 다름" }
+        check(bytes.copyOfRange(0, 4).decodeToString() == "WBM2") { "basemap.bin 형식이 다름" }
         b.position(4)
         cellDeg = b.get().toInt()
         repeat(b.int) {
@@ -78,8 +82,10 @@ class BaseMap @Inject constructor(
             val lat = b.int / SCALE
             val lon = b.int / SCALE
             val rank = b.get().toInt() and 0xFF
+            val geonameId = b.int.toLong()
             val name = ByteArray(b.get().toInt() and 0xFF).also { b.get(it) }.decodeToString()
-            MapCity(lat, lon, rank, name)
+            val enName = ByteArray(b.get().toInt() and 0xFF).also { b.get(it) }.decodeToString()
+            MapCity(lat, lon, rank, name, geonameId, enName)
         }
         data = b
         return b

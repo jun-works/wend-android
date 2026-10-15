@@ -37,7 +37,7 @@ data class Trip(
     val userName: String? = null,
 )
 
-/** 여행 상세: 장소들과, 장소마다 자동 이름(CityFinder.placeName, 없으면 null)과 사용자가 바꾼 이름 */
+/** 여행 상세: 장소들과, 장소마다 자동 이름(가장 가까운 도시의 사용자 언어 이름, 없으면 null)과 사용자가 바꾼 이름 */
 data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>, val placeUserNames: List<String?>)
 
 sealed interface AnalysisState {
@@ -104,10 +104,13 @@ class AnalysisRepository @Inject constructor(
         val locale = locale()
         val named = if (entity.cityId == null) withCity(entity) else entity
         val name = title(named, cityFinder.byIds(listOfNotNull(named.cityId)), locale)
+        // 도시는 위치만으로 고르고(언어와 무관), 이름만 사용자 언어로 — 없으면 영어
         val placeCities = places.map { p ->
-            if (p.latitude == null || p.longitude == null) null else cityFinder.placeName(p.latitude, p.longitude, locale)
+            if (p.latitude == null || p.longitude == null) null else cityFinder.nearestCity(p.latitude, p.longitude, locale)
         }
-        val merged = withContext(Dispatchers.Default) { mergeSameName(places, placeCities, ZoneId.systemDefault()) }
+        val merged = withContext(Dispatchers.Default) {
+            mergeSameCity(places, placeCities.map { it?.id }, placeCities.map { it?.name }, ZoneId.systemDefault())
+        }
         // 사용자 이름은 자동 이름으로 합친 뒤에 얹는다 — 이름을 바꿔도 장소를 합치거나 나누지 않는다
         val userPlaceNames = tripDao.placeNames().associate { (it.video to it.mediaId) to it.name }
         val placeUserNames = merged.places.map { p ->

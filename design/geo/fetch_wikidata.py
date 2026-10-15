@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Fetch Wikidata labels (en/ko/ja/zh) for GeoNames cities. Needs wkdt.tsv from extract step in <src>; resumable."""
-import sys, os, json, time, urllib.request, urllib.parse
+"""Fetch Wikidata labels (en/ko/ja/zh) for the items in <src>/wkdt.tsv and <src>/p1566*.tsv → <src>/wd_labels.jsonl. Resumable."""
+import sys, os, glob, json, time, urllib.request, urllib.parse
 d = sys.argv[1]
-qids = sorted(set(l.split('\t')[1].strip() for n in ('wkdt.tsv', 'p1566.tsv') if os.path.exists(os.path.join(d, n)) for l in open(os.path.join(d, n))))
+maps = [os.path.join(d, 'wkdt.tsv')] + sorted(glob.glob(os.path.join(d, 'p1566*.tsv')))
+qids = sorted(set(l.split('\t')[1].strip() for p in maps if os.path.exists(p) for l in open(p)))
 outp = os.path.join(d, 'wd_labels.jsonl')
 done = set()
 if os.path.exists(outp):

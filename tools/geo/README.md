@@ -2,7 +2,7 @@
 
 `app/src/main/assets/basemap.bin` is built from [Natural Earth](https://www.naturalearthdata.com/) 1:10m data
 (public domain — no attribution required). It lets the trip map show land, sea, lakes, rivers, borders,
-major roads and city names (Korean names from `NAME_KO`) without any network access.
+major roads and city points. Each city point carries its GeoNames ID; the app labels it with the same city's name from `assets/geo/cities.db` in the user's language, so map labels match place names (the stored `NAME_KO`/`NAME_EN` are only a fallback) without any network access.
 
 Data simplified to ~300 m and clipped into 2° cells; the app decodes only the cells around the day it shows.
 

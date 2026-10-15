@@ -38,6 +38,7 @@ GeoNames `cities1000` 기준 171,228곳(인구 1천 이상). gzip TSV, 첫 줄�
 
 자동 정리 (`build_cities.py`의 `clean()`):
 - 행정 단위 꼬리표를 뗀다: 교토 시 → 교토, 箱根町 → 箱根, 嘉定镇街道 → 嘉定, Jeju City → Jeju, … District → ….
+  특별시·광역시·특별자치시는 꼬리표 전체를 뗀다: 서울특별시 → 서울, 釜山広域市 → 釜山, 開城特級市 → 開城.
 - 간체/번체 중 하나만 있으면 OpenCC로 다른 쪽을 만든다. 번체의 臺 → 台, 음역의 裏/裡 → 里.
 - 중국·대만·홍콩·마카오 지명에 일본어가 없으면 번체를 일본 신자체로 바꿔 쓴다(萬→万, 廣→広 …).
 
@@ -48,7 +49,7 @@ GeoNames `cities1000` 기준 171,228곳(인구 1천 이상). gzip TSV, 첫 줄�
 
 ## 다시 만들기
 
-`<src>`는 아무 작업 폴더. GeoNames 원본(~1GB)은 저장소에 넣지 않는다.
+`<src>`는 아무 작업 폴더(이 맥에서는 `~/workspace/geonames-src` — 원본·Wikidata 캐시·`pylib/`의 OpenCC가 들어 있음). GeoNames 원본(~1GB)은 저장소에 넣지 않는다.
 
 ```bash
 pip install opencc-python-reimplemented
@@ -67,3 +68,7 @@ python3 geo/build_cities.py --src <src>         # → geo/cities.tsv.gz, 비율 
 - 2026-10-15 빌드는 역조회를 인구 1.5만+ 빈칸 도시 전체로 넓혀서 돌렸다(`p1566_b.tsv`). `p1566*.tsv`는 모두 읽힌다.
 - 받은 Wikidata 데이터는 `geo/cache/`에 두면 다시 받지 않아도 된다(git 제외).
 - `build_cities.py --report`는 파일을 쓰지 않고 비율만 보여 준다.
+- 앱에 넣을 때: `python3 tools/geo/build_cities_db.py design/geo/cities.tsv.gz app/src/main/assets/geo/cities.db`. 데이터가 바뀌면 그 스크립트의 `user_version`과 `CityDatabase`의 `version`을 같이 올린다(기기에 복사된 옛 DB를 새것으로 바꾸기 위해).
+- 한국어 표기는 국립국어원 외래어 표기 용례(korean.go.kr/kornorms, 용례 찾기)를 따른다. 자동 이름이 용례와 다르면 `manual_names.tsv`에 용례 표기를 넣는다(예: 샌디에고 → 샌디에이고, 푸켓 → 푸껫). 용례에 없는 곳은 고치지 않는다. 용례도 바뀐다 — 울란바토르는 2026년 심의에서 울란바타르로 바뀌었다.
+- 2026-10-15 검수: 여행지가 될 만한 약 1만 곳(Natural Earth 도시 · 인구 10만+ · travel_towns)을 en/ja/zh 위키백과 제목, Natural Earth, GeoNames와 대조해 고친 이름을 `manual_names.tsv`에 넣었다. 규칙으로 고친 것: 번체는 해외 지명이면 대만 이름(zh-tw) 우선, OpenCC가 음역 글자를 바꾸는 것(託·佈·採 …) 되돌림, 수동 간체/번체가 다른 쪽도 정함, 일본어 県·郡·가타카나+区 꼬리표, 영어 -shi/-si/-ku 꼬리표와 북한 -ŭp/-ni, 순번 구(巴黎十五区)와 社区는 区를 떼지 않음.
+- 알려진 한계: GeoNames의 Wikidata 링크가 다른 장소(동네·역·고대 도시)를 가리키는 경우가 있다. 캐시에 좌표가 없어 자동으로 거르지 못하고, 검수 범위 밖의 작은 도시에는 남아 있을 수 있다.

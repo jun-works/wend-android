@@ -7,7 +7,13 @@ import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.Trip
 import app.wend.sea.data.geo.BaseMap
+import android.content.Context
+import app.wend.sea.data.geo.CityFinder
 import app.wend.sea.data.geo.MapArea
+import app.wend.sea.data.geo.MapCity
+import app.wend.sea.data.geo.localName
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Locale
 import app.wend.sea.feature.analysis.autoName
 import app.wend.sea.feature.analysis.name
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,7 +90,11 @@ class TripDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
     private val baseMap: BaseMap,
+    private val cityFinder: CityFinder,
+    @ApplicationContext context: Context,
 ) : ViewModel() {
+
+    private val locale: Locale = context.resources.configuration.locales[0]
 
     /** 네비게이션 인자(TripRoute.number) */
     private val number: Int = checkNotNull(savedStateHandle["number"])
@@ -129,8 +139,16 @@ class TripDetailViewModel @Inject constructor(
     }
 
     /** 지도에 깔 오프라인 기본 지도(땅·바다·도로·경계·도시) */
-    suspend fun mapArea(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): MapArea =
-        baseMap.area(minLat, maxLat, minLon, maxLon)
+    suspend fun mapArea(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): MapArea {
+        val area = baseMap.area(minLat, maxLat, minLon, maxLon)
+        // 도시 글자는 장소 이름과 같은 도시 데이터에서(같은 GeoNames 도시), 사용자 언어로
+        val cities = cityFinder.byIds(area.cities.map { it.geonameId }.filter { it > 0 })
+        val labeled = area.cities.map { c ->
+            val name = cities[c.geonameId]?.localName(locale) ?: if (locale.language == "ko") c.name else c.enName
+            MapCity(c.latitude, c.longitude, c.rank, name, c.geonameId, c.enName)
+        }
+        return MapArea(area.shapes, labeled)
+    }
 
     /** 여행 이름 바꾸기. 처음 이름과 같게 적으면 자동 이름으로 돌아간다 */
     fun renameTrip(name: String) {

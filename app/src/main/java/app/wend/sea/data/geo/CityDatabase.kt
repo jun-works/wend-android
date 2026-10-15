@@ -49,7 +49,7 @@ interface CityDao {
  * 앱에 넣어 둔 도시 목록(assets/geo/cities.db, tools/geo/build_cities_db.py 로 만듦). 읽기만 한다.
  * 데이터를 바꾸면 [version] 을 올린다 — 기기에 복사해 둔 예전 파일을 버리고 새로 복사한다.
  */
-@Database(entities = [CityEntity::class], version = 1, exportSchema = false)
+@Database(entities = [CityEntity::class], version = 4, exportSchema = false)
 abstract class CityDatabase : RoomDatabase() {
     abstract fun cityDao(): CityDao
 }
