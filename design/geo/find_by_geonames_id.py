@@ -4,7 +4,7 @@ Usage: find_by_geonames_id.py gaps.tsv <src>/p1566_b.tsv"""
 import sys, os, json, time, csv, urllib.request, urllib.parse
 gaps, out = sys.argv[1], sys.argv[2]
 ids = [r['geonameid'] for r in csv.DictReader(open(gaps), delimiter='\t')]
-UA = 'WendGeoBuild/0.1 (offline city names build; contact jh22dev@gmail.com)'
+UA = 'WendGeoBuild/0.1'
 done_p = out + '.done'
 done = set(open(done_p).read().split()) if os.path.exists(done_p) else set()
 found = 0

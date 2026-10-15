@@ -10,7 +10,7 @@ if os.path.exists(outp):
     for l in open(outp): done.add(json.loads(l)['id'])
 todo = [q for q in qids if q not in done]
 LANGS = 'en|ko|ja|zh|zh-hans|zh-hant|zh-cn|zh-tw|zh-hk'
-UA = 'WendGeoBuild/0.1 (offline city names build; contact jh22dev@gmail.com)'
+UA = 'WendGeoBuild/0.1'
 with open(outp, 'a') as f:
     for i in range(0, len(todo), 50):
         batch = todo[i:i + 50]
