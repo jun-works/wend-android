@@ -111,6 +111,21 @@ class MediaRepository @Inject constructor(
         }.toMap()
     }
 
+    /** 사진들의 파일 수정 시각(MediaStore DATE_MODIFIED, 초). 그사이 지워진 것은 빠진다 */
+    suspend fun photoModified(ids: List<Long>): Map<Long, Long> = withContext(Dispatchers.IO) {
+        ids.chunked(500).flatMap { chunk ->
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATE_MODIFIED),
+                "${MediaStore.MediaColumns._ID} IN (${chunk.joinToString(",")})",
+                null,
+                null,
+            )?.use { cursor ->
+                buildList { while (cursor.moveToNext()) add(cursor.getLong(0) to cursor.getLong(1)) }
+            } ?: emptyList()
+        }.toMap()
+    }
+
     /** 볼 수 있는 사진·영상 전체 수(캡처 포함) — "N개 중 M개가 여행에 담겼어요" 의 N */
     suspend fun visibleCount(): Int = withContext(Dispatchers.IO) { allItems().size }
 

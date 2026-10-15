@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import app.wend.sea.data.UserRepository
 import app.wend.sea.data.geo.CityEntity
 import app.wend.sea.data.geo.CityFinder
+import app.wend.sea.data.local.MediaFeatureDao
 import app.wend.sea.data.local.TripDao
 import app.wend.sea.data.local.TripEntity
 import app.wend.sea.data.local.UserNameEntity
@@ -61,6 +62,7 @@ class AnalysisRepository @Inject constructor(
     private val mediaRepository: MediaRepository,
     private val cityFinder: CityFinder,
     private val cityPicker: TripCityPicker,
+    private val featureDao: MediaFeatureDao,
 ) {
     private val workManager = WorkManager.getInstance(context)
 
@@ -90,6 +92,7 @@ class AnalysisRepository @Inject constructor(
     val summary: Flow<AnalysisSummary?> = userRepository.analysisSummary
 
     suspend fun trips(): List<Trip> {
+        FeatureWorker.ensure(context)
         val entities = tripDao.trips().map { if (it.cityId == null) withCity(it) else it }
         val cities = cityFinder.byIds(entities.mapNotNull { it.cityId })
         val locale = locale()
@@ -143,6 +146,25 @@ class AnalysisRepository @Inject constructor(
         }
         val userName = tripDao.tripNameCounts().filter { it.tripNumber == number }.maxByOrNull { it.count }?.name
         return TripDetail(Trip(entity.number, entity.start, entity.end, points.size, name, userName), merged.places, merged.names, placeUserNames)
+    }
+
+    /**
+     * 장소마다 같은 장면을 여러 번 찍은 사진 묶음(design/BEST_SHOT.md) — 2장 이상인 장면만, 순서는 [TripDetail.places] 와 같다.
+     * 묶음이 없는 장소는 빈 목록. 값을 아직 계산하지 않은 사진은 빠진다.
+     */
+    suspend fun similarScenes(detail: TripDetail): List<List<List<MediaThumbnail>>> {
+        val hashes = featureDao.features(detail.places.flatMap { p -> p.media.filter { !it.video }.map { it.id } })
+            .associate { it.mediaId to it.hash }
+        val grouper = SceneGrouper()
+        return withContext(Dispatchers.Default) {
+            detail.places.map { place ->
+                val shots = place.media.mapNotNull { m ->
+                    val hash = hashes[m.id]?.takeIf { !m.video } ?: return@mapNotNull null
+                    SceneShot(m.id, m.takenAt ?: return@mapNotNull null, hash)
+                }
+                grouper.group(shots).map { scene -> scene.map { MediaThumbnail(it.id, video = false) } }
+            }
+        }
     }
 
     /** 사진 한 장을 여행에서 뺀다. 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */

@@ -6,13 +6,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class],
-    version = 6,
+    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class, MediaFeatureEntity::class],
+    version = 8,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
     abstract fun mediaLocationDao(): MediaLocationDao
     abstract fun tripDao(): TripDao
+    abstract fun mediaFeatureDao(): MediaFeatureDao
 
     companion object {
         /** 1 → 2: 여행 결과 테이블 추가(위치 저장값은 그대로) */
@@ -50,6 +51,24 @@ abstract class WendDatabase : RoomDatabase() {
         val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `excluded_media` (`mediaId` INTEGER NOT NULL, `video` INTEGER NOT NULL, PRIMARY KEY(`mediaId`, `video`))")
+            }
+        }
+
+        private const val CREATE_MEDIA_FEATURE =
+            "CREATE TABLE IF NOT EXISTS `media_feature` (`mediaId` INTEGER NOT NULL, `modified` INTEGER NOT NULL, `brightness` REAL NOT NULL, `darkClip` REAL NOT NULL, `brightClip` REAL NOT NULL, `hash` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))"
+
+        /** 6 → 7: 베스트샷 장면 묶기·사진 정리에 쓰는 사진 값 */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(CREATE_MEDIA_FEATURE)
+            }
+        }
+
+        /** 7 → 8: 좋은 사진 판정을 빼면서 화질·얼굴 값을 지운다(개발 빌드에만 있던 표 — 다시 계산한다) */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `media_feature`")
+                db.execSQL(CREATE_MEDIA_FEATURE)
             }
         }
     }

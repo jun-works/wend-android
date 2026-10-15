@@ -81,6 +81,8 @@ class AnalysisWorker @AssistedInject constructor(
             ),
         )
         notifier.notifyDone(trips.size)
+        // 베스트샷·사진 정리에 쓸 특징값은 뒤에서 계산한다
+        FeatureWorker.start(applicationContext)
         return Result.success()
     }
 

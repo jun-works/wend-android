@@ -16,7 +16,7 @@ object DatabaseModule {
     @Singleton
     fun database(@ApplicationContext context: Context): WendDatabase =
         Room.databaseBuilder(context, WendDatabase::class.java, "wend.db")
-            .addMigrations(WendDatabase.MIGRATION_1_2, WendDatabase.MIGRATION_2_3, WendDatabase.MIGRATION_3_4, WendDatabase.MIGRATION_4_5, WendDatabase.MIGRATION_5_6)
+            .addMigrations(WendDatabase.MIGRATION_1_2, WendDatabase.MIGRATION_2_3, WendDatabase.MIGRATION_3_4, WendDatabase.MIGRATION_4_5, WendDatabase.MIGRATION_5_6, WendDatabase.MIGRATION_6_7, WendDatabase.MIGRATION_7_8)
             .build()
 
     @Provides
@@ -24,4 +24,7 @@ object DatabaseModule {
 
     @Provides
     fun tripDao(database: WendDatabase): TripDao = database.tripDao()
+
+    @Provides
+    fun mediaFeatureDao(database: WendDatabase): MediaFeatureDao = database.mediaFeatureDao()
 }
