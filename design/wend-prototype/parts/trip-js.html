@@ -10,19 +10,26 @@ var BUSAN = {
     { label: '2일째', date: '5월 4일 월요일' },
     { label: '3일째', date: '5월 5일 화요일 · 어린이날' },
   ],
-  stops: [   // x,y on the map (lon/lat projected); ph = stand-in photos, first five = one "similar" group
-    { d: 0, place: '부산역', when: '오전 11:20', n: 6, x: 97, y: 119, ph: ['p-city', 'p-cafe', 'p-city', 'p-sky', 'p-cafe', 'p-food'] },
-    { d: 0, place: '감천문화마을', when: '오후 1:40 – 3:30', n: 38, x: 51, y: 151, ph: ['p-sky', 'p-city', 'p-sky', 'p-cafe', 'p-dusk', 'p-food'] },
+  stops: [   // x,y on the map (lon/lat projected); ph = stand-in photos; sc = scenes: photo numbers shot again and again (similar photos)
+    { d: 0, place: '부산역', when: '오전 11:20', n: 6, x: 97, y: 119, ph: ['p-city', 'p-cafe', 'p-city', 'p-sky', 'p-cafe', 'p-food'], sc: [[0, 1, 2], [4, 5]] },
+    { d: 0, place: '감천문화마을', when: '오후 1:40 – 3:30', n: 38, x: 51, y: 151, ph: ['p-sky', 'p-city', 'p-sky', 'p-cafe', 'p-dusk', 'p-food'], sc: [[0, 1, 2, 3, 4], [10, 11, 12]] },
     { d: 0, place: '남포동 · 자갈치시장', when: '오후 5:10 – 7:00', n: 21, x: 85, y: 150, ph: ['p-food', 'p-food', 'p-city', 'p-dusk', 'p-food', 'p-cafe'] },
-    { d: 1, place: '해운대', when: '오전 9:50 – 12:10', n: 34, x: 283, y: 40, ph: ['p-sea', 'p-sea', 'p-sky', 'p-sea', 'p-food', 'p-cafe'] },
-    { d: 1, place: '청사포', when: '오후 2:00 – 4:20', n: 29, x: 332, y: 36, ph: ['p-sea', 'p-sky', 'p-sea', 'p-forest', 'p-cafe', 'p-sea'] },
-    { d: 1, place: '광안리', when: '오후 7:30 – 9:40', n: 31, x: 218, y: 51, ph: ['p-dusk', 'p-city', 'p-dusk', 'p-dusk', 'p-food', 'p-city'] },
-    { d: 2, place: '흰여울문화마을', when: '오전 10:30 – 12:00', n: 19, x: 107, y: 186, ph: ['p-sea', 'p-sky', 'p-sea', 'p-cafe', 'p-sky', 'p-sea'] },
+    { d: 1, place: '해운대', when: '오전 9:50 – 12:10', n: 34, x: 283, y: 40, ph: ['p-sea', 'p-sea', 'p-sky', 'p-sea', 'p-food', 'p-cafe'], sc: [[0, 1, 2, 3], [4, 5]] },
+    { d: 1, place: '청사포', when: '오후 2:00 – 4:20', n: 29, x: 332, y: 36, ph: ['p-sea', 'p-sky', 'p-sea', 'p-forest', 'p-cafe', 'p-sea'], sc: [[1, 2, 3]] },
+    { d: 1, place: '광안리', when: '오후 7:30 – 9:40', n: 31, x: 218, y: 51, ph: ['p-dusk', 'p-city', 'p-dusk', 'p-dusk', 'p-food', 'p-city'], sc: [[0, 1, 2, 3, 4]] },
+    { d: 2, place: '흰여울문화마을', when: '오전 10:30 – 12:00', n: 19, x: 107, y: 186, ph: ['p-sea', 'p-sky', 'p-sea', 'p-cafe', 'p-sky', 'p-sea'], sc: [[0, 1, 2]] },
     { d: 2, place: '부산역', when: '오후 3:10', n: 8, x: 97, y: 119, ph: ['p-city', 'p-food', 'p-cafe', 'p-city', 'p-sky', 'p-cafe'] },
   ],
 };
 BUSAN.stops.forEach(function (s) { s.auto = s.place; });   // the name Wend gave it; renames keep it for "처음 이름"
-App.state.best = BUSAN.stops.map(function () { return 0; });   // index of the chosen best shot per stop (0 = 추천)
+App.state.best = {};   // chosen best shots: key → {s, k}. One per scene ("stop:scene"), or a single photo picked in the viewer ("stop:kN"). The app never pre-picks.
+function sceneOf(s, k) {
+  var sc = BUSAN.stops[s].sc || [];
+  for (var i = 0; i < sc.length; i++) if (sc[i].indexOf(k) >= 0) return i;
+  return -1;
+}
+function bestKey(s, k) { var i = sceneOf(s, k); return s + ':' + (i >= 0 ? i : 'k' + k); }
+function isBest(s, k) { var b = App.state.best[bestKey(s, k)]; return !!b && b.k === k; }
 App.state.bestDone = false;
 App.state.removed = BUSAN.stops.map(function () { return 0; });
 
@@ -79,10 +86,10 @@ function drawRoute(L, intro) {
 }
 
 function stopHTML(s, i) {
-  var photos = tripPhotos(i), shown = photos.length, more = shown - 5, best = App.state.best[i];
+  var photos = tripPhotos(i), shown = photos.length, more = shown - 5;
   var cells = photos.slice(0, 6).map(function (it, index) {
     var isMore = index === 5 && shown > 6;
-    var star = App.state.bestDone && it.k === best && !isMore ? '<span class="star"><span class="ms fill">star</span></span>' : '';
+    var star = isBest(i, it.k) && !isMore ? '<span class="star"><span class="ms fill">star</span></span>' : '';
     return '<button class="' + it.c + '" data-action="' + (isMore ? 'openPlacePhotos' : 'viewTrip') + '" data-s="' + i + '" data-k="' + it.k + '" aria-label="' + s.place + (isMore ? ' 사진 ' + shown + '장 전체 보기' : ' 사진 ' + (index + 1) + ' 크게 보기') + '">' + star + (isMore ? '<b class="tp-more"><strong>+' + more + '</strong><small>전체 보기</small></b>' : '') + '</button>';
   }).join('');
   return '<div class="tp-stop" data-i="' + i + '" style="--d:' + DAYT[s.d] + '"><span class="no">' + (i + 1) + '</span>' +
@@ -275,26 +282,48 @@ function glowPlaces(idx) {
   });
 }
 
-/* ── best shots: one row of similar photos per stop, the recommended one pre-picked ── */
+/* ── best shots: Wend only groups photos shot again and again (same scene); the user picks one per scene, or none ── */
+function bsPhoto(s, k) { return tripPhotos(s).filter(function (it) { return it.k === k; })[0]; }
 function renderBest() {
+  var d = App.state.bestDraft = {};
+  for (var key in App.state.best) d[key] = App.state.best[key];
   document.getElementById('bs-list').innerHTML = BUSAN.stops.map(function (s, i) {
-    return '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '<span>비슷한 사진 5장</span></h3><div class="bs-row">' +
-      s.ph.slice(0, 5).map(function (c, k) {
-        return '<button class="' + c + (App.state.best[i] === k ? ' on' : '') + '" data-action="pickBest" data-i="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + (k === 0 ? ', 추천' : '') + '">' +
-          (k === 0 ? '<span class="rec">추천</span>' : '') + '<span class="star"><span class="ms fill">star</span></span></button>';
-      }).join('') + '</div></div>';
+    var rows = (s.sc || []).map(function (ks, j) {
+      var items = ks.map(function (k) { return bsPhoto(i, k); }).filter(Boolean);
+      if (items.length < 2) return '';
+      return '<div class="bs-scene"><p>' + items[0].t + ' · 비슷한 사진 ' + items.length + '장</p><div class="bs-row">' +
+        items.map(function (it, n) {
+          var on = !!d[i + ':' + j] && d[i + ':' + j].k === it.k;
+          return '<button class="' + it.c + (on ? ' on' : '') + '" data-action="pickBest" data-key="' + i + ':' + j + '" data-s="' + i + '" data-k="' + it.k + '" aria-pressed="' + on + '" aria-label="' + s.place + ' ' + items[0].t + ' 비슷한 사진 ' + (n + 1) + '">' +
+            '<span class="star"><span class="ms fill">star</span></span></button>';
+        }).join('') + '</div></div>';
+    }).join('');
+    return rows ? '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '</h3>' + rows + '</div>' : '';
   }).join('');
+  bestCount();
+}
+function bestCount() {
+  var n = Object.keys(App.state.bestDraft).length, b = document.getElementById('bs-done');
+  b.disabled = !n;
+  b.textContent = n ? n + '장으로 정하기' : '사진을 골라 주세요';
 }
 App.onEnter('best', renderBest);
+/* tap picks one in that scene; tapping the picked one again clears it (a scene may stay without a best shot) */
 App.actions.pickBest = function (el) {
-  var i = +el.getAttribute('data-i'), k = +el.getAttribute('data-k');
-  App.state.best[i] = k;
-  el.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === el); });
+  var key = el.getAttribute('data-key'), s = +el.getAttribute('data-s'), k = +el.getAttribute('data-k'), d = App.state.bestDraft;
+  if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
+  el.parentNode.querySelectorAll('button').forEach(function (b) {
+    var on = !!d[key] && d[key].k === +b.getAttribute('data-k');
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  });
+  bestCount();
 };
 App.actions.bestDone = function () {
+  App.state.best = App.state.bestDraft;
+  var n = Object.keys(App.state.best).length;
   App.state.bestDone = true;
   App.back();
-  App.after(320, function () { App.snack('베스트샷 8장을 골랐어요. 사진에 별이 붙어 있어요'); });
+  App.after(320, function () { App.snack('베스트샷 ' + n + '장을 골랐어요. 사진에 별이 붙어 있어요'); });
 };
 
 /* ── clean up: suggested photos, all pre-checked; Android's own dialog confirms the move to trash ── */

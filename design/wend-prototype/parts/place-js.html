@@ -9,7 +9,8 @@ function tripPhotos(stop) {
   var items = [];
   for (var k = 0; k < s.n; k++) {
     if (App.state.photoExcluded[stop + ':' + k]) continue;
-    items.push({ c: s.ph[k % s.ph.length], d: TRIP_DATES[s.d], t: addMin(start, Math.round(Math.max(0, span) * k / Math.max(1, s.n - 1))), place: s.place, col: DAYC[s.d], s: stop, k: k });
+    var sc = sceneOf(stop, k), c = sc >= 0 ? s.ph[s.sc[sc][0] % s.ph.length] + ' sv' + (s.sc[sc].indexOf(k) % 4) : s.ph[k % s.ph.length];
+    items.push({ c: c, d: TRIP_DATES[s.d], t: addMin(start, Math.round(Math.max(0, span) * k / Math.max(1, s.n - 1))), place: s.place, col: DAYC[s.d], s: stop, k: k });
   }
   // Bulk cleanup in the existing prototype only records counts; trim those examples from the end.
   return items.slice(0, Math.max(0, s.n - App.state.removed[stop]));
@@ -33,7 +34,7 @@ function renderPlacePhotos() {
   document.getElementById('pg-time').textContent = s.when;
   document.getElementById('pg-count').textContent = '사진 ' + items.length + '장';
   document.getElementById('pg-grid').innerHTML = items.map(function (it, index) {
-    var star = App.state.bestDone && App.state.best[stop] === it.k;
+    var star = isBest(stop, it.k);
     return '<button class="pg-photo ' + it.c + '" data-action="viewPlacePhoto" data-s="' + stop + '" data-k="' + it.k + '" aria-label="' + s.place + ', 사진 ' + (index + 1) + ', ' + it.t + (star ? ', 베스트샷' : '') + ', 크게 보기">' +
       (star ? '<span class="pg-star"><span class="ms fill">star</span></span>' : '') + '</button>';
   }).join('');

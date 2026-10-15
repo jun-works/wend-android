@@ -42,8 +42,8 @@ function act(icon, label, action, extra) {
 function vwActions() {
   var v = App.state.vw, it = vwCur(), html;
   if (v.ctx === 'trip') {
-    var isBest = App.state.bestDone && App.state.best[it.s] === it.k;
-    html = act('star', isBest ? '베스트샷' : '베스트샷으로', 'vwBest', isBest ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
+    var best = isBest(it.s, it.k);
+    html = act('star', best ? '베스트샷' : '베스트샷으로', 'vwBest', best ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
       act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
   } else {
     html = act('library_add', '여행에 넣기', 'vwAdd') + act('add_location_alt', '새 여행', 'vwNew') + act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
@@ -53,7 +53,7 @@ function vwActions() {
 function vwSlides() {
   var v = App.state.vw;
   document.getElementById('vw-track').innerHTML = v.items.map(function (it) {
-    var star = v.ctx === 'trip' && App.state.bestDone && App.state.best[it.s] === it.k ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
+    var star = v.ctx === 'trip' && isBest(it.s, it.k) ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
     return '<div class="vw-slide"><i class="' + it.c + '">' + star + '</i></div>';
   }).join('');
 }
@@ -73,7 +73,7 @@ document.getElementById('vw-track').addEventListener('scroll', function () {
 /* ── trip actions ── */
 App.actions.vwBest = function () {
   var it = vwCur();
-  App.state.best[it.s] = it.k; App.state.bestDone = true;
+  App.state.best[bestKey(it.s, it.k)] = { s: it.s, k: it.k }; App.state.bestDone = true;
   vwSlides(); vwActions();
   var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
   App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');

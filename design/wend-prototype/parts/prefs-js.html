@@ -50,7 +50,7 @@ App.actions.notiNo = function () { App.snack('알림을 허용하지 않았어�
 App.actions.rescan = function () { App.go('analyze'); return false; };
 App.actions.wipe = function () {
   App.state.nick = ''; App.state.chatFor = null; App.state.bestDone = false; App.state.noti = false;
-  App.state.best = BUSAN.stops.map(function () { return 0; });
+  App.state.best = {};
   document.getElementById('nick-input').value = ''; nickCheck(false);
   App.reset('splash');
   App.after(400, function () { App.snack('Wend 데이터를 지웠어요. 사진은 그대로 있어요'); });
