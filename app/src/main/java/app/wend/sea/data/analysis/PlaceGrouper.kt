@@ -1,5 +1,8 @@
 package app.wend.sea.data.analysis
 
+import java.time.Instant
+import java.time.ZoneId
+
 /** 여행 안의 장소 하나: 시간 순서대로 이어진 사진 묶음 */
 data class Place(
     val media: List<MediaPoint>,
@@ -69,4 +72,41 @@ class PlaceGrouper(
         }
         return places
     }
+}
+
+/** 이름 붙인 장소들 */
+data class NamedPlaces(val places: List<Place>, val names: List<String?>)
+
+/**
+ * 지명이 같으면 같은 장소로 본다: 같은 날 이어진 같은 이름은 한 장소로 합치고,
+ * 앞서 들른 이름이 다시 나오면 그 장소 번호를 쓴다([Place.sameAs]). 이름이 없는 장소는 그대로.
+ */
+fun mergeSameName(places: List<Place>, names: List<String?>, zone: ZoneId): NamedPlaces {
+    fun day(t: Long) = Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
+    val groups = mutableListOf<MutableList<Int>>()
+    for (i in places.indices) {
+        val prev = groups.lastOrNull()?.last()
+        if (prev != null && names[i] != null && names[i] == names[prev] && day(places[prev].end) == day(places[i].start)) {
+            groups.last() += i
+        } else {
+            groups += mutableListOf(i)
+        }
+    }
+    val newIndex = IntArray(places.size).also { map -> groups.forEachIndexed { k, g -> g.forEach { map[it] = k } } }
+    val mergedNames = groups.map { names[it.first()] }
+    val merged = groups.mapIndexed { k, g ->
+        val parts = g.map { places[it] }
+        val located = parts.filter { it.latitude != null && it.longitude != null }
+        val weight = located.map { p -> p.media.count { it.hasLocation }.coerceAtLeast(1).toDouble() }
+        val lat = located.takeIf { it.isNotEmpty() }?.let { l -> l.indices.sumOf { l[it].latitude!! * weight[it] } / weight.sum() }
+        val lon = located.takeIf { it.isNotEmpty() }?.let { l -> l.indices.sumOf { l[it].longitude!! * weight[it] } / weight.sum() }
+        val name = mergedNames[k]
+        val sameAs = if (name != null) {
+            mergedNames.indexOf(name).takeIf { it < k }
+        } else {
+            parts.first().sameAs?.let { newIndex[it] }?.takeIf { it < k }
+        }
+        Place(parts.flatMap { it.media }, lat, lon, sameAs)
+    }
+    return NamedPlaces(merged, mergedNames)
 }

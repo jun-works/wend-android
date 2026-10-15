@@ -42,8 +42,8 @@ import java.time.temporal.ChronoUnit
 private val NameStyle = TextStyle(fontFamily = GowunBatang, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 20.4.sp, lineHeightStyle = CssLineHeight)
 private val CountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 14.sp, lineHeightStyle = CssLineHeight)
 
-/** 지명 정책이 정해지기 전까지 "여행 N" */
-val Trip.name: String get() = "여행 $number"
+/** 가장 많이 찍은 도시 이름, 근처에 도시가 없으면 "여행 N" */
+val Trip.name: String get() = city ?: "여행 $number"
 
 /** "2025. 6. 7 – 6. 10 · 4일", 하루면 "2025. 9. 13 · 당일" */
 val Trip.period: String

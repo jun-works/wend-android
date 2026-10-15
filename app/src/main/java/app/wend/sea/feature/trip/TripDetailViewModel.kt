@@ -37,9 +37,11 @@ data class PlaceUi(
     val y: Double?,
     /** 앞서 들른 같은 곳의 순번 — 지도 번호는 그곳 하나만 */
     val sameAs: Int?,
+    /** 사용자 언어 이름이 있는 가까운 도시(없으면 가장 가까운 도시 영어 이름). 위치가 없거나 근처에 도시가 없으면 null */
+    val city: String?,
 ) {
     val number: Int get() = index + 1
-    val name: String get() = "장소 $number"
+    val name: String get() = city ?: "장소 $number"
 }
 
 /** 하루. [day] 는 0부터, [ordinal] 은 여행 첫날부터 센 "N일째" */
@@ -76,7 +78,7 @@ class TripDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val (trip, places) = analysisRepository.tripDetail(number) ?: return@launch
+            val (trip, places, placeCities) = analysisRepository.tripDetail(number) ?: return@launch
             val zone = ZoneId.systemDefault()
             fun dateOf(t: Long) = Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
             val firstDate = dateOf(trip.start)
@@ -95,6 +97,7 @@ class TripDetailViewModel @Inject constructor(
                     x = p.longitude?.let { it * lonScale },
                     y = p.latitude?.let { -it },
                     sameAs = p.sameAs,
+                    city = placeCities[i],
                 )
             }
             val days = dates.mapIndexed { d, date ->

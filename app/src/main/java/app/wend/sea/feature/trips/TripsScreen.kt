@@ -109,6 +109,7 @@ private val CardCountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = 
 fun TripsScreen(
     onReanalyze: () -> Unit,
     onTripClick: (number: Int) -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: TripsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -193,7 +194,7 @@ fun TripsScreen(
                 Box(Modifier.size(DockSize).onGloballyPositioned { dockPos = it.positionInRoot() })
                 IconButton(onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                    viewModel.onSettingsClick()
+                    onSettingsClick()
                 }) {
                     Icon(Icons.Outlined.Settings, contentDescription = "설정", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

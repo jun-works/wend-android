@@ -77,7 +77,6 @@ class TripsViewModel @Inject constructor(
     }
 
     fun onLeftClick() = comingSoon("빠진 사진")
-    fun onSettingsClick() = comingSoon("설정")
 
     private fun comingSoon(what: String) {
         _events.trySend(TripsEvent.ShowMessage("다음 단계($what)는 곧 이어서 만들어요"))

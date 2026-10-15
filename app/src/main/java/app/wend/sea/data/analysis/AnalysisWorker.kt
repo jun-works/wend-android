@@ -30,6 +30,7 @@ class AnalysisWorker @AssistedInject constructor(
     private val userRepository: UserRepository,
     private val tripDao: TripDao,
     private val notifier: AnalysisNotifier,
+    private val cityPicker: TripCityPicker,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -53,9 +54,15 @@ class AnalysisWorker @AssistedInject constructor(
 
         report(AnalysisPhase.Grouping, points.size, points.size)
         val trips = withContext(Dispatchers.Default) { TripDetector().detect(points) }
+        val cities = trips.map { cityPicker.pick(it.media) }
 
         tripDao.replaceAll(
-            trips = trips.mapIndexed { i, t -> TripEntity(number = i + 1, start = t.start, end = t.end, mediaCount = t.media.size) },
+            trips = trips.mapIndexed { i, t ->
+                TripEntity(
+                    number = i + 1, start = t.start, end = t.end, mediaCount = t.media.size,
+                    cityId = cities[i].cityId, cityShare = cities[i].share, countryCode = cities[i].countryCode,
+                )
+            },
             media = trips.flatMapIndexed { i, t -> t.media.map { TripMediaEntity(i + 1, it.id, it.video) } },
         )
         userRepository.saveAnalysisSummary(

@@ -11,15 +11,23 @@ import app.wend.sea.data.MediaThumbnail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import app.wend.sea.data.UserRepository
+import app.wend.sea.data.geo.CityEntity
+import app.wend.sea.data.geo.CityFinder
 import app.wend.sea.data.local.TripDao
+import app.wend.sea.data.local.TripEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.ZoneId
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** 찾은 여행 하나. [number] 는 찍은 순서(오래된 것이 1) — 지명 정책이 정해지기 전까지 "여행 N" 으로 부른다 */
-data class Trip(val number: Int, val start: Long, val end: Long, val mediaCount: Int)
+/** 찾은 여행 하나. [number] 는 찍은 순서(오래된 것이 1), [city] 는 사용자 언어의 도시 이름(근처에 도시가 없으면 null) */
+data class Trip(val number: Int, val start: Long, val end: Long, val mediaCount: Int, val city: String? = null)
+
+/** 여행 상세: 장소들과, 장소마다 도시 이름(CityFinder.placeName, 없으면 null) */
+data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>)
 
 sealed interface AnalysisState {
     /** 분석을 시작한 적 없음 */
@@ -34,10 +42,12 @@ sealed interface AnalysisState {
 
 @Singleton
 class AnalysisRepository @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     private val tripDao: TripDao,
     private val userRepository: UserRepository,
     private val mediaRepository: MediaRepository,
+    private val cityFinder: CityFinder,
+    private val cityPicker: TripCityPicker,
 ) {
     private val workManager = WorkManager.getInstance(context)
 
@@ -66,16 +76,41 @@ class AnalysisRepository @Inject constructor(
 
     val summary: Flow<AnalysisSummary?> = userRepository.analysisSummary
 
-    suspend fun trips(): List<Trip> = tripDao.trips().map { Trip(it.number, it.start, it.end, it.mediaCount) }
+    suspend fun trips(): List<Trip> {
+        val entities = tripDao.trips().map { if (it.cityId == null) withCity(it) else it }
+        val cities = cityFinder.byIds(entities.mapNotNull { it.cityId })
+        val locale = locale()
+        return entities.map { Trip(it.number, it.start, it.end, it.mediaCount, title(it, cities, locale)) }
+    }
 
     /** 여행 하나와, 그 사진들을 장소 단위로 나눈 것 */
-    suspend fun tripDetail(number: Int): Pair<Trip, List<Place>>? {
+    suspend fun tripDetail(number: Int): TripDetail? {
         val entity = tripDao.trip(number) ?: return null
         val keys = tripDao.media(number).map { it.video to it.mediaId }
         val points = mediaRepository.points(keys)
         val places = withContext(Dispatchers.Default) { PlaceGrouper().group(points) }
-        return Trip(entity.number, entity.start, entity.end, points.size) to places
+        val locale = locale()
+        val named = if (entity.cityId == null) withCity(entity) else entity
+        val name = title(named, cityFinder.byIds(listOfNotNull(named.cityId)), locale)
+        val placeCities = places.map { p ->
+            if (p.latitude == null || p.longitude == null) null else cityFinder.placeName(p.latitude, p.longitude, locale)
+        }
+        val merged = withContext(Dispatchers.Default) { mergeSameName(places, placeCities, ZoneId.systemDefault()) }
+        return TripDetail(Trip(entity.number, entity.start, entity.end, points.size, name), merged.places, merged.names)
     }
+
+    /** 도시를 붙이기 전에 찾은 여행(앱 업데이트 전 분석 결과)에 도시를 찾아 저장한다 */
+    private suspend fun withCity(entity: TripEntity): TripEntity {
+        val points = mediaRepository.points(tripDao.media(entity.number).map { it.video to it.mediaId })
+        val city = cityPicker.pick(points)
+        tripDao.setCity(entity.number, city.cityId, city.share, city.countryCode)
+        return entity.copy(cityId = city.cityId, cityShare = city.share, countryCode = city.countryCode)
+    }
+
+    private fun title(entity: TripEntity, cities: Map<Long, CityEntity>, locale: Locale): String? =
+        tripTitle(entity.cityId?.let(cities::get), entity.cityShare ?: 0f, entity.countryCode, locale)
+
+    private fun locale(): Locale = context.resources.configuration.locales[0]
 
     /** 여행마다 카드에 보일 사진 3장: 첫 장 · 가운데 장 · 마지막 장 */
     suspend fun covers(): Map<Int, List<MediaThumbnail>> =

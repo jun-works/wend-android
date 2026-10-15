@@ -18,6 +18,7 @@ import app.wend.sea.feature.permission.PartialScreen
 import app.wend.sea.feature.permission.PermScreen
 import app.wend.sea.feature.splash.SplashDestination
 import app.wend.sea.feature.splash.SplashScreen
+import app.wend.sea.feature.settings.LicensesScreen
 import app.wend.sea.feature.trip.TripDetailScreen
 import app.wend.sea.feature.trips.TripsScreen
 import kotlinx.serialization.Serializable
@@ -35,6 +36,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object NoFoundRoute
 @Serializable data object TripsRoute
 @Serializable data class TripRoute(val number: Int)
+@Serializable data object LicensesRoute
 
 @Composable
 fun WendNavHost() {
@@ -137,8 +139,11 @@ fun WendNavHost() {
             TripsScreen(
                 onReanalyze = { navController.reanalyze(TripsRoute) },
                 onTripClick = { navController.navigate(TripRoute(it)) },
+                // 설정 화면이 생기기 전까지는 라이선스로 바로 간다
+                onSettingsClick = { navController.navigate(LicensesRoute) },
             )
         }
+        composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
         composable<TripRoute> { TripDetailScreen(onBack = { navController.popBackStack() }) }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }
