@@ -41,6 +41,9 @@ interface CityDao {
     @Query("SELECT * FROM city WHERE cell IN (:cells)")
     suspend fun inCells(cells: List<Int>): List<CityEntity>
 
+    @Query("SELECT * FROM city WHERE cell IN (:cells) ORDER BY pop DESC LIMIT :limit")
+    suspend fun biggestInCells(cells: List<Int>, limit: Int): List<CityEntity>
+
     @Query("SELECT * FROM city WHERE id IN (:ids)")
     suspend fun byIds(ids: List<Long>): List<CityEntity>
 }

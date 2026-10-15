@@ -45,6 +45,8 @@ import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.text.font.FontStyle
+import app.wend.sea.data.geo.NatureKind
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import app.wend.sea.data.geo.MapArea
@@ -86,6 +88,15 @@ private val ProvinceInk = Color(0xFFD8CBB8)
 private val RoadInk = Color(0xFFE0D2BC)
 private val CityInk = Color(0xFF8A7D70)
 private val CityStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 14.sp, color = CityInk)
+private val TownStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.Normal, fontSize = 10.sp, lineHeight = 13.sp, color = CityInk)
+// 자연 지명: 기울인 글자를 띄어 넓게 — 도시(점 + 이름)와 구별되게
+private val NatureInk = Color(0xFF9A8670)
+private val SeaInk = Color(0xFF6E929B)
+private val NatureStyle = TextStyle(fontFamily = IbmPlexSansKr, fontStyle = FontStyle.Italic, fontWeight = FontWeight.Medium, fontSize = 10.sp, lineHeight = 13.sp, letterSpacing = 1.2.sp, color = NatureInk)
+private val PeakStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.Normal, fontSize = 9.sp, lineHeight = 12.sp, color = NatureInk)
+private val DesertTint = Color(0x66E7D3A6)
+private val RangeTint = Color(0x55CDBB9C)
+private val PlateauTint = Color(0x40DCCCB0)
 
 /** 하루 범위가 이보다 좁아도 위도 이만큼(약 9km)은 보여 준다 */
 private const val MIN_SPAN_DEG = .08
@@ -237,15 +248,30 @@ fun TripMap(
         }
         val basePaths = remember(area, origin, lonScale) { area?.let { buildBasePaths(it, origin, lonScale) } }
         val cityLabels = remember(area, view, points) { area?.let { pickCities(it, view, lonScale, w, h, density.density, points) }.orEmpty() }
+        val natureLabels = remember(area, view, points, cityLabels) {
+            area?.let { pickNature(it, view, lonScale, w, h, density.density, points, cityLabels.map { c -> c.pos }) }.orEmpty()
+        }
         val textMeasurer = rememberTextMeasurer()
 
         val color = dayMapColor(day)
         // 기본 지도는 자기 레이어에 캐시 — 핀이 숨쉴 때마다 도로·경계를 다시 그리지 않게
         Canvas(Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
             basePaths?.let { drawBaseMap(it, view, origin) }
-            cityLabels.forEach { (pos, name) ->
-                drawCircle(CityInk, radius = 2.5.dp.toPx(), center = pos)
-                drawText(textMeasurer, name, topLeft = pos + Offset(5.dp.toPx(), -8.dp.toPx()), style = CityStyle)
+            natureLabels.forEach { label ->
+                if (label.kind == NatureKind.Peak) {
+                    // ▲ + 이름 + 높이
+                    val r = 3.5.dp.toPx()
+                    drawPath(Path().apply { moveTo(label.pos.x, label.pos.y - r); lineTo(label.pos.x + r, label.pos.y + r * .8f); lineTo(label.pos.x - r, label.pos.y + r * .8f); close() }, NatureInk)
+                    drawText(textMeasurer, label.text, topLeft = label.pos + Offset(6.dp.toPx(), -7.dp.toPx()), style = PeakStyle)
+                } else {
+                    val style = if (label.kind == NatureKind.Sea) NatureStyle.copy(color = SeaInk) else NatureStyle
+                    val m = textMeasurer.measure(label.text, style)
+                    drawText(m, topLeft = label.pos - Offset(m.size.width / 2f, m.size.height / 2f))
+                }
+            }
+            cityLabels.forEach { label ->
+                drawCircle(CityInk, radius = (if (label.town) 2f else 2.5f).dp.toPx(), center = label.pos)
+                drawText(textMeasurer, label.name, topLeft = label.pos + Offset(5.dp.toPx(), -8.dp.toPx()), style = if (label.town) TownStyle else CityStyle)
             }
         }
         Canvas(Modifier.fillMaxSize().graphicsLayer()) {
@@ -343,6 +369,7 @@ private fun buildBasePaths(area: MapArea, origin: Pair<Double, Double>, lonScale
         }
     }
     val fills = mutableListOf<Pair<Path, Color>>()
+    val lakes = mutableListOf<Pair<Path, Color>>()
     val lines = mutableListOf<Triple<Path, Color, MapLayer>>()
     area.shapes.forEach { (layer, shapes) ->
         val path = Path().apply { fillType = PathFillType.EvenOdd }
@@ -353,15 +380,25 @@ private fun buildBasePaths(area: MapArea, origin: Pair<Double, Double>, lonScale
             }
         }
         when (layer) {
-            MapLayer.Land -> fills += path to Paper
-            MapLayer.Lake -> fills += path to Sea
+            MapLayer.Land -> fills.add(0, path to Paper)
+            MapLayer.Lake -> lakes += path to Sea
             MapLayer.River -> lines += Triple(path, RiverInk, layer)
             MapLayer.Border -> lines += Triple(path, BorderInk, layer)
             MapLayer.Province -> lines += Triple(path, ProvinceInk, layer)
             MapLayer.Road -> lines += Triple(path, RoadInk, layer)
         }
     }
-    return BasePaths(fills, lines)
+    // 사막·산맥·고원: 땅 위에 옅게(호수보다 아래)
+    area.nature.filter { it.kind.tint && it.rings.isNotEmpty() }.forEach { n ->
+        val path = Path().apply { fillType = PathFillType.EvenOdd }
+        n.rings.forEach { ring -> ringPath(path, ring); path.close() }
+        fills += path to when (n.kind) {
+            NatureKind.Desert -> DesertTint
+            NatureKind.Range -> RangeTint
+            else -> PlateauTint
+        }
+    }
+    return BasePaths(fills + lakes, lines)
 }
 
 private fun DrawScope.drawBaseMap(paths: BasePaths, view: MapView, origin: Pair<Double, Double>) {
@@ -391,7 +428,14 @@ private fun DrawScope.drawBaseMap(paths: BasePaths, view: MapView, origin: Pair<
     }
 }
 
-/** 화면 안의 큰 도시부터, 서로 겹치지 않게 몇 개만 */
+private class CityLabel(val pos: Offset, val name: String, val town: Boolean)
+
+private class NatureLabel(val pos: Offset, val text: String, val kind: NatureKind)
+
+/**
+ * 화면 안의 큰 도시부터, 서로 겹치지 않게. 기본 지도의 큰 도시가 먼저, 그다음 도시 데이터의 마을을 인구 순으로 —
+ * 사막·시골처럼 큰 도시가 없는 곳도 이름이 비지 않게.
+ */
 private fun pickCities(
     area: MapArea,
     view: MapView,
@@ -400,19 +444,75 @@ private fun pickCities(
     h: Float,
     density: Float,
     markers: List<Offset>,
-): List<Pair<Offset, String>> {
-    val picked = mutableListOf<Pair<Offset, String>>()
-    val gap = 72 * density
+): List<CityLabel> {
+    val picked = mutableListOf<CityLabel>()
+    val gap = 64 * density
     for (city in area.cities.sortedBy { it.rank }) {
         val p = view.toScreen(city.longitude * lonScale, -city.latitude)
         if (p.x < 8 * density || p.x > w - 60 * density || p.y < 12 * density || p.y > h - 24 * density) continue
-        if (picked.any { (q, _) -> (q - p).getDistance() < gap }) continue
+        if (picked.any { (it.pos - p).getDistance() < gap }) continue
         // 장소 번호와 겹치지 않게(이름은 점 오른쪽으로 뻗는다)
         if (markers.any { m -> m.y in (p.y - 22 * density)..(p.y + 22 * density) && m.x in (p.x - 20 * density)..(p.x + 90 * density) }) continue
-        picked += p to city.name
-        if (picked.size == 5) break
+        picked += CityLabel(p, city.name, city.town)
+        if (picked.size == 7) break
     }
     return picked
+}
+
+/** 사막·산맥·바다·산봉우리 이름: 큰 지명부터 화면 안에, 도시 이름·장소 번호와 겹치지 않게 몇 개만 */
+private fun pickNature(
+    area: MapArea,
+    view: MapView,
+    lonScale: Double,
+    w: Float,
+    h: Float,
+    density: Float,
+    markers: List<Offset>,
+    cities: List<Offset>,
+): List<NatureLabel> {
+    val picked = mutableListOf<NatureLabel>()
+    // 넓은 지명 먼저(사막·산맥·바다), 산봉우리는 뒤에
+    val order = area.nature.sortedWith(compareBy({ it.kind == NatureKind.Peak }, { it.rank }))
+    for (n in order) {
+        val p = view.toScreen(n.longitude * lonScale, -n.latitude)
+        if (p.x < 40 * density || p.x > w - 40 * density || p.y < 16 * density || p.y > h - 30 * density) continue
+        val near = 56 * density
+        if (picked.any { (it.pos - p).getDistance() < near * 1.4f }) continue
+        if (cities.any { (it - p).getDistance() < near }) continue
+        if (markers.any { (it - p).getDistance() < near }) continue
+        val text = if (n.kind == NatureKind.Peak && n.elevation > 0) "${n.name} ${"%,d".format(n.elevation)}m" else n.name
+        picked += NatureLabel(p, text, n.kind)
+        if (picked.size == 3) break
+    }
+    // 지금 보이는 곳이 넓은 사막·산맥·고원 안이면(이름 자리는 화면 밖) 그 이름을 화면 빈자리에 찍는다
+    if (picked.none { it.kind.tint }) {
+        val lon = view.cx / lonScale
+        val lat = -view.cy
+        val around = area.nature.filter { it.kind.tint && it.rings.any { ring -> contains(ring, lon, lat) } }.minByOrNull { it.rank }
+        if (around != null) {
+            val spots = listOf(Offset(w * .5f, h * .16f), Offset(w * .5f, h * .84f), Offset(w * .26f, h * .5f), Offset(w * .74f, h * .5f))
+            val near = 56 * density
+            val spot = spots.firstOrNull { s ->
+                picked.none { (it.pos - s).getDistance() < near } && cities.none { (it - s).getDistance() < near } && markers.none { (it - s).getDistance() < near }
+            }
+            if (spot != null) picked += NatureLabel(spot, around.name, around.kind)
+        }
+    }
+    return picked
+}
+
+/** 경도·위도 쌍 고리 안에 점이 있는지(반직선 교차) */
+private fun contains(ring: DoubleArray, lon: Double, lat: Double): Boolean {
+    var inside = false
+    val n = ring.size / 2
+    var j = n - 1
+    for (i in 0 until n) {
+        val xi = ring[i * 2]; val yi = ring[i * 2 + 1]
+        val xj = ring[j * 2]; val yj = ring[j * 2 + 1]
+        if ((yi > lat) != (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside
+        j = i
+    }
+    return inside
 }
 
 /** 핀이 서야 할 경로 위 거리: 읽는 장소까지, 그 장소에서 다음 장소로 걸어간 만큼 더 */

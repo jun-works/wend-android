@@ -11,6 +11,7 @@ import android.content.Context
 import app.wend.sea.data.geo.CityFinder
 import app.wend.sea.data.geo.MapArea
 import app.wend.sea.data.geo.MapCity
+import app.wend.sea.data.geo.NatureMap
 import app.wend.sea.data.geo.localName
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Locale
@@ -90,6 +91,7 @@ class TripDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
     private val baseMap: BaseMap,
+    private val natureMap: NatureMap,
     private val cityFinder: CityFinder,
     @ApplicationContext context: Context,
 ) : ViewModel() {
@@ -165,7 +167,13 @@ class TripDetailViewModel @Inject constructor(
             val name = cities[c.geonameId]?.localName(locale) ?: if (locale.language == "ko") c.name else c.enName
             MapCity(c.latitude, c.longitude, c.rank, name, c.geonameId, c.enName)
         }
-        return MapArea(area.shapes, labeled)
+        // 기본 지도의 큰 도시만으로는 비는 곳(사막·시골)이 많아, 도시 데이터의 마을을 인구 순으로 더한다
+        val known = area.cities.map { it.geonameId }.toSet()
+        val towns = cityFinder.biggestIn(minLat, maxLat, minLon, maxLon, limit = 80)
+            .filter { it.id !in known }
+            .map { MapCity(it.lat / 1e4, it.lon / 1e4, rank = 20, name = it.localName(locale), geonameId = it.id, town = true) }
+        val nature = natureMap.area(minLat, maxLat, minLon, maxLon, locale)
+        return MapArea(area.shapes, labeled + towns, nature)
     }
 
     /** 여행 이름 바꾸기. 처음 이름과 같게 적으면 자동 이름으로 돌아간다 */

@@ -47,6 +47,16 @@ object CityGrid {
         }.distinct()
     }
 
+    /** 위도·경도 상자에 걸치는 칸들 */
+    fun cellsInBox(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): List<Int> {
+        val liFrom = floor((max(minLat, -90.0) + 90) / CELL_DEG).toInt()
+        val liTo = minOf(floor((minOf(maxLat, 90.0) + 90) / CELL_DEG).toInt(), LAT_CELLS - 1)
+        val loFrom = floor((minLon + 180) / CELL_DEG).toInt()
+        val loTo = floor((maxLon + 180) / CELL_DEG).toInt()
+        if (liTo < liFrom || loTo < loFrom || (liTo - liFrom + 1L) * (loTo - loFrom + 1L) > 5000) return emptyList()
+        return buildList { for (li in liFrom..liTo) for (lo in loFrom..loTo) add(li * LON_CELLS + lo.mod(LON_CELLS)) }.distinct()
+    }
+
     private fun floorDiv(a: Int, b: Int) = Math.floorDiv(a, b)
 
     private const val KM_PER_DEG = 111.2
@@ -64,6 +74,19 @@ class CityFinder @Inject constructor(private val dao: CityDao) {
         nearest(lat, lon) { dao.inCells(it) }?.let { (row, km) -> row.toCity(locale, km) }
     }
 
+
+    /**
+     * 범위 안의 도시를 인구 순으로 [limit] 개(지도에 마을 이름을 찍을 때). 범위가 너무 넓으면(칸 600개 넘게) 빈 목록 —
+     * 그 축척에서는 기본 지도의 큰 도시로 충분하다.
+     */
+    suspend fun biggestIn(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double, limit: Int): List<CityEntity> = withContext(Dispatchers.IO) {
+        val cells = CityGrid.cellsInBox(minLat, maxLat, minLon, maxLon)
+        if (cells.isEmpty() || cells.size > 600) return@withContext emptyList()
+        cells.chunked(500).flatMap { dao.biggestInCells(it, limit) }
+            .filter { it.lat / 1e4 in minLat..maxLat && it.lon / 1e4 in minLon..maxLon }
+            .sortedByDescending { it.pop }
+            .take(limit)
+    }
 
     /** 저장해 둔 도시 id 들의 행 */
     suspend fun byIds(ids: Collection<Long>): Map<Long, CityEntity> = withContext(Dispatchers.IO) {

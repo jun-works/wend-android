@@ -142,18 +142,28 @@ fun TripDetailScreen(
     val linePx = with(density) { 60.dp.toPx() }
     val target by remember(placeItem) {
         derivedStateOf {
+            val layout = listState.layoutInfo
+            // 마지막 장소들은 기준선까지 올라오지 못하므로, 목록 끝 한 화면 안에서는 기준선을 아래로 내려
+            // 남은 장소를 차례로 지나 맨 끝에서 마지막 장소에 서게 한다
+            val viewEnd = layout.viewportEndOffset.toFloat()
+            val lastItem = layout.visibleItemsInfo.lastOrNull { it.index == layout.totalItemsCount - 1 }
+            val toEnd = lastItem?.let { (it.offset + it.size - viewEnd).coerceAtLeast(0f) }
+            val endFactor = if (toEnd == null) 0f else (1f - toEnd / (viewEnd - linePx).coerceAtLeast(1f)).coerceIn(0f, 1f)
+            val line = linePx + (viewEnd - 1f - linePx) * endFactor
             var place = 0
             var frac = 0f
-            listState.layoutInfo.visibleItemsInfo.forEach { info ->
+            layout.visibleItemsInfo.forEach { info ->
                 val p = placeItem[info.index] ?: return@forEach
-                if (info.offset <= linePx) {
+                if (info.offset <= line) {
                     place = p
-                    frac = ((linePx - info.offset) / info.size).coerceIn(0f, 1f)
+                    frac = ((line - info.offset) / info.size).coerceIn(0f, 1f)
                 }
             }
             if (listState.firstVisibleItemIndex > (placeItem.keys.maxOrNull() ?: 0)) place = places.lastIndex.coerceAtLeast(0)
             var walk = ((frac - .55f) / .45f).coerceIn(0f, 1f)
             walk = walk * walk * (3 - 2 * walk)
+            // 마지막 장소에서는 더 걸어갈 곳이 없다
+            if (place >= places.lastIndex) walk = 0f
             place to walk
         }
     }
