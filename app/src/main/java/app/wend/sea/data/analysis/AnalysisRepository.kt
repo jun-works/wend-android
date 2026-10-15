@@ -6,7 +6,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import app.wend.sea.data.AnalysisSummary
+import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import app.wend.sea.data.UserRepository
 import app.wend.sea.data.local.TripDao
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,6 +37,7 @@ class AnalysisRepository @Inject constructor(
     @ApplicationContext context: Context,
     private val tripDao: TripDao,
     private val userRepository: UserRepository,
+    private val mediaRepository: MediaRepository,
 ) {
     private val workManager = WorkManager.getInstance(context)
 
@@ -63,6 +67,15 @@ class AnalysisRepository @Inject constructor(
     val summary: Flow<AnalysisSummary?> = userRepository.analysisSummary
 
     suspend fun trips(): List<Trip> = tripDao.trips().map { Trip(it.number, it.start, it.end, it.mediaCount) }
+
+    /** 여행 하나와, 그 사진들을 장소 단위로 나눈 것 */
+    suspend fun tripDetail(number: Int): Pair<Trip, List<Place>>? {
+        val entity = tripDao.trip(number) ?: return null
+        val keys = tripDao.media(number).map { it.video to it.mediaId }
+        val points = mediaRepository.points(keys)
+        val places = withContext(Dispatchers.Default) { PlaceGrouper().group(points) }
+        return Trip(entity.number, entity.start, entity.end, points.size) to places
+    }
 
     /** 여행마다 카드에 보일 사진 3장: 첫 장 · 가운데 장 · 마지막 장 */
     suspend fun covers(): Map<Int, List<MediaThumbnail>> =

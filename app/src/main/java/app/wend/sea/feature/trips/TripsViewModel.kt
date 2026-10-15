@@ -76,7 +76,6 @@ class TripsViewModel @Inject constructor(
         }
     }
 
-    fun onTripClick(trip: Trip) = comingSoon("여행 상세")
     fun onLeftClick() = comingSoon("빠진 사진")
     fun onSettingsClick() = comingSoon("설정")
 

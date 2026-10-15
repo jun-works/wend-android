@@ -18,6 +18,7 @@ import app.wend.sea.feature.permission.PartialScreen
 import app.wend.sea.feature.permission.PermScreen
 import app.wend.sea.feature.splash.SplashDestination
 import app.wend.sea.feature.splash.SplashScreen
+import app.wend.sea.feature.trip.TripDetailScreen
 import app.wend.sea.feature.trips.TripsScreen
 import kotlinx.serialization.Serializable
 
@@ -33,6 +34,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object FoundRoute
 @Serializable data object NoFoundRoute
 @Serializable data object TripsRoute
+@Serializable data class TripRoute(val number: Int)
 
 @Composable
 fun WendNavHost() {
@@ -122,12 +124,22 @@ fun WendNavHost() {
             )
         }
         composable<FoundRoute> {
-            FoundScreen(onReanalyze = { navController.reanalyze(FoundRoute) }, onOpenTrips = navController::openTripsAsHome)
+            FoundScreen(
+                onReanalyze = { navController.reanalyze(FoundRoute) },
+                onOpenTrips = navController::openTripsAsHome,
+                onTripClick = { navController.navigate(TripRoute(it)) },
+            )
         }
         composable<NoFoundRoute> {
             NoFoundScreen(onReanalyze = { navController.reanalyze(NoFoundRoute) }, onOpenTrips = navController::openTripsAsHome)
         }
-        composable<TripsRoute> { TripsScreen(onReanalyze = { navController.reanalyze(TripsRoute) }) }
+        composable<TripsRoute> {
+            TripsScreen(
+                onReanalyze = { navController.reanalyze(TripsRoute) },
+                onTripClick = { navController.navigate(TripRoute(it)) },
+            )
+        }
+        composable<TripRoute> { TripDetailScreen(onBack = { navController.popBackStack() }) }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }
 }

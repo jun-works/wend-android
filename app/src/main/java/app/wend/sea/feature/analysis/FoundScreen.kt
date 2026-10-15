@@ -49,6 +49,7 @@ import app.wend.sea.feature.permission.rememberMediaPermissionRequest
 fun FoundScreen(
     onReanalyze: () -> Unit,
     onOpenTrips: () -> Unit,
+    onTripClick: (number: Int) -> Unit,
     viewModel: ResultViewModel = hiltViewModel(),
 ) {
     val currentOnOpenTrips by rememberUpdatedState(onOpenTrips)
@@ -154,7 +155,7 @@ fun FoundScreen(
                         trip,
                         Modifier.clip(RoundedCornerShape(16.dp)).clickable {
                             haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                            viewModel.onTripClick()
+                            onTripClick(trip.number)
                         },
                     )
                 }

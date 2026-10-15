@@ -27,6 +27,12 @@ interface TripDao {
     @Query("SELECT * FROM trip ORDER BY number")
     suspend fun trips(): List<TripEntity>
 
+    @Query("SELECT * FROM trip WHERE number = :number")
+    suspend fun trip(number: Int): TripEntity?
+
+    @Query("SELECT * FROM trip_media WHERE tripNumber = :number ORDER BY rowid")
+    suspend fun media(number: Int): List<TripMediaEntity>
+
     /** 여행마다 찍은 순서대로(넣은 순서 = 찍은 순서) */
     @Query("SELECT * FROM trip_media ORDER BY tripNumber, rowid")
     suspend fun allMedia(): List<TripMediaEntity>

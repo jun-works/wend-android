@@ -108,6 +108,7 @@ private val CardCountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = 
 @Composable
 fun TripsScreen(
     onReanalyze: () -> Unit,
+    onTripClick: (number: Int) -> Unit,
     viewModel: TripsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -231,7 +232,7 @@ fun TripsScreen(
                                 focused = trip.number == focusNumber,
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                    viewModel.onTripClick(trip)
+                                    onTripClick(trip.number)
                                 },
                             )
                         }

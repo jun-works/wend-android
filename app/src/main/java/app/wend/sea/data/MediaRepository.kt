@@ -53,6 +53,35 @@ class MediaRepository @Inject constructor(
     /** 분석할 사진·영상 수(캡처 제외) */
     suspend fun analysisItemCount(): Int = withContext(Dispatchers.IO) { allItems().count { !it.screenshot } }
 
+    /**
+     * 이미 알고 있는 사진·영상들의 촬영 시각과 저장된 위치(파일은 열지 않는다).
+     * 그사이 지워진 것은 빠진다.
+     */
+    suspend fun points(keys: List<Pair<Boolean, Long>>): List<MediaPoint> = withContext(Dispatchers.IO) {
+        val locations = locationDao.getAll().associateBy { it.video to it.mediaId }
+        keys.groupBy({ it.first }, { it.second }).flatMap { (video, ids) ->
+            val collection = if (video) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ids.chunked(500).flatMap { chunk ->
+                context.contentResolver.query(
+                    collection,
+                    arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATE_TAKEN),
+                    "${MediaStore.MediaColumns._ID} IN (${chunk.joinToString(",")})",
+                    null,
+                    null,
+                )?.use { cursor ->
+                    buildList {
+                        while (cursor.moveToNext()) {
+                            val id = cursor.getLong(0)
+                            val taken = if (cursor.isNull(1)) null else cursor.getLong(1).takeIf { it > 0 }
+                            val location = locations[video to id]
+                            add(MediaPoint(id, video, taken, location?.latitude, location?.longitude))
+                        }
+                    }
+                } ?: emptyList()
+            }
+        }
+    }
+
     /** 볼 수 있는 사진·영상 전체 수(캡처 포함) — "N개 중 M개가 여행에 담겼어요" 의 N */
     suspend fun visibleCount(): Int = withContext(Dispatchers.IO) { allItems().size }
 

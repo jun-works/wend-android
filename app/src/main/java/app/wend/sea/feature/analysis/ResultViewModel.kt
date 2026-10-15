@@ -70,9 +70,6 @@ class ResultViewModel @Inject constructor(
         }
     }
 
-    fun onTripClick() {
-        _events.trySend(ResultEvent.ShowMessage("다음 단계(여행 상세)는 곧 이어서 만들어요"))
-    }
 
     /** 권한 안내창 결과: 모두 허용이 되면 처음부터 다시 찾는다 */
     fun onRequestResult(access: MediaAccess, showRationale: Boolean) {
