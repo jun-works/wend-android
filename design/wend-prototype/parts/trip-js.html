@@ -300,6 +300,11 @@ function renderBest() {
     }).join('');
     return rows ? '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '</h3>' + rows + '</div>' : '';
   }).join('');
+  /* no scene shot more than once (e.g. every photo was cleaned up): nothing to pick — say so, no button */
+  var empty = !document.querySelector('#bs-list .bs-row');
+  document.querySelector('#best .bs-intro').textContent = empty ? '이 여행에는 같은 장면을 여러 번 찍은 사진이 없어요.' :
+    '같은 장면을 여러 번 찍은 사진끼리 모았어요. 장면마다 마음에 드는 한 장을 골라 주세요. 안 골라도 돼요. 고른 사진은 여행의 대표 사진이 돼요.';
+  document.getElementById('bs-done').parentNode.hidden = empty;
   bestCount();
 }
 function bestCount() {

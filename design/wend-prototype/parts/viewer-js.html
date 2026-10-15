@@ -73,6 +73,7 @@ document.getElementById('vw-track').addEventListener('scroll', function () {
 /* ── trip actions ── */
 App.actions.vwBest = function () {
   var it = vwCur();
+  if (isBest(it.s, it.k)) return;   // already the best shot of its scene — nothing to change
   App.state.best[bestKey(it.s, it.k)] = { s: it.s, k: it.k }; App.state.bestDone = true;
   vwSlides(); vwActions();
   var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
