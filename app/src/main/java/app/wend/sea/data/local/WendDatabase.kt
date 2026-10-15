@@ -6,8 +6,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class],
-    version = 5,
+    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class],
+    version = 6,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
@@ -43,6 +43,13 @@ abstract class WendDatabase : RoomDatabase() {
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `user_name` (`mediaId` INTEGER NOT NULL, `video` INTEGER NOT NULL, `kind` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`mediaId`, `video`, `kind`))")
+            }
+        }
+
+        /** 5 → 6: 사용자가 여행에서 뺀 사진 */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `excluded_media` (`mediaId` INTEGER NOT NULL, `video` INTEGER NOT NULL, PRIMARY KEY(`mediaId`, `video`))")
             }
         }
     }

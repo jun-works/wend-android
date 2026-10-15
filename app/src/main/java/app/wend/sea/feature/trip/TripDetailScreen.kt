@@ -99,6 +99,7 @@ private fun PlaceUi.whenText(): String = if (end - start < 60_000) time(start) e
 @Composable
 fun TripDetailScreen(
     onBack: () -> Unit,
+    onPhotoClick: (place: Int, index: Int) -> Unit,
     viewModel: TripDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -220,9 +221,9 @@ fun TripDetailScreen(
                     stickyHeader(key = "day-${day.day}") { DayHeader(day) }
                     day.places.forEach { place ->
                         item(key = "place-${place.index}") {
-                            PlaceSection(place, glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places }, onRename = { renaming = place.index }, onPhotoClick = {
+                            PlaceSection(place, glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places }, onRename = { renaming = place.index }, onPhotoClick = { index ->
                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                viewModel.onPhotoClick()
+                                onPhotoClick(place.index, index)
                             })
                         }
                     }
@@ -334,7 +335,7 @@ private fun DayHeader(day: DayUi) {
 
 /** 시안 `.tp-stop`: 왼쪽 타임라인 + 번호, 이름, 시간대 · 장수, 사진 6칸(+n) */
 @Composable
-private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: () -> Unit) {
+private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: (index: Int) -> Unit) {
     val colors = MaterialTheme.colorScheme
     val rail = colors.outlineVariant
     val surface = colors.surface
@@ -382,7 +383,7 @@ private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit,
 
 /** 3열 정사각 사진. 6칸째에 "+나머지" */
 @Composable
-private fun PhotoGrid(photos: List<MediaThumbnail>, more: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun PhotoGrid(photos: List<MediaThumbnail>, more: Int, onClick: (index: Int) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.clip(RoundedCornerShape(14.dp)), verticalArrangement = Arrangement.spacedBy(3.dp)) {
         photos.chunked(3).forEachIndexed { row, rowPhotos ->
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -392,7 +393,7 @@ private fun PhotoGrid(photos: List<MediaThumbnail>, more: Int, onClick: () -> Un
                         Modifier
                             .weight(1f)
                             .aspectRatio(1f)
-                            .then(if (photo != null) Modifier.background(MaterialTheme.colorScheme.surfaceContainer).clickable(onClick = onClick) else Modifier),
+                            .then(if (photo != null) Modifier.background(MaterialTheme.colorScheme.surfaceContainer).clickable { onClick(row * 3 + col) } else Modifier),
                     ) {
                         if (photo != null) {
                             AsyncImage(model = photo, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())

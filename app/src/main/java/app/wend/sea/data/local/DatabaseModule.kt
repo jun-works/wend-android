@@ -16,7 +16,7 @@ object DatabaseModule {
     @Singleton
     fun database(@ApplicationContext context: Context): WendDatabase =
         Room.databaseBuilder(context, WendDatabase::class.java, "wend.db")
-            .addMigrations(WendDatabase.MIGRATION_1_2, WendDatabase.MIGRATION_2_3, WendDatabase.MIGRATION_3_4, WendDatabase.MIGRATION_4_5)
+            .addMigrations(WendDatabase.MIGRATION_1_2, WendDatabase.MIGRATION_2_3, WendDatabase.MIGRATION_3_4, WendDatabase.MIGRATION_4_5, WendDatabase.MIGRATION_5_6)
             .build()
 
     @Provides

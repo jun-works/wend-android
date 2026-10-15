@@ -53,7 +53,14 @@ class AnalysisWorker @AssistedInject constructor(
         }
 
         report(AnalysisPhase.Grouping, points.size, points.size)
-        val trips = withContext(Dispatchers.Default) { TripDetector().detect(points) }
+        // 사용자가 여행에서 뺀 사진은 다시 넣지 않는다
+        val excluded = tripDao.excluded().map { it.video to it.mediaId }.toSet()
+        val trips = withContext(Dispatchers.Default) {
+            TripDetector().detect(points)
+                .map { t -> t.copy(media = t.media.filter { (it.video to it.id) !in excluded }) }
+                .filter { t -> t.media.any { it.takenAt != null } }
+                .map { t -> t.copy(start = t.media.mapNotNull { it.takenAt }.min(), end = t.media.mapNotNull { it.takenAt }.max()) }
+        }
         val cities = trips.map { cityPicker.pick(it.media) }
 
         tripDao.replaceAll(

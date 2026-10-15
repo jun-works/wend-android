@@ -87,7 +87,7 @@ sealed interface TripDetailEvent {
 
 @HiltViewModel
 class TripDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
     private val baseMap: BaseMap,
     private val cityFinder: CityFinder,
@@ -99,6 +99,11 @@ class TripDetailViewModel @Inject constructor(
     /** 네비게이션 인자(TripRoute.number) */
     private val number: Int = checkNotNull(savedStateHandle["number"])
 
+    companion object {
+        /** 사진 크게 보기가 돌려주는 결과(여행이 바뀜). 빈 문자열이면 안내 없이 다시 읽기만 */
+        const val VIEWER_RESULT = "viewerResult"
+    }
+
     private val _uiState = MutableStateFlow(TripDetailUiState())
     val uiState: StateFlow<TripDetailUiState> = _uiState.asStateFlow()
 
@@ -106,6 +111,19 @@ class TripDetailViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        load()
+        // 사진 크게 보기에서 여행을 바꾸고 돌아오면(빼기·휴지통) 다시 읽고, 안내가 있으면 띄운다
+        viewModelScope.launch {
+            savedStateHandle.getStateFlow<String?>(VIEWER_RESULT, null).collect { message ->
+                if (message == null) return@collect
+                savedStateHandle[VIEWER_RESULT] = null
+                load()
+                if (message.isNotEmpty()) _events.send(TripDetailEvent.ShowMessage(message))
+            }
+        }
+    }
+
+    private fun load() {
         viewModelScope.launch {
             val (trip, places, placeCities, placeUserNames) = analysisRepository.tripDetail(number) ?: return@launch
             val zone = ZoneId.systemDefault()
@@ -134,7 +152,7 @@ class TripDetailViewModel @Inject constructor(
             val days = dates.mapIndexed { d, date ->
                 DayUi(d, ChronoUnit.DAYS.between(firstDate, date).toInt() + 1, date, ui.filter { it.day == d })
             }
-            _uiState.value = TripDetailUiState(trip, days, lonScale)
+            _uiState.update { it.copy(trip = trip, days = days, lonScale = lonScale) }
         }
     }
 
@@ -214,7 +232,6 @@ class TripDetailViewModel @Inject constructor(
 
     fun onBestShots() = comingSoon("베스트샷 고르기")
     fun onCleanUp() = comingSoon("사진 정리하기")
-    fun onPhotoClick() = comingSoon("사진 크게 보기")
 
     private fun comingSoon(what: String) {
         _events.trySend(TripDetailEvent.ShowMessage("다음 단계($what)는 곧 이어서 만들어요"))

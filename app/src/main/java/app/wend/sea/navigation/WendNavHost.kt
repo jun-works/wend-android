@@ -20,7 +20,10 @@ import app.wend.sea.feature.splash.SplashDestination
 import app.wend.sea.feature.splash.SplashScreen
 import app.wend.sea.feature.settings.LicensesScreen
 import app.wend.sea.feature.trip.TripDetailScreen
+import app.wend.sea.feature.trip.TripDetailViewModel
+import app.wend.sea.feature.viewer.ViewerScreen
 import app.wend.sea.feature.trips.TripsScreen
+import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object SplashRoute
@@ -36,6 +39,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object NoFoundRoute
 @Serializable data object TripsRoute
 @Serializable data class TripRoute(val number: Int)
+@Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int)
 @Serializable data object LicensesRoute
 
 @Composable
@@ -144,7 +148,19 @@ fun WendNavHost() {
             )
         }
         composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
-        composable<TripRoute> { TripDetailScreen(onBack = { navController.popBackStack() }) }
+        composable<TripRoute> { entry ->
+            val number = entry.toRoute<TripRoute>().number
+            TripDetailScreen(
+                onBack = { navController.popBackStack() },
+                onPhotoClick = { place, index -> navController.navigate(ViewerRoute(number, place, index)) },
+            )
+        }
+        composable<ViewerRoute> {
+            ViewerScreen(
+                onBack = { navController.popBackStack() },
+                onTripChanged = { message -> navController.previousBackStackEntry?.savedStateHandle?.set(TripDetailViewModel.VIEWER_RESULT, message) },
+            )
+        }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }
 }

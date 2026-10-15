@@ -50,6 +50,13 @@ data class UserNameEntity(
     }
 }
 
+/**
+ * 사용자가 "여행에서 빼기"로 뺀 사진·영상. 다시 분석해도 여행에 넣지 않는다(빠진 사진에 남음).
+ * 나중에 빠진 사진에서 여행에 다시 넣으면 이 줄을 지운다.
+ */
+@Entity(tableName = "excluded_media", primaryKeys = ["mediaId", "video"])
+data class ExcludedMediaEntity(val mediaId: Long, val video: Boolean)
+
 /** 여행마다 사진에 붙은 이름과 그 장수 */
 data class TripNameCount(val tripNumber: Int, val name: String, val count: Int)
 
@@ -107,6 +114,25 @@ interface TripDao {
         } else {
             media.chunked(500).forEach { chunk -> upsertNames(chunk.map { (video, id) -> UserNameEntity(id, video, kind, name) }) }
         }
+    }
+
+    @Upsert
+    suspend fun exclude(media: ExcludedMediaEntity)
+
+    @Query("SELECT * FROM excluded_media")
+    suspend fun excluded(): List<ExcludedMediaEntity>
+
+    @Query("DELETE FROM trip_media WHERE tripNumber = :tripNumber AND mediaId = :mediaId AND video = :video")
+    suspend fun deleteTripMedia(tripNumber: Int, mediaId: Long, video: Boolean): Int
+
+    @Query("UPDATE trip SET mediaCount = mediaCount - 1 WHERE number = :number")
+    suspend fun decrementCount(number: Int)
+
+    /** 사진 한 장을 여행에서 덜어 낸다(빼기 · 휴지통). [exclude] 면 다시 분석해도 넣지 않는다 */
+    @Transaction
+    suspend fun removeFromTrip(tripNumber: Int, mediaId: Long, video: Boolean, exclude: Boolean) {
+        if (exclude) exclude(ExcludedMediaEntity(mediaId, video))
+        if (deleteTripMedia(tripNumber, mediaId, video) > 0) decrementCount(tripNumber)
     }
 
     /** 새 분석 결과로 통째로 바꾼다 */

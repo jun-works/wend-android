@@ -120,6 +120,14 @@ class AnalysisRepository @Inject constructor(
         return TripDetail(Trip(entity.number, entity.start, entity.end, points.size, name, userName), merged.places, merged.names, placeUserNames)
     }
 
+    /** 사진 한 장을 여행에서 뺀다. 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
+    suspend fun excludeFromTrip(number: Int, media: MediaThumbnail) =
+        tripDao.removeFromTrip(number, media.mediaId, media.video, exclude = true)
+
+    /** 휴지통으로 옮긴 사진을 여행에서 덜어 낸다 */
+    suspend fun removeTrashed(number: Int, media: MediaThumbnail) =
+        tripDao.removeFromTrip(number, media.mediaId, media.video, exclude = false)
+
     /** 여행 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
     suspend fun renameTrip(number: Int, name: String?) {
         tripDao.setName(UserNameEntity.KIND_TRIP, tripDao.media(number).map { it.video to it.mediaId }, name)
