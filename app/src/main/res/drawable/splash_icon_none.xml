@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시스템 스플래시(Android 12+)에는 아이콘을 그리지 않는다: 앱 스플래시가 흩어진 방울부터 시작하므로,
+     완성된 로고를 먼저 보여 주면 전환 때 로고가 두 번 나온다 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+</shape>

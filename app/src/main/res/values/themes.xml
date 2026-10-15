@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- 첫 프레임 전(콜드 스타트)에도 앱 스플래시와 같은 종이색 화면 · 같은 시스템 바 -->
     <style name="Theme.Wend" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:navigationBarColor">@color/paper</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
