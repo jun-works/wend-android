@@ -15,6 +15,7 @@ import app.wend.sea.data.geo.CityEntity
 import app.wend.sea.data.geo.CityFinder
 import app.wend.sea.data.local.TripDao
 import app.wend.sea.data.local.TripEntity
+import app.wend.sea.data.local.UserNameEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,11 +24,21 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** 찾은 여행 하나. [number] 는 찍은 순서(오래된 것이 1), [city] 는 사용자 언어의 도시 이름(근처에 도시가 없으면 null) */
-data class Trip(val number: Int, val start: Long, val end: Long, val mediaCount: Int, val city: String? = null)
+/**
+ * 찾은 여행 하나. [number] 는 찍은 순서(오래된 것이 1), [city] 는 자동으로 붙인 이름(도시나 나라, 근처에 도시가 없으면 null),
+ * [userName] 은 사용자가 바꾼 이름.
+ */
+data class Trip(
+    val number: Int,
+    val start: Long,
+    val end: Long,
+    val mediaCount: Int,
+    val city: String? = null,
+    val userName: String? = null,
+)
 
-/** 여행 상세: 장소들과, 장소마다 도시 이름(CityFinder.placeName, 없으면 null) */
-data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>)
+/** 여행 상세: 장소들과, 장소마다 자동 이름(CityFinder.placeName, 없으면 null)과 사용자가 바꾼 이름 */
+data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>, val placeUserNames: List<String?>)
 
 sealed interface AnalysisState {
     /** 분석을 시작한 적 없음 */
@@ -80,7 +91,8 @@ class AnalysisRepository @Inject constructor(
         val entities = tripDao.trips().map { if (it.cityId == null) withCity(it) else it }
         val cities = cityFinder.byIds(entities.mapNotNull { it.cityId })
         val locale = locale()
-        return entities.map { Trip(it.number, it.start, it.end, it.mediaCount, title(it, cities, locale)) }
+        val userNames = tripDao.tripNameCounts().groupBy { it.tripNumber }.mapValues { (_, c) -> c.maxBy { it.count }.name }
+        return entities.map { Trip(it.number, it.start, it.end, it.mediaCount, title(it, cities, locale), userNames[it.number]) }
     }
 
     /** 여행 하나와, 그 사진들을 장소 단위로 나눈 것 */
@@ -96,7 +108,23 @@ class AnalysisRepository @Inject constructor(
             if (p.latitude == null || p.longitude == null) null else cityFinder.placeName(p.latitude, p.longitude, locale)
         }
         val merged = withContext(Dispatchers.Default) { mergeSameName(places, placeCities, ZoneId.systemDefault()) }
-        return TripDetail(Trip(entity.number, entity.start, entity.end, points.size, name), merged.places, merged.names)
+        // 사용자 이름은 자동 이름으로 합친 뒤에 얹는다 — 이름을 바꿔도 장소를 합치거나 나누지 않는다
+        val userPlaceNames = tripDao.placeNames().associate { (it.video to it.mediaId) to it.name }
+        val placeUserNames = merged.places.map { p ->
+            p.media.mapNotNull { userPlaceNames[it.video to it.id] }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+        }
+        val userName = tripDao.tripNameCounts().filter { it.tripNumber == number }.maxByOrNull { it.count }?.name
+        return TripDetail(Trip(entity.number, entity.start, entity.end, points.size, name, userName), merged.places, merged.names, placeUserNames)
+    }
+
+    /** 여행 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
+    suspend fun renameTrip(number: Int, name: String?) {
+        tripDao.setName(UserNameEntity.KIND_TRIP, tripDao.media(number).map { it.video to it.mediaId }, name)
+    }
+
+    /** 장소(그 사진들) 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
+    suspend fun renamePlace(media: List<Pair<Boolean, Long>>, name: String?) {
+        tripDao.setName(UserNameEntity.KIND_PLACE, media, name)
     }
 
     /** 도시를 붙이기 전에 찾은 여행(앱 업데이트 전 분석 결과)에 도시를 찾아 저장한다 */

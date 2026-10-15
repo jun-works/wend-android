@@ -21,6 +21,7 @@ var BUSAN = {
     { d: 2, place: '부산역', when: '오후 3:10', n: 8, x: 97, y: 119, ph: ['p-city', 'p-food', 'p-cafe', 'p-city', 'p-sky', 'p-cafe'] },
   ],
 };
+BUSAN.stops.forEach(function (s) { s.auto = s.place; });   // the name Wend gave it; renames keep it for "처음 이름"
 App.state.best = BUSAN.stops.map(function () { return 0; });   // index of the chosen best shot per stop (0 = 추천)
 App.state.bestDone = false;
 App.state.removed = BUSAN.stops.map(function () { return 0; });
@@ -58,7 +59,7 @@ function placeStopNumbers() {
   var box = document.getElementById('tp-nums'), m = mapScale(), sc = m.sc, ox = m.ox, oy = m.oy;
   box.innerHTML = BUSAN.stops.map(function (s, i) {
     if (i === BUSAN.stops.length - 1 && s.x === BUSAN.stops[0].x && s.y === BUSAN.stops[0].y) return '';   // back at the station: one dot is enough
-    return '<span style="background:' + DAYT[s.d] + ';left:' + (ox + s.x * sc).toFixed(1) + 'px;top:' + (oy + s.y * sc).toFixed(1) + 'px">' + (i + 1) + '</span>';
+    return '<span data-i="' + i + '" style="--d:' + DAYT[s.d] + ';background:' + DAYT[s.d] + ';left:' + (ox + s.x * sc).toFixed(1) + 'px;top:' + (oy + s.y * sc).toFixed(1) + 'px">' + (i + 1) + '</span>';
   }).join('');
 }
 function drawRoute(L, intro) {
@@ -84,7 +85,7 @@ function stopHTML(s, i) {
     return '<button class="' + c + '" data-action="viewTrip" data-s="' + i + '" data-k="' + k + '" aria-label="' + s.place + ' 사진 ' + (k + 1) + ' 크게 보기">' + star + (k === 5 && more > 0 ? '<b>+' + more + '</b>' : '') + '</button>';
   }).join('');
   return '<div class="tp-stop" data-i="' + i + '" style="--d:' + DAYT[s.d] + '"><span class="no">' + (i + 1) + '</span>' +
-    '<h3>' + s.place + '</h3><div class="when">' + s.when + ' · ' + shown + '장</div><div class="tp-grid">' + cells + '</div></div>';
+    '<h3><button class="tp-rename" data-action="askPlaceName" data-i="' + i + '" aria-label="장소 이름 바꾸기, 지금 이름 ' + s.place + '"><span>' + s.place + '</span><span class="ms">edit</span></button></h3><div class="when">' + s.when + ' · ' + shown + '장</div><div class="tp-grid">' + cells + '</div></div>';
 }
 function renderTrip() {
   var S = BUSAN.stops, html = '', removed = App.state.removed.reduce(function (a, b) { return a + b; }, 0);
@@ -95,8 +96,12 @@ function renderTrip() {
       html += stopHTML(S[i], i);
     });
   });
-  html += '<div class="tp-end">여행 끝 · 부산역 오후 3:10</div>';
+  html += '<div class="tp-end">여행 끝 · ' + S[S.length - 1].place.split(' ·')[0] + ' 오후 3:10</div>';
   document.getElementById('tp-days').innerHTML = html;
+  var name = busanTrip().place;
+  document.getElementById('tp-title').innerHTML = name;
+  document.getElementById('tp-name').firstChild.innerHTML = name;
+  document.getElementById('tp-name').setAttribute('aria-label', '여행 이름 바꾸기, 지금 이름 ' + name);
   document.getElementById('tp-meta').textContent = '2026. 5. 3 – 5. 5 · 3일 · ' + (186 - removed) + '장 · 7곳';
 }
 
@@ -130,10 +135,100 @@ App.onEnter('trip', function () {
 /* only the Busan trip has sample data in the prototype */
 App.actions.openTrip = function (el) {
   var k = +el.getAttribute('data-k'), t = analysisData().trips[k];
-  if (t && t.place === '부산' && !analysisData().partial) { App.go('trip'); return false; }
+  if (t && t.key === '부산' && !analysisData().partial) { App.go('trip'); return false; }
   App.snack('시안에서는 부산 여행만 열어 볼 수 있어요');
   return false;
 };
+
+/* ── rename: Wend names trips and places from the map; the user can always say what it really was ──
+   Trip: long-press its card in the list, or tap the title here. Place: tap its name. If other places still carry the
+   same name, Wend asks once whether they change too — "same name" is checked against the names as they are now, so a
+   place that was renamed on its own is no longer asked about. Renaming never merges or splits places. */
+function busanTrip() { return TRIPS_ALL.filter(function (t) { return t.key === '부산'; })[0]; }
+function unesc(s) { var t = document.createElement('textarea'); t.innerHTML = s; return t.value; }
+function fieldError(id, help, msg) {
+  document.getElementById(id).closest('.field').classList.toggle('error', !!msg);
+  if (msg) document.getElementById(help).textContent = msg;
+}
+function askTripName(t) {
+  App.state.renameTrip = t;
+  var input = document.getElementById('tn-name');
+  input.value = unesc(t.place);
+  document.getElementById('tn-when').textContent = t.date + ' · ' + fmt(t.n) + '장';
+  document.getElementById('tn-help').textContent = '처음 이름: ' + unesc(t.key || t.place);
+  fieldError('tn-name', 'tn-help', '');
+  App.dialog('trip-name');
+  App.after(80, function () { input.focus(); input.select(); });
+}
+App.actions.askTripName = function () { askTripName(busanTrip()); };
+App.actions.saveTripName = function () {
+  var v = document.getElementById('tn-name').value.trim(), t = App.state.renameTrip;
+  if (!v) { fieldError('tn-name', 'tn-help', '이름을 입력해 주세요'); return false; }
+  App.close();
+  var before = t.place;
+  if (esc(v) === before) return;
+  t.place = esc(v);
+  showTripRename(t);
+  App.snack('여행 이름을 바꿨어요', '되돌리기', function () { t.place = before; showTripRename(t); });
+};
+function showTripRename(t) {
+  if (App.current() === 'trip') {
+    renderTrip();
+    var b = document.getElementById('tp-name'); b.classList.remove('renamed'); void b.offsetWidth; b.classList.add('renamed');
+  } else if (App.current() === 'trips') {
+    var k = TR.data.trips.indexOf(t);
+    renderTrips();
+    var card = document.querySelector('#tr-list .tc[data-k="' + k + '"]');
+    if (card) card.classList.add('renamed');
+  }
+}
+
+function placeWhen(i) { var s = BUSAN.stops[i]; return BUSAN.days[s.d].label + ' · ' + s.when.split(' –')[0]; }
+App.actions.askPlaceName = function (el) {
+  var i = +el.getAttribute('data-i'), s = BUSAN.stops[i], input = document.getElementById('pn-name');
+  App.state.renamePlace = i;
+  input.value = unesc(s.place);
+  document.getElementById('pn-when').textContent = placeWhen(i) + ' · ' + (s.n - App.state.removed[i]) + '장';
+  document.getElementById('pn-help').textContent = '처음 이름: ' + s.auto;
+  fieldError('pn-name', 'pn-help', '');
+  App.dialog('place-name');
+  App.after(80, function () { input.focus(); input.select(); });
+};
+App.actions.savePlaceName = function () {
+  var v = document.getElementById('pn-name').value.trim(), i = App.state.renamePlace, old = BUSAN.stops[i].place;
+  if (!v) { fieldError('pn-name', 'pn-help', '이름을 입력해 주세요'); return false; }
+  App.close();
+  if (esc(v) === old) return;
+  App.state.renameTo = esc(v);
+  // same name right now, anywhere else in the trip
+  var others = BUSAN.stops.map(function (s, j) { return j !== i && s.place === old ? j : -1; }).filter(function (j) { return j >= 0; });
+  App.state.renameOthers = others;
+  if (!others.length) { renamePlaces([i]); return; }
+  document.getElementById('ps-title').textContent = '같은 이름이 ' + others.length + '곳 더 있어요';
+  document.getElementById('ps-text').textContent = '‘' + unesc(old) + '’ — ' + others.map(placeWhen).join(', ') + '에 들른 곳도 같이 바꿀까요?';
+  App.after(200, function () { App.dialog('place-same'); });
+};
+App.actions.renameOne = function () { renamePlaces([App.state.renamePlace]); };
+App.actions.renameAll = function () { renamePlaces([App.state.renamePlace].concat(App.state.renameOthers)); };
+function renamePlaces(idx) {
+  var before = idx.map(function (j) { return BUSAN.stops[j].place; });
+  idx.forEach(function (j) { BUSAN.stops[j].place = App.state.renameTo; });
+  glowPlaces(idx);
+  App.snack(idx.length > 1 ? '장소 ' + idx.length + '곳의 이름을 바꿨어요' : '장소 이름을 바꿨어요', '되돌리기', function () {
+    idx.forEach(function (j, n) { BUSAN.stops[j].place = before[n]; });
+    glowPlaces(idx);
+  });
+}
+/* every place that changed glows together — on the list and on the map — so it's visible what moved with it */
+function glowPlaces(idx) {
+  renderTrip();
+  idx.forEach(function (j) {
+    var b = document.querySelector('#tp-days .tp-stop[data-i="' + j + '"] .tp-rename');
+    if (b) b.classList.add('renamed');
+    var n = document.querySelector('#tp-nums span[data-i="' + j + '"]');
+    if (n) { n.classList.remove('renamed'); void n.offsetWidth; n.classList.add('renamed'); }
+  });
+}
 
 /* ── best shots: one row of similar photos per stop, the recommended one pre-picked ── */
 function renderBest() {
@@ -193,7 +288,7 @@ App.actions.trashAsk = function () { document.getElementById('tr-n').textContent
 App.actions.trashOk = function () {
   var n = 0;
   CLEAN.forEach(function (c, ci) { c.items.forEach(function (it, k) { if (App.state.cleanSel[ci][k]) { App.state.removed[it[0]]++; n++; } }); });
-  TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n -= n; });
+  TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n -= n; });
   TOTAL_ALL -= n;
   App.after(320, function () { App.snack(n + '장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
 };

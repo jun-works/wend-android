@@ -33,6 +33,26 @@ data class TripMediaEntity(
     val video: Boolean,
 )
 
+/**
+ * 사용자가 붙인 이름. 여행·장소는 분석할 때마다 새로 묶이므로 이름을 그 안의 사진·영상 하나하나에 붙여 둔다 —
+ * 다시 찾아도 같은 사진들이 모인 여행·장소는 그 이름을 되찾는다. [kind] 는 [KIND_TRIP] 또는 [KIND_PLACE].
+ */
+@Entity(tableName = "user_name", primaryKeys = ["mediaId", "video", "kind"])
+data class UserNameEntity(
+    val mediaId: Long,
+    val video: Boolean,
+    val kind: Int,
+    val name: String,
+) {
+    companion object {
+        const val KIND_TRIP = 0
+        const val KIND_PLACE = 1
+    }
+}
+
+/** 여행마다 사진에 붙은 이름과 그 장수 */
+data class TripNameCount(val tripNumber: Int, val name: String, val count: Int)
+
 @Dao
 interface TripDao {
     @Query("SELECT * FROM trip ORDER BY number")
@@ -62,6 +82,32 @@ interface TripDao {
 
     @Upsert
     suspend fun insertMedia(media: List<TripMediaEntity>)
+
+    @Query(
+        "SELECT tm.tripNumber AS tripNumber, un.name AS name, COUNT(*) AS count FROM trip_media tm " +
+            "JOIN user_name un ON un.mediaId = tm.mediaId AND un.video = tm.video AND un.kind = 0 " +
+            "GROUP BY tm.tripNumber, un.name",
+    )
+    suspend fun tripNameCounts(): List<TripNameCount>
+
+    @Query("SELECT * FROM user_name WHERE kind = 1")
+    suspend fun placeNames(): List<UserNameEntity>
+
+    @Query("DELETE FROM user_name WHERE kind = :kind AND mediaId = :mediaId AND video = :video")
+    suspend fun deleteName(kind: Int, mediaId: Long, video: Boolean)
+
+    @Upsert
+    suspend fun upsertNames(names: List<UserNameEntity>)
+
+    /** 사진들에 이름을 붙인다. [name] 이 null 이면 붙여 둔 이름을 지워 자동 이름으로 돌아간다 */
+    @Transaction
+    suspend fun setName(kind: Int, media: List<Pair<Boolean, Long>>, name: String?) {
+        if (name == null) {
+            media.forEach { (video, id) -> deleteName(kind, id, video) }
+        } else {
+            media.chunked(500).forEach { chunk -> upsertNames(chunk.map { (video, id) -> UserNameEntity(id, video, kind, name) }) }
+        }
+    }
 
     /** 새 분석 결과로 통째로 바꾼다 */
     @Transaction

@@ -8,12 +8,15 @@ import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.Trip
 import app.wend.sea.data.geo.BaseMap
 import app.wend.sea.data.geo.MapArea
+import app.wend.sea.feature.analysis.autoName
+import app.wend.sea.feature.analysis.name
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -39,10 +42,21 @@ data class PlaceUi(
     val sameAs: Int?,
     /** 사용자 언어 이름이 있는 가까운 도시(없으면 가장 가까운 도시 영어 이름). 위치가 없거나 근처에 도시가 없으면 null */
     val city: String?,
+    /** 사용자가 바꾼 이름 */
+    val userName: String? = null,
+    /** 이 장소의 사진·영상 전부(이름을 바꿀 때 붙인다) */
+    val media: List<Pair<Boolean, Long>> = emptyList(),
 ) {
     val number: Int get() = index + 1
-    val name: String get() = city ?: "장소 $number"
+    val autoName: String get() = city ?: "장소 $number"
+    val name: String get() = userName ?: autoName
 }
+
+/** 같은 이름의 다른 장소가 있어서 같이 바꿀지 묻는 중 */
+data class PendingRename(val index: Int, val newName: String, val oldName: String, val others: List<Int>)
+
+/** 방금 이름이 바뀐 것들 — 한 번 같이 빛난다. [token] 이 바뀔 때마다 다시 */
+data class RenameGlow(val places: Set<Int> = emptySet(), val title: Boolean = false, val token: Long = 0)
 
 /** 하루. [day] 는 0부터, [ordinal] 은 여행 첫날부터 센 "N일째" */
 data class DayUi(val day: Int, val ordinal: Int, val date: LocalDate, val places: List<PlaceUi>)
@@ -52,12 +66,17 @@ data class TripDetailUiState(
     val days: List<DayUi> = emptyList(),
     /** 지도 평면 x = 경도 × lonScale (여행 평균 위도 기준) */
     val lonScale: Double = 1.0,
+    val pending: PendingRename? = null,
+    val glow: RenameGlow = RenameGlow(),
 ) {
     val places: List<PlaceUi> get() = days.flatMap { it.places }
 }
 
 sealed interface TripDetailEvent {
     data class ShowMessage(val message: String) : TripDetailEvent
+
+    /** 이름을 바꿨다 — 스낵바의 되돌리기로 [undo] */
+    data class Renamed(val message: String, val undo: () -> Unit) : TripDetailEvent
 }
 
 @HiltViewModel
@@ -78,7 +97,7 @@ class TripDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val (trip, places, placeCities) = analysisRepository.tripDetail(number) ?: return@launch
+            val (trip, places, placeCities, placeUserNames) = analysisRepository.tripDetail(number) ?: return@launch
             val zone = ZoneId.systemDefault()
             fun dateOf(t: Long) = Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
             val firstDate = dateOf(trip.start)
@@ -98,6 +117,8 @@ class TripDetailViewModel @Inject constructor(
                     y = p.latitude?.let { -it },
                     sameAs = p.sameAs,
                     city = placeCities[i],
+                    userName = placeUserNames[i],
+                    media = p.media.map { it.video to it.id },
                 )
             }
             val days = dates.mapIndexed { d, date ->
@@ -110,6 +131,68 @@ class TripDetailViewModel @Inject constructor(
     /** 지도에 깔 오프라인 기본 지도(땅·바다·도로·경계·도시) */
     suspend fun mapArea(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): MapArea =
         baseMap.area(minLat, maxLat, minLon, maxLon)
+
+    /** 여행 이름 바꾸기. 처음 이름과 같게 적으면 자동 이름으로 돌아간다 */
+    fun renameTrip(name: String) {
+        val trip = _uiState.value.trip ?: return
+        if (name == trip.name) return
+        val before = trip.userName
+        setTripName(name.takeIf { it != trip.autoName })
+        _events.trySend(TripDetailEvent.Renamed("여행 이름을 바꿨어요") { setTripName(before) })
+    }
+
+    private fun setTripName(userName: String?) {
+        _uiState.update { s -> s.copy(trip = s.trip?.copy(userName = userName), glow = RenameGlow(title = true, token = s.glow.token + 1)) }
+        viewModelScope.launch { analysisRepository.renameTrip(number, userName) }
+    }
+
+    /** 장소 이름 바꾸기. 지금 같은 이름인 다른 장소가 있으면 같이 바꿀지 먼저 묻는다 */
+    fun renamePlace(index: Int, name: String) {
+        val places = _uiState.value.places
+        val place = places.getOrNull(index) ?: return
+        if (name == place.name) return
+        val others = places.filter { it.index != index && it.name == place.name }.map { it.index }
+        if (others.isEmpty()) {
+            applyPlaceNames(listOf(index), name)
+        } else {
+            _uiState.update { it.copy(pending = PendingRename(index, name, place.name, others)) }
+        }
+    }
+
+    fun confirmRename(all: Boolean) {
+        val pending = _uiState.value.pending ?: return
+        _uiState.update { it.copy(pending = null) }
+        applyPlaceNames(if (all) listOf(pending.index) + pending.others else listOf(pending.index), pending.newName)
+    }
+
+    fun cancelRename() = _uiState.update { it.copy(pending = null) }
+
+    private fun applyPlaceNames(indices: List<Int>, name: String) {
+        val before = indices.associateWith { i -> _uiState.value.places.first { it.index == i }.userName }
+        setPlaceNames(indices.associateWith { name })
+        val message = if (indices.size > 1) "장소 ${indices.size}곳의 이름을 바꿨어요" else "장소 이름을 바꿨어요"
+        _events.trySend(TripDetailEvent.Renamed(message) { setPlaceNames(before, raw = true) })
+    }
+
+    /** [raw] 가 아니면 처음 이름과 같은 이름은 자동 이름으로 돌린다 */
+    private fun setPlaceNames(names: Map<Int, String?>, raw: Boolean = false) {
+        val changed = mutableListOf<PlaceUi>()
+        _uiState.update { s ->
+            s.copy(
+                days = s.days.map { day ->
+                    day.copy(
+                        places = day.places.map { p ->
+                            if (p.index !in names) return@map p
+                            val name = names[p.index]
+                            p.copy(userName = if (raw) name else name?.takeIf { it != p.autoName }).also { changed += it }
+                        },
+                    )
+                },
+                glow = RenameGlow(places = names.keys, token = s.glow.token + 1),
+            )
+        }
+        viewModelScope.launch { changed.forEach { analysisRepository.renamePlace(it.media, it.userName) } }
+    }
 
     fun onBestShots() = comingSoon("베스트샷 고르기")
     fun onCleanUp() = comingSoon("사진 정리하기")

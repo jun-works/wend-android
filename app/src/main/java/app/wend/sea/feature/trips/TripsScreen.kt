@@ -31,6 +31,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
+import app.wend.sea.core.designsystem.component.RenameDialog
+import app.wend.sea.core.designsystem.component.renameGlow
+import app.wend.sea.feature.analysis.autoName
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.FilledTonalButton
@@ -124,14 +136,21 @@ fun TripsScreen(
         onReturnFromSettings = { viewModel.checkAccess() },
     )
 
+    var renaming by rememberSaveable { mutableStateOf<Int?>(null) }
+
     LifecycleResumeEffect(viewModel) {
         viewModel.checkAccess()
+        viewModel.refreshTrips()
         onPauseOrDispose { }
     }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is TripsEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                is TripsEvent.Renamed -> {
+                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = "되돌리기", duration = SnackbarDuration.Short)
+                    if (result == SnackbarResult.ActionPerformed) event.undo()
+                }
                 TripsEvent.Reanalyze -> currentOnReanalyze()
             }
         }
@@ -231,6 +250,8 @@ fun TripsScreen(
                                 trip = trip,
                                 covers = uiState.covers[trip.number].orEmpty(),
                                 focused = trip.number == focusNumber,
+                                glowToken = uiState.renamedToken.takeIf { uiState.renamed == trip.number },
+                                onRename = { renaming = trip.number },
                                 onClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                     onTripClick(trip.number)
@@ -281,6 +302,22 @@ fun TripsScreen(
         )
 
         SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
+    }
+
+    renaming?.let { number ->
+        trips.firstOrNull { it.number == number }?.let { t ->
+            RenameDialog(
+                title = "여행 이름 바꾸기",
+                contextIcon = Icons.Outlined.Event,
+                context = "${t.period} · ${formatCount(t.mediaCount)}장",
+                label = "여행 이름",
+                current = t.name,
+                autoName = t.autoName,
+                maxLength = 20,
+                onDismiss = { renaming = null },
+                onSave = { renaming = null; viewModel.renameTrip(t.number, it) },
+            )
+        }
     }
 }
 
@@ -346,7 +383,7 @@ private fun YearHeader(year: Int, count: Int) {
 
 /** 시안 `.tc`: 사진 3장(큰 1 + 작은 2, 마지막에 "+나머지") · 색 방울 · 이름 · 기간 · 장수. 보고 있으면 여행 색 테두리 */
 @Composable
-private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean, onClick: () -> Unit) {
+private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean, glowToken: Long?, onRename: () -> Unit, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val color = tripColor(trip.number)
     val shape = RoundedCornerShape(20.dp)
@@ -386,7 +423,19 @@ private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean,
                 Box(Modifier.offset(x = 19.dp, y = (-5).dp).size(10.dp).background(color, CircleShape))
             }
             Column(Modifier.weight(1f)) {
-                Text(trip.name, style = CardNameStyle)
+                // 이름 옆 ✎(시안 `.tc-edit`): 카드는 여행을 열고, ✎만 이름을 바꾼다. 40dp 영역이 이름 줄보다 커서 위아래로 겹쳐 둔다
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(23.dp)) {
+                    Text(
+                        trip.name,
+                        style = CardNameStyle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false).renameGlow(glowToken != null, glowToken ?: 0, color),
+                    )
+                    IconButton(onClick = onRename, modifier = Modifier.requiredSize(40.dp)) {
+                        Icon(Icons.Outlined.Edit, contentDescription = "${trip.name} 여행 이름 바꾸기", tint = colors.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
+                    }
+                }
                 Text(trip.period, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
             }
             Text("${formatCount(trip.mediaCount)}장", style = CardCountStyle)

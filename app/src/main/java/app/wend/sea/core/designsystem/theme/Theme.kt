@@ -3,6 +3,7 @@ package app.wend.sea.core.designsystem.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,8 @@ private val PaperColorScheme = lightColorScheme(
     outlineVariant = OutlineVariant,
     inverseSurface = OnSurface,
     inverseOnSurface = Surface,
+    // 시안 --inverse-primary: 어두운 스낵바 위 "되돌리기" 같은 글자 버튼
+    inversePrimary = Color(0xFFFFB4A2),
 )
 
 private val WendShapes = Shapes(

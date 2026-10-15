@@ -6,8 +6,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class],
-    version = 4,
+    entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class],
+    version = 5,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
@@ -36,6 +36,13 @@ abstract class WendDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `trip` ADD COLUMN `cityShare` REAL")
                 db.execSQL("ALTER TABLE `trip` ADD COLUMN `countryCode` TEXT")
                 db.execSQL("UPDATE `trip` SET `cityId` = NULL")
+            }
+        }
+
+        /** 4 → 5: 사용자가 붙인 여행·장소 이름 */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `user_name` (`mediaId` INTEGER NOT NULL, `video` INTEGER NOT NULL, `kind` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`mediaId`, `video`, `kind`))")
             }
         }
     }

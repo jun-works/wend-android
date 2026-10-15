@@ -21,8 +21,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import app.wend.sea.core.designsystem.component.RenameDialog
+import app.wend.sea.core.designsystem.component.SameNameDialog
+import app.wend.sea.core.designsystem.component.renameGlow
+import app.wend.sea.feature.analysis.autoName
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoDelete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -99,9 +113,16 @@ fun TripDetailScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is TripDetailEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+                is TripDetailEvent.Renamed -> {
+                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = "되돌리기", duration = SnackbarDuration.Short)
+                    if (result == SnackbarResult.ActionPerformed) event.undo()
+                }
             }
         }
     }
+
+    // 이름 바꾸기 창: 여행(-1) 또는 장소 순번
+    var renaming by rememberSaveable { mutableStateOf<Int?>(null) }
 
     // 목록 항목 순번: 요약 0, 버튼 1, 그 뒤로 날짜 머리 + 장소들
     val placeItem = remember(uiState.days) {
@@ -142,6 +163,7 @@ fun TripDetailScreen(
                 lonScale = uiState.lonScale,
                 loadArea = viewModel::mapArea,
                 target = { target },
+                glow = uiState.glow,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MapHeight)
@@ -152,7 +174,14 @@ fun TripDetailScreen(
             LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 32.dp), modifier = Modifier.fillMaxSize()) {
                 item(key = "sum") {
                     Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp)) {
-                        Text(trip?.name.orEmpty(), style = TitleStyle)
+                        EditableName(
+                            name = trip?.name.orEmpty(),
+                            style = TitleStyle,
+                            editLabel = "여행 이름 바꾸기",
+                            glow = uiState.glow.title,
+                            glowToken = uiState.glow.token,
+                            onEdit = { renaming = TRIP },
+                        )
                         if (trip != null) {
                             Text(
                                 "${trip.period} · ${formatCount(trip.mediaCount)}장 · ${places.count { it.sameAs == null }}곳",
@@ -191,7 +220,7 @@ fun TripDetailScreen(
                     stickyHeader(key = "day-${day.day}") { DayHeader(day) }
                     day.places.forEach { place ->
                         item(key = "place-${place.index}") {
-                            PlaceSection(place, onPhotoClick = {
+                            PlaceSection(place, glowToken = uiState.glow.token.takeIf { place.index in uiState.glow.places }, onRename = { renaming = place.index }, onPhotoClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                 viewModel.onPhotoClick()
                             })
@@ -211,6 +240,65 @@ fun TripDetailScreen(
             }
         }
         SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
+    }
+
+    when (val target = renaming) {
+        null -> Unit
+        TRIP -> trip?.let { t ->
+            RenameDialog(
+                title = "여행 이름 바꾸기",
+                contextIcon = Icons.Outlined.Event,
+                context = "${t.period} · ${formatCount(t.mediaCount)}장",
+                label = "여행 이름",
+                current = t.name,
+                autoName = t.autoName,
+                maxLength = 20,
+                onDismiss = { renaming = null },
+                onSave = { renaming = null; viewModel.renameTrip(it) },
+            )
+        }
+        else -> places.getOrNull(target)?.let { p ->
+            RenameDialog(
+                title = "장소 이름 바꾸기",
+                contextIcon = Icons.Outlined.Schedule,
+                context = "${p.dayOrdinal}일째 · ${time(p.start)} · ${formatCount(p.count)}장",
+                label = "장소 이름",
+                current = p.name,
+                autoName = p.autoName,
+                maxLength = 20,
+                onDismiss = { renaming = null },
+                onSave = { renaming = null; viewModel.renamePlace(p.index, it) },
+            )
+        }
+    }
+    uiState.pending?.let { pending ->
+        SameNameDialog(
+            oldName = pending.oldName,
+            where = pending.others.mapNotNull { i -> places.getOrNull(i)?.let { "${it.dayOrdinal}일째 · ${time(it.start)}" } },
+            onDismiss = viewModel::cancelRename,
+            onOnlyThis = { viewModel.confirmRename(all = false) },
+            onAll = { viewModel.confirmRename(all = true) },
+        )
+    }
+}
+
+private const val TRIP = -1
+
+/** 이름 + 옆의 ✎(시안 `.tp-rename`). 이름이 길면 말줄임, ✎는 항상 보인다 */
+@Composable
+private fun EditableName(name: String, style: TextStyle, editLabel: String, glow: Boolean, glowToken: Long, onEdit: () -> Unit, color: Color = Color.Unspecified) {
+    val glowColor = if (color == Color.Unspecified) MaterialTheme.colorScheme.primary else color
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            name,
+            style = style,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false).renameGlow(glow, glowToken, glowColor),
+        )
+        IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
+            Icon(Icons.Outlined.Edit, contentDescription = "$editLabel, 지금 이름 $name", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
+        }
     }
 }
 
@@ -246,7 +334,7 @@ private fun DayHeader(day: DayUi) {
 
 /** 시안 `.tp-stop`: 왼쪽 타임라인 + 번호, 이름, 시간대 · 장수, 사진 6칸(+n) */
 @Composable
-private fun PlaceSection(place: PlaceUi, onPhotoClick: () -> Unit) {
+private fun PlaceSection(place: PlaceUi, glowToken: Long?, onRename: () -> Unit, onPhotoClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val rail = colors.outlineVariant
     val surface = colors.surface
@@ -270,15 +358,24 @@ private fun PlaceSection(place: PlaceUi, onPhotoClick: () -> Unit) {
                 color = Color.White,
             )
         }
-        Column(Modifier.padding(start = 56.dp, end = 16.dp, top = 14.dp, bottom = 6.dp)) {
-            Text(place.name, style = PlaceStyle)
+        Column(Modifier.padding(start = 56.dp, end = 16.dp, top = 5.dp, bottom = 6.dp)) {
+            // ✎ 누르는 영역(40dp)이 이름 줄(22dp)보다 커서 위아래로 9dp 씩 겹쳐 둔다 — 시안과 같은 간격
+            EditableName(
+                name = place.name,
+                style = PlaceStyle,
+                editLabel = "장소 이름 바꾸기",
+                glow = glowToken != null,
+                glowToken = glowToken ?: 0,
+                onEdit = onRename,
+                color = dayTextColor(place.day),
+            )
             Text(
                 "${place.whenText()} · ${formatCount(place.count)}장",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.offset(y = (-7).dp),
             )
-            PhotoGrid(place.photos, more = place.count - 6, onClick = onPhotoClick, modifier = Modifier.padding(top = 10.dp))
+            PhotoGrid(place.photos, more = place.count - 6, onClick = onPhotoClick, modifier = Modifier.padding(top = 3.dp))
         }
     }
 }

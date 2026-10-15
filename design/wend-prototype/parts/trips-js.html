@@ -11,11 +11,14 @@ TG.list = TripGlobe('tg-list', 'trips');
 var TR = { data: null, focus: -1 };
 
 function tripCard(t, k) {
-  var ph = TRIP_PHOTOS[t.place] || ['p-sky', 'p-food', 'p-city'];
-  return '<button class="tc" data-action="openTrip" data-links="trip" data-k="' + k + '" style="--c:' + t.c + '" aria-label="' + t.place + ' 여행, ' + t.date + ', ' + t.n + '장">' +
+  var ph = TRIP_PHOTOS[t.key || t.place] || ['p-sky', 'p-food', 'p-city'];
+  // the card opens the trip; the ✎ beside the name renames it (a button inside, so the card is a div with role=button)
+  return '<div class="tc" role="button" tabindex="0" data-action="openTrip" data-links="trip" data-k="' + k + '" style="--c:' + t.c + '" aria-label="' + t.place + ' 여행, ' + t.date + ', ' + t.n + '장">' +
     '<span class="tc-ph"><i class="' + ph[0] + '"></i><i class="' + ph[1] + '"></i><i class="more ' + ph[2] + '"><b>+' + fmt(Math.max(0, t.n - 3)) + '</b></i></span>' +
-    '<span class="tc-row"><i class="tk-dot" style="--c:' + t.c + '"></i><span class="tc-main"><b>' + t.place + '</b><span>' + t.date + ' · ' + t.days + '</span></span>' +
-    '<span class="tc-n num">' + fmt(t.n) + '장</span></span></button>';
+    '<span class="tc-row"><i class="tk-dot" style="--c:' + t.c + '"></i><span class="tc-main"><span class="tc-name"><b>' + t.place + '</b>' +
+    '<button class="tc-edit" data-action="renameTripAt" data-links="trip-name" data-k="' + k + '" aria-label="' + t.place + ' 여행 이름 바꾸기"><span class="ms">edit</span></button></span>' +
+    '<span>' + t.date + ' · ' + t.days + '</span></span>' +
+    '<span class="tc-n num">' + fmt(t.n) + '장</span></span></div>';
 }
 function renderTrips() {
   var data = TR.data = analysisData(), trips = data.trips, sum = trips.reduce(function (a, t) { return a + t.n; }, 0);
@@ -85,6 +88,8 @@ TG.list.pick(function (k) {
   var top = sc.scrollTop + card.getBoundingClientRect().top - document.getElementById('tr-dock').getBoundingClientRect().bottom - 28;
   sc.scrollTo({ top: Math.max(180, top), behavior: 'smooth' });
 });
+
+App.actions.renameTripAt = function (el) { askTripName(TR.data.trips[+el.getAttribute('data-k')]); };
 
 App.onEnter('trips', function () { renderTrips(); App.after(0, placeGlobe); });
 /* the list is home: arriving here clears the first-run screens from the back stack */

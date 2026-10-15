@@ -4,13 +4,13 @@
    then one cluster after another pulls together and merges — and the moment a cluster becomes solid, that trip
    drops out of the globe as a ticket. Only results are shown, never how they were decided. */
 var TRIPS_ALL = [   // found oldest → newest (Wend reads in shooting order); the list shows newest on top
-  { place: '전주', date: '2025. 4. 5', days: '당일', n: 58, c: '#f2b33d' },
-  { place: '오사카', date: '2025. 6. 7 – 6. 10', days: '4일', n: 231, c: '#2f7fd8' },
-  { place: '성수동', date: '2025. 9. 13', days: '당일', n: 73, c: '#e2553a' },
-  { place: '강릉', date: '2025. 12. 30 – 2026. 1. 1', days: '3일', n: 97, c: '#2bae8e' },
-  { place: '도쿄', date: '2026. 3. 19 – 3. 22', days: '4일', n: 264, c: '#f2b33d' },
-  { place: '부산', date: '2026. 5. 3 – 5. 5', days: '3일', n: 186, c: '#e2553a' },
-  { place: '제주', date: '2026. 7. 12 – 7. 23', days: '12일', n: 412, c: '#2f7fd8' },
+  { key: '전주', place: '전주', date: '2025. 4. 5', days: '당일', n: 58, c: '#f2b33d' },
+  { key: '오사카', place: '오사카', date: '2025. 6. 7 – 6. 10', days: '4일', n: 231, c: '#2f7fd8' },
+  { key: '성수동', place: '성수동', date: '2025. 9. 13', days: '당일', n: 73, c: '#e2553a' },
+  { key: '강릉', place: '강릉', date: '2025. 12. 30 – 2026. 1. 1', days: '3일', n: 97, c: '#2bae8e' },
+  { key: '도쿄', place: '도쿄', date: '2026. 3. 19 – 3. 22', days: '4일', n: 264, c: '#f2b33d' },
+  { key: '부산', place: '부산', date: '2026. 5. 3 – 5. 5', days: '3일', n: 186, c: '#e2553a' },
+  { key: '제주', place: '제주', date: '2026. 7. 12 – 7. 23', days: '12일', n: 412, c: '#2f7fd8' },
 ];
 var TOTAL_ALL = 2554;   // 사진 2,418 + 영상 136 (앨범 열림 화면과 같은 숫자)
 
@@ -19,8 +19,8 @@ function analysisData() {
     var n = App.state.picked || 14, a = Math.ceil(n * .4), b = Math.floor(n * .3);
     if (n < 10) return { total: n, partial: true, trips: [] };   // one or two picks: nothing that reads as a trip
     return { total: n, partial: true, trips: [
-      { place: '제주', date: '2026. 7. 14', days: '당일', n: a, c: '#2f7fd8' },
-      { place: '제주', date: '2026. 7. 19', days: '당일', n: b, c: '#2bae8e' },
+      { key: '제주', place: '제주', date: '2026. 7. 14', days: '당일', n: a, c: '#2f7fd8' },
+      { key: '제주', place: '제주', date: '2026. 7. 19', days: '당일', n: b, c: '#2bae8e' },
     ] };
   }
   return { total: TOTAL_ALL, partial: false, trips: TRIPS_ALL };

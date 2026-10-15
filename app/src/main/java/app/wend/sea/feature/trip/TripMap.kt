@@ -15,6 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -116,6 +120,8 @@ fun TripMap(
     loadArea: suspend (minLat: Double, maxLat: Double, minLon: Double, maxLon: Double) -> MapArea,
     target: () -> Pair<Int, Float>,
     modifier: Modifier = Modifier,
+    /** 방금 이름이 바뀐 장소들 — 지도 번호가 두 번 맥박친다 */
+    glow: RenameGlow = RenameGlow(),
 ) {
     val reduced = rememberReducedMotion()
     val clock = rememberAmbientClock()
@@ -249,6 +255,7 @@ fun TripMap(
             Box(
                 Modifier
                     .offset { IntOffset((p.x - 13.dp.toPx()).roundToInt(), (p.y - 13.dp.toPx()).roundToInt()) }
+                    .renamePulse(place.index in glow.places, glow.token, dayTextColor(place.day))
                     .size(26.dp)
                     .background(Ring, CircleShape)
                     .padding(2.dp)
@@ -428,4 +435,20 @@ private fun positionAt(walked: Float, segments: List<Segment>, cumulative: List<
     if (!(seg.length > 0f) || walked.isNaN()) return points[i]
     val pos = seg.measure.getPosition((walked - cumulative[i]).coerceIn(0f, seg.length))
     return if (pos.x.isNaN() || pos.y.isNaN()) points[i] else pos
+}
+
+/** 시안 `.tp-nums span.renamed`: 번호 둘레로 퍼지는 고리가 두 번 */
+@Composable
+private fun Modifier.renamePulse(active: Boolean, token: Long, color: Color): Modifier {
+    val t = remember { Animatable(1f) }
+    LaunchedEffect(token) {
+        if (active && token > 0) repeat(2) {
+            t.snapTo(0f)
+            t.animateTo(1f, tween(1200, easing = LinearOutSlowInEasing))
+        }
+    }
+    return drawBehind {
+        val v = t.value
+        if (v < 1f) drawCircle(color.copy(alpha = 1f - v), radius = size.minDimension / 2 + 8.dp.toPx() * v, style = Stroke(2.dp.toPx()))
+    }
 }

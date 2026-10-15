@@ -174,7 +174,7 @@ App.actions.makeTrip = function () {
   var ids = pickIds(), ds = pickDates(), name = document.getElementById('nt-name').value.trim() || '새 여행';
   var a = new Date(ds[0] + 'T12:00:00'), b = new Date(ds[ds.length - 1] + 'T12:00:00'), days = Math.round((b - a) / 864e5) + 1;
   var color = NEW_COLS[(TRIPS_ALL.length) % NEW_COLS.length];
-  var trip = { place: esc(name), date: rangeText(ds), days: days === 1 ? '당일' : days + '일', n: ids.length, c: color };
+  var trip = { key: esc(name), place: esc(name), date: rangeText(ds), days: days === 1 ? '당일' : days + '일', n: ids.length, c: color };
   TRIP_PHOTOS[trip.place] = ids.slice(0, 3).map(function (id) { return leftItem(id).c; });
   flyInto(ids, color, function () {
     leftRemove(ids);

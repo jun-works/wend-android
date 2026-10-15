@@ -20,14 +20,14 @@
           <div class="tp-legend"><span><i style="background:#e2553a"></i>1일째</span><span><i style="background:#2f7fd8"></i>2일째</span><span><i style="background:#2bae8e"></i>3일째</span></div>
         </div>
         <div class="tp-sum">
-          <h2>부산</h2>
+          <h2><button class="tp-rename" id="tp-name" data-action="askTripName" data-links="trip-name" aria-label="여행 이름 바꾸기, 지금 이름 부산"><span>부산</span><span class="ms">edit</span></button></h2>
           <p id="tp-meta">2026. 5. 3 – 5. 5 · 3일 · 186장 · 7곳</p>
         </div>
         <div class="tp-acts">
           <button class="btn tonal" data-go="best"><span class="ms fill">star</span>베스트샷 고르기</button>
           <button class="btn outlined" data-go="clean"><span class="ms">auto_delete</span>사진 정리하기</button>
         </div>
-        <div id="tp-days" data-links="viewer"></div>
+        <div id="tp-days" data-links="viewer,place-name,place-same"></div>
       </div>
     </section>
 
@@ -59,6 +59,30 @@
         <button class="btn block lg danger" id="cl-go" data-action="trashAsk" data-dialog="sys-trash">23장 휴지통으로 옮기기</button>
       </div>
     </section>
+
+    <!-- rename: trip (from the list by long-press, or the title here) -->
+    <div class="dialog" id="trip-name" aria-label="여행 이름 바꾸기">
+      <div class="d-title">여행 이름 바꾸기</div>
+      <div class="nt-when"><span class="ms">event</span><span id="tn-when">2026. 5. 3 – 5. 5 · 186장</span></div>
+      <label class="field"><input id="tn-name" maxlength="14" placeholder=" " data-js><span class="label">여행 이름</span><span class="support" id="tn-help">처음 이름: 부산</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-action="saveTripName">저장</button></div>
+    </div>
+
+    <!-- rename: one place -->
+    <div class="dialog" id="place-name" aria-label="장소 이름 바꾸기">
+      <div class="d-title">장소 이름 바꾸기</div>
+      <div class="nt-when"><span class="ms">schedule</span><span id="pn-when">1일째 · 오전 11:20 · 6장</span></div>
+      <label class="field"><input id="pn-name" maxlength="16" placeholder=" " data-js><span class="label">장소 이름</span><span class="support" id="pn-help">처음 이름: 부산역</span></label>
+      <div class="d-actions"><button class="btn text" data-close>취소</button><button class="btn text" data-action="savePlaceName">저장</button></div>
+    </div>
+
+    <!-- rename: other places that still carry the same name -->
+    <div class="dialog" id="place-same" aria-label="같은 이름의 장소도 바꿀까요">
+      <span class="ms d-icon">edit_location_alt</span>
+      <div class="d-title" id="ps-title">같은 이름이 1곳 더 있어요</div>
+      <div class="d-text" id="ps-text">‘부산역’ — 3일째 · 오후 3:10에 들른 곳도 같이 바꿀까요?</div>
+      <div class="d-actions"><button class="btn text" data-close data-action="renameOne">이 장소만</button><button class="btn text" data-close data-action="renameAll">같이 바꾸기</button></div>
+    </div>
 
     <!-- system trash confirmation (MediaStore.createTrashRequest) -->
     <div class="dialog sys sysui" id="sys-trash" role="dialog" aria-label="사진 휴지통 이동 확인">

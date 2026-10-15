@@ -81,7 +81,7 @@ App.actions.vwBest = function () {
 App.actions.vwOut = function () {
   var it = vwCur();
   App.state.removed[it.s]++;
-  TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; });
+  TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; });
   leftAdd({ id: 'out-' + it.s + '-' + it.k + '-' + Date.now(), d: it.d, c: it.c, t: it.t, place: it.place });
   App.back();
   App.after(320, function () { App.snack('여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요'); });
@@ -103,7 +103,7 @@ App.actions.trashOk = function (el) {
   App.state.trashCtx = null;
   var it = vwCur();
   TOTAL_ALL--;
-  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.place === '부산') t.n--; }); }
+  if (App.state.vw.ctx === 'trip') { App.state.removed[it.s]++; TRIPS_ALL.forEach(function (t) { if (t.key === '부산') t.n--; }); }
   else leftRemove([it.id]);
   App.after(320, function () { App.snack('1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요'); });
 };
