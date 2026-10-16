@@ -55,11 +55,6 @@ class PlacePhotosViewModel @Inject constructor(
     private val trip: Int = checkNotNull(savedStateHandle["trip"])
     private val firstPlace: Int = checkNotNull(savedStateHandle["place"])
 
-    companion object {
-        /** 크게 보기에서 마지막으로 본 사진([MediaThumbnail.key]) — 돌아오면 그 사진이 보이게 한다 */
-        const val LAST_VIEWED = "lastViewed"
-    }
-
     private val _uiState = MutableStateFlow(PlacePhotosUiState())
     val uiState: StateFlow<PlacePhotosUiState> = _uiState.asStateFlow()
 

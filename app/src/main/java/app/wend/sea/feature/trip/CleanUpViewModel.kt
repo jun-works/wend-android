@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 정리 후보 한 장. [place] 는 읽어 주기용 장소 이름 */
-data class CleanPhotoUi(val media: MediaThumbnail, val place: String)
+/** 정리 후보 한 장. [place] 는 장소 이름, [day] 는 날짜 순번(0부터, 색), [takenAt] 은 촬영 시각 — 크게 보기 위에 */
+data class CleanPhotoUi(val media: MediaThumbnail, val place: String, val day: Int = 0, val takenAt: Long? = null)
 
 /** 이유 하나(비슷한 사진 · 너무 어두운 사진) */
 data class CleanGroupUi(val key: String, val title: String, val sub: String?, val photos: List<CleanPhotoUi>)
@@ -30,6 +30,8 @@ data class CleanUpUiState(
     val pending: Boolean = false,
     /** 이 여행에 고른 베스트샷이 있다 — 없으면 비슷한 사진이 나올 수 없어 빈 화면에서 알려 준다 */
     val hasBestShots: Boolean = false,
+    /** 크게 보고 있는 이유(그룹 key)와 사진 순번, 닫혀 있으면 null */
+    val viewing: Pair<String, Int>? = null,
 ) {
     val selected: List<MediaThumbnail>
         get() = groups.flatMap { g -> g.photos.map { it.media } }.filter { it !in kept }
@@ -60,11 +62,15 @@ class CleanUpViewModel @Inject constructor(
         viewModelScope.launch {
             val detail = analysisRepository.tripDetail(trip) ?: return@launch
             val candidates = analysisRepository.cleanUpCandidates(detail)
-            val placeOf = detail.places.flatMapIndexed { i, p ->
+            val zone = java.time.ZoneId.systemDefault()
+            fun dateOf(t: Long) = java.time.Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
+            val dates = detail.places.map { dateOf(it.start) }.distinct()
+            val info = detail.places.flatMapIndexed { i, p ->
                 val name = detail.placeUserNames[i] ?: detail.placeCities[i] ?: "장소 ${i + 1}"
-                p.media.filter { !it.video }.map { it.id to name }
+                val day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0)
+                p.media.filter { !it.video }.map { it.id to CleanPhotoUi(MediaThumbnail(it.id, video = false), name, day, it.takenAt) }
             }.toMap()
-            fun photos(list: List<MediaThumbnail>) = list.map { CleanPhotoUi(it, placeOf[it.mediaId].orEmpty()) }
+            fun photos(list: List<MediaThumbnail>) = list.map { info[it.mediaId] ?: CleanPhotoUi(it, "") }
             val groups = listOfNotNull(
                 CleanGroupUi("similar", "비슷한 사진", "베스트샷과 거의 같은 사진", photos(candidates.similar)).takeIf { it.photos.isNotEmpty() },
                 CleanGroupUi("dark", "너무 어두운 사진", null, photos(candidates.dark)).takeIf { it.photos.isNotEmpty() },
@@ -82,6 +88,9 @@ class CleanUpViewModel @Inject constructor(
     fun toggle(photo: MediaThumbnail) = _uiState.update { s ->
         s.copy(kept = if (photo in s.kept) s.kept - photo else s.kept + photo)
     }
+
+    /** 이유 [group] 의 [index] 번째 사진을 크게 본다. null 이면 닫는다 */
+    fun view(group: String?, index: Int = 0) = _uiState.update { it.copy(viewing = group?.let { g -> g to index }) }
 
     /** 시스템 확인창에서 허용됨 — [trashed] 는 창을 띄울 때 넘긴 사진들 */
     fun onTrashed(trashed: List<MediaThumbnail>) {

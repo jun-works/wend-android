@@ -68,11 +68,6 @@ class LeftViewModel @Inject constructor(
     /** 방울이 다 뭉치면 할 일 */
     private var pending: (suspend () -> String)? = null
 
-    companion object {
-        /** 크게 보기가 돌려주는 결과(여행에 넣음 · 새 여행 · 휴지통). 빈 문자열이면 안내 없이 다시 읽기만 */
-        const val VIEWER_RESULT = "leftViewerResult"
-    }
-
     init {
         load()
     }
@@ -89,7 +84,7 @@ class LeftViewModel @Inject constructor(
         }
     }
 
-    /** 크게 보기에서 바꾸고 돌아왔다 */
+    /** 크게 보기에서 바꿨다(여행에 넣음 · 새 여행 · 휴지통). 빈 문자열이면 안내 없이 다시 읽기만 */
     fun onResult(message: String) {
         load()
         if (message.isNotEmpty()) _messages.trySend(message)

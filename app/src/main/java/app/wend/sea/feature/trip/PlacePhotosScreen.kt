@@ -58,11 +58,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wend.sea.core.designsystem.component.PhotoEasing
-import app.wend.sea.core.designsystem.component.PhotoKey
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.component.key
 import app.wend.sea.core.designsystem.component.rememberThumbnail
-import app.wend.sea.core.designsystem.component.sharedPhoto
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
@@ -186,7 +184,7 @@ fun PlacePhotosScreen(
                             model = rememberThumbnail(photo.media),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().sharedPhoto(PhotoKey(photo.media.key, album = true)).clip(RoundedCornerShape(5.dp)),
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(5.dp)),
                         )
                         if (isBest) PlaceStar(Modifier.padding(6.dp))
                     }

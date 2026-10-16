@@ -1,6 +1,5 @@
 package app.wend.sea.feature.viewer
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaRepository
@@ -36,8 +35,6 @@ data class ViewerUiState(
     val placeName: String = "",
     /** 장소의 날짜 순번(0부터) — 날짜 색 */
     val day: Int = 0,
-    /** 장소 사진 화면에서 열었는지(사진이 날아올 썸네일이 그 화면에 있다) */
-    val album: Boolean = false,
     /** 사용자가 고른 베스트샷(사진 id) */
     val best: Set<Long> = emptySet(),
     /** 빠진 사진에서 열었다 — 아래 버튼이 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
@@ -60,23 +57,27 @@ sealed interface ViewerEvent {
     data class Moved(val message: String) : ViewerEvent
 }
 
+/** 크게 보기를 연 곳: 여행 [trip] 의 장소 [place] 에서 [index] 번째 사진, [left] 면 빠진 사진 전체의 [index] 번째 */
+data class ViewerArgs(val trip: Int, val place: Int, val index: Int, val left: Boolean = false)
+
 /**
- * 사진 크게 보기. 여행 상세·장소 사진에서는 그 장소의 사진을, 빠진 사진에서는 빠진 사진 전체를 옆으로 넘겨 본다.
+ * 사진 크게 보기. 연 화면 위에 겹쳐 열린다([open] · [close]) — 끌어내리는 동안 아래 화면이 비친다.
+ * 여행 상세·장소 사진에서는 그 장소의 사진을, 빠진 사진에서는 빠진 사진 전체를 옆으로 넘겨 본다.
  * 아래 버튼은 들어온 곳에 따라: 베스트샷으로 · 여행에서 빼기 · 공유 · 휴지통 / 여행에 넣기 · 새 여행 · 공유 · 휴지통.
  */
 @HiltViewModel
 class ViewerViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
     private val mediaRepository: MediaRepository,
 ) : ViewModel() {
 
-    /** 네비게이션 인자(ViewerRoute) */
-    private val trip: Int = checkNotNull(savedStateHandle["trip"])
-    private val place: Int = checkNotNull(savedStateHandle["place"])
-    private val index: Int = checkNotNull(savedStateHandle["index"])
-    private val album: Boolean = savedStateHandle["album"] ?: false
-    private val left: Boolean = savedStateHandle["left"] ?: false
+    /** 지금 열린 곳 — 닫혀 있으면 null */
+    private val _args = MutableStateFlow<ViewerArgs?>(null)
+    val args: StateFlow<ViewerArgs?> = _args.asStateFlow()
+
+    private val trip: Int get() = _args.value?.trip ?: 0
+    private val place: Int get() = _args.value?.place ?: 0
+    private val index: Int get() = _args.value?.index ?: 0
 
     private val _uiState = MutableStateFlow(ViewerUiState())
     val uiState: StateFlow<ViewerUiState> = _uiState.asStateFlow()
@@ -84,15 +85,26 @@ class ViewerViewModel @Inject constructor(
     private val _events = Channel<ViewerEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    init {
-        if (left) loadLeft() else loadTrip()
+    private var loading: kotlinx.coroutines.Job? = null
+
+    fun open(args: ViewerArgs) {
+        loading?.cancel()
+        _uiState.value = ViewerUiState()
+        _args.value = args
+        if (args.left) loadLeft() else loadTrip()
+    }
+
+    fun close() {
+        loading?.cancel()
+        _args.value = null
+        _uiState.value = ViewerUiState()
     }
 
     /** 빠진 사진의 촬영 시각(없는 것은 빠짐) — 가까운 여행·새 여행 날짜에 쓴다 */
     private var leftTimes: Map<MediaThumbnail, Long> = emptyMap()
 
     private fun loadLeft() {
-        viewModelScope.launch {
+        loading = viewModelScope.launch {
             val items = analysisRepository.leftMedia()
             leftTimes = items.filter { it.dated }.associate { it.media to it.time }
             val ratios = mediaRepository.aspectRatios(items.map { it.media.video to it.media.mediaId })
@@ -106,9 +118,9 @@ class ViewerViewModel @Inject constructor(
     }
 
     private fun loadTrip() {
-        // 썸네일에서 사진이 날아오려면 첫 그림부터 사진이 있어야 한다 — 상세가 읽어 둔 것으로 바로 채운다
+        // 누르자마자 사진이 보이게 상세가 읽어 둔 것으로 먼저 채운다
         analysisRepository.cachedTripDetail(trip)?.let { build(it, emptyMap()) }?.let { _uiState.value = it }
-        viewModelScope.launch {
+        loading = viewModelScope.launch {
             val detail = analysisRepository.tripDetail(trip) ?: return@launch
             val p = detail.places.getOrNull(place) ?: return@launch
             val ratios = mediaRepository.aspectRatios(p.media.map { it.video to it.id })
@@ -128,7 +140,6 @@ class ViewerViewModel @Inject constructor(
             startIndex = index.coerceIn(0, (p.media.size - 1).coerceAtLeast(0)),
             placeName = detail.placeUserNames[place] ?: detail.placeCities[place] ?: "장소 ${place + 1}",
             day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0),
-            album = album,
         )
     }
 

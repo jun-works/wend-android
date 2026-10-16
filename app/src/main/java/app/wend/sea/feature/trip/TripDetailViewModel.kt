@@ -104,7 +104,7 @@ class TripDetailViewModel @Inject constructor(
     private val number: Int = checkNotNull(savedStateHandle["number"])
 
     companion object {
-        /** 사진 크게 보기·베스트샷·사진 정리하기 화면이 돌려주는 결과(여행이 바뀜, 네비게이션 항목의 savedStateHandle). 빈 문자열이면 안내 없이 다시 읽기만 */
+        /** 베스트샷·사진 정리하기·장소 사진 화면이 돌려주는 결과(여행이 바뀜, 네비게이션 항목의 savedStateHandle). 빈 문자열이면 안내 없이 다시 읽기만 */
         const val VIEWER_RESULT = "viewerResult"
     }
 

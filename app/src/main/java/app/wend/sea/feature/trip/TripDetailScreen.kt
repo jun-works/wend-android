@@ -77,10 +77,8 @@ import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
-import app.wend.sea.core.designsystem.component.PhotoKey
 import app.wend.sea.core.designsystem.component.key
 import app.wend.sea.core.designsystem.component.rememberThumbnail
-import app.wend.sea.core.designsystem.component.sharedPhoto
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -485,7 +483,7 @@ private fun PhotoGrid(
                                 model = rememberThumbnail(photo),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize().then(if (isMore) Modifier else Modifier.sharedPhoto(PhotoKey(photo.key, album = false))),
+                                modifier = Modifier.fillMaxSize(),
                             )
                             if (!isMore && photo.isBest(best)) BestStar(Modifier.padding(5.dp))
                             if (isMore) {

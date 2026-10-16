@@ -1,5 +1,11 @@
 package app.wend.sea.feature.viewer
 
+import kotlin.math.abs
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.animation.core.animate
+import androidx.activity.compose.BackHandler
 import android.app.Activity
 import android.content.Intent
 import android.provider.MediaStore
@@ -94,13 +100,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wend.sea.feature.trip.dayTextColor
-import app.wend.sea.core.designsystem.component.PhotoKey
 import app.wend.sea.core.designsystem.component.cacheKey
 import app.wend.sea.core.designsystem.component.key
-import app.wend.sea.core.designsystem.component.sharedPhoto
 import androidx.compose.foundation.layout.aspectRatio
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
@@ -119,9 +122,13 @@ import java.util.Locale
 
 // 시안 #viewer: 어두운 바탕(#0f0d0b) 위 종이색 글자
 private val ViewerBg = Color(0xFF0F0D0B)
-private val ViewerInk = Color(0xFFF6F1E9)
+
+/** 이만큼 끌어내리면(또는 빠르게 쓸어내리면) 크게 보기를 닫는다 */
+private val DismissDistance = 120.dp
+private const val DismissVelocity = 2000f
+internal val ViewerInk = Color(0xFFF6F1E9)
 private val ViewerSub = Color(0xFFC9BFB2)
-private val ViewerWarn = Color(0xFFFFB4A8)
+internal val ViewerWarn = Color(0xFFFFB4A8)
 private val TitleStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 19.5.sp, lineHeightStyle = CssLineHeight)
 private val DateTimeFormat = DateTimeFormatter.ofPattern("yyyy년 M월 d일 a h:mm", Locale.KOREAN)
 
@@ -132,13 +139,27 @@ private val DateTimeFormat = DateTimeFormatter.ofPattern("yyyy년 M월 d일 a h:
  */
 @Composable
 fun ViewerScreen(
-    onBack: () -> Unit,
-    /** 여행에서 뺐거나 휴지통으로 옮겨 여행이 바뀌었다 — 상세가 다시 읽는다. [message] 는 상세에서 띄울 안내 */
+    /** 연 화면의 크게 보기 — [ViewerViewModel.open] 으로 열고, 닫혀 있으면 아무것도 그리지 않는다 */
+    viewModel: ViewerViewModel,
+    /** 여행에서 뺐거나 휴지통으로 옮겨 여행이 바뀌었다 — 연 화면이 다시 읽는다. [message] 는 그 화면에서 띄울 안내 */
     onTripChanged: (message: String) -> Unit,
-    /** 지금 보는 사진([MediaThumbnail.key]) — 돌아가면 썸네일 화면이 그 사진을 보여 준다 */
+    /** 지금 보는 사진([MediaThumbnail.key]) — 닫으면 썸네일 화면이 그 사진을 보여 준다 */
     onPageChange: (media: Long) -> Unit = {},
-    viewModel: ViewerViewModel = hiltViewModel(),
 ) {
+    val args by viewModel.args.collectAsStateWithLifecycle()
+    if (args == null) return
+    OpenViewer(viewModel, onBack = viewModel::close, onTripChanged = onTripChanged, onPageChange = onPageChange)
+}
+
+/** 연 화면 위에 겹쳐 그린다 — 열고 닫을 때 움직임 없이 바로. 끌어내리는 동안 아래 화면이 비친다 */
+@Composable
+private fun OpenViewer(
+    viewModel: ViewerViewModel,
+    onBack: () -> Unit,
+    onTripChanged: (message: String) -> Unit,
+    onPageChange: (media: Long) -> Unit,
+) {
+    BackHandler(onBack = onBack)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -172,9 +193,12 @@ fun ViewerScreen(
     val removing = remember { Animatable(0f) }
     var removingItem by remember { mutableStateOf<ViewerItem?>(null) }
     val scope = rememberCoroutineScope()
-    val chrome = Modifier.graphicsLayer { alpha = 1f - removing.value }
+    // 아래로 끌어 닫기(0~1): 배경과 위아래 버튼이 옅어진다
+    var dismiss by remember { mutableFloatStateOf(0f) }
+    val chrome = Modifier.graphicsLayer { alpha = (1f - removing.value) * (1f - dismiss * 4f).coerceAtLeast(0f) }
 
-    Box(Modifier.fillMaxSize().background(ViewerBg)) {
+    // 아래 화면으로 손이 닿지 않게 막는다
+    Box(Modifier.fillMaxSize().pointerInput(Unit) {}.background(ViewerBg.copy(alpha = 1f - dismiss * .85f))) {
         if (!uiState.loaded) return@Box
         val items = uiState.items
         // 휴지통으로 모두 옮겨 볼 사진이 없으면 닫는다
@@ -206,7 +230,7 @@ fun ViewerScreen(
             Box(chrome) { ViewerTopBar(current, uiState.placeName, uiState.day, onBack) }
             HorizontalPager(
                 state = pager,
-                userScrollEnabled = !zoomed && removingItem == null,
+                userScrollEnabled = !zoomed && removingItem == null && dismiss == 0f,
                 beyondViewportPageCount = 1,
                 key = { items[it].media.mediaId * 2 + if (items[it].media.video) 1 else 0 },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -215,12 +239,12 @@ fun ViewerScreen(
                 ZoomableMedia(
                     item = item,
                     active = page == pager.currentPage,
-                    // 보고 있는 장만 썸네일과 같이 움직인다(옆 장이 다른 썸네일로 날아가지 않게)
-                    sharedKey = if (page == pager.currentPage) PhotoKey(item.media.key, uiState.album) else null,
                     removeProgress = if (removingItem == item) removing.value else 0f,
                     best = !item.media.video && item.media.mediaId in uiState.best,
                     dayColor = dayTextColor(uiState.day),
                     onZoomChange = { if (page == pager.currentPage) zoomed = it },
+                    onDismissProgress = { dismiss = it },
+                    onDismiss = onBack,
                     onPlay = {
                         val intent = Intent(Intent.ACTION_VIEW).setDataAndType(items[page].media.uri, "video/*")
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -299,6 +323,87 @@ fun ViewerScreen(
     }
 }
 
+/** 고르는 화면에서 크게 볼 사진 한 장: 위에 보일 장소와 그날 순번(색) */
+data class PickPhoto(val item: ViewerItem, val place: String, val day: Int)
+
+/**
+ * 시안 ⑮·⑯ 크게 보기: 베스트샷 고르기·사진 정리하기 위에 열린다. 같은 묶음끼리 넘기고 확대하는 것은 크게 보기와 같고,
+ * 아래 버튼만 그 화면의 고르기([action]) + 공유. 고른 상태는 연 화면의 ViewModel 이 가진다 — 돌아가면 목록에 그대로 보인다.
+ */
+@Composable
+fun PickViewer(
+    photos: List<PickPhoto>,
+    startIndex: Int,
+    /** 사진 왼쪽 위 "★ 베스트샷" */
+    best: (ViewerItem) -> Boolean,
+    onBack: () -> Unit,
+    action: @Composable (ViewerItem) -> Unit,
+) {
+    val context = LocalContext.current
+    DarkSystemBars()
+    BackHandler(onBack = onBack)
+    var dismiss by remember { mutableFloatStateOf(0f) }
+    // 위아래 글자·버튼은 빨리 걷힌다 — 아래 목록 글자와 겹쳐 보이지 않게
+    val chrome = Modifier.graphicsLayer { alpha = (1f - dismiss * 4f).coerceAtLeast(0f) }
+    // 아래 화면으로 손이 닿지 않게 막는다
+    Box(Modifier.fillMaxSize().pointerInput(Unit) {}.background(ViewerBg.copy(alpha = 1f - dismiss * .85f))) {
+        if (photos.isEmpty()) return@Box
+        val pager = rememberPagerState(initialPage = startIndex.coerceIn(0, photos.lastIndex)) { photos.size }
+        var zoomed by remember { mutableStateOf(false) }
+        val current = photos[pager.currentPage.coerceIn(0, photos.lastIndex)]
+        Column(Modifier.fillMaxSize()) {
+            Box(chrome) { ViewerTopBar(current.item, current.place, current.day, onBack) }
+            HorizontalPager(
+                state = pager,
+                userScrollEnabled = !zoomed && dismiss == 0f,
+                beyondViewportPageCount = 1,
+                key = { photos[it].item.media.mediaId * 2 + if (photos[it].item.media.video) 1 else 0 },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) { page ->
+                val photo = photos[page]
+                ZoomableMedia(
+                    item = photo.item,
+                    active = page == pager.currentPage,
+                    removeProgress = 0f,
+                    best = best(photo.item),
+                    dayColor = dayTextColor(photo.day),
+                    onZoomChange = { if (page == pager.currentPage) zoomed = it },
+                    onDismissProgress = { dismiss = it },
+                    onDismiss = onBack,
+                    onPlay = {
+                        val intent = Intent(Intent.ACTION_VIEW).setDataAndType(photo.item.media.uri, "video/*")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        runCatching { context.startActivity(intent) }
+                    },
+                )
+            }
+            Text(
+                "${pager.currentPage + 1} / ${photos.size}",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFFE9E1D4),
+                modifier = chrome
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 6.dp, bottom = 10.dp)
+                    .background(ViewerInk.copy(alpha = .12f), CircleShape)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+            Row(
+                modifier = chrome.fillMaxWidth().navigationBarsPadding().padding(top = 6.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+            ) {
+                action(current.item)
+                ViewerAction(Icons.Outlined.Share, "공유") {
+                    val intent = Intent(Intent.ACTION_SEND)
+                        .setType(if (current.item.media.video) "video/*" else "image/*")
+                        .putExtra(Intent.EXTRA_STREAM, current.item.media.uri)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    context.startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        }
+    }
+}
+
 /**
  * 어두운 화면 동안 시스템 바를 어둡게(밝은 글자), 나가면 종이색으로 되돌린다.
  * 테마의 statusBarColor(콜드 스타트용 종이색)를 그대로 그리는 기기가 있어 창의 바 색도 직접 바꾼다.
@@ -351,7 +456,7 @@ private fun ViewerTopBar(item: ViewerItem, placeName: String, day: Int, onBack: 
 
 /** 시안 .vw-act: 아이콘 위 · 글자 아래, 최소 76×56 */
 @Composable
-private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerInk, iconTint: Color = tint, onClick: () -> Unit) {
+internal fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerInk, iconTint: Color = tint, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .widthIn(min = 76.dp)
@@ -375,15 +480,25 @@ private fun ViewerAction(icon: ImageVector, label: String, tint: Color = ViewerI
 private fun ZoomableMedia(
     item: ViewerItem,
     active: Boolean,
-    sharedKey: PhotoKey?,
     removeProgress: Float,
     /** 베스트샷이면 사진 왼쪽 위에 "★ 베스트샷" */
     best: Boolean,
     dayColor: Color,
     onZoomChange: (Boolean) -> Unit,
+    /** 아래로 끌어 닫는 정도 0~1 — 화면이 배경·버튼을 옅게 한다 */
+    onDismissProgress: (Float) -> Unit,
+    /** 충분히 끌어내렸다 — 닫는다 */
+    onDismiss: () -> Unit,
     onPlay: () -> Unit,
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
+    // 아래로 끌어 닫기: 보고 있는 장만 손가락을 따라 내려간다(옆 장은 그대로)
+    var dragY by remember { mutableFloatStateOf(0f) }
+    val scope = rememberCoroutineScope()
+    val currentOnDismissProgress by rememberUpdatedState(onDismissProgress)
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val dismissRange = with(LocalDensity.current) { DismissDistance.toPx() }
+    LaunchedEffect(dragY) { if (active) currentOnDismissProgress((dragY / (dismissRange * 2.5f)).coerceIn(0f, 1f)) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
     val currentOnZoomChange by rememberUpdatedState(onZoomChange)
@@ -423,20 +538,50 @@ private fun ZoomableMedia(
                     },
                 )
             }
-            .pointerInput(item) {
+            .pointerInput(item, active) {
+                val slop = viewConfiguration.touchSlop
                 awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    // 한 손가락으로 아래로 끌기 시작하면 닫기, 옆으로면 넘기기(페이저)에 맡긴다
+                    var dragging = false
+                    var undecided = active && removeProgress == 0f
+                    var moved = Offset.Zero
+                    val tracker = VelocityTracker()
                     do {
                         val event = awaitPointerEvent()
                         val pinching = event.changes.count { it.pressed } > 1
-                        if (pinching || scale > 1f) {
+                        if (!dragging && (pinching || scale > 1f)) {
+                            undecided = false
                             val s = (scale * event.calculateZoom()).coerceIn(1f, 5f)
                             offset = clamp(offset + event.calculatePan(), s)
                             scale = s
                             if (s == 1f) offset = Offset.Zero
                             event.changes.forEach { it.consume() }
+                        } else if (dragging || undecided) {
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            tracker.addPosition(change.uptimeMillis, change.position)
+                            val delta = change.positionChange()
+                            if (!dragging) {
+                                moved += delta
+                                if (moved.getDistance() > slop) {
+                                    undecided = false
+                                    dragging = moved.y > 0 && abs(moved.y) > abs(moved.x) * 1.2f
+                                }
+                            }
+                            if (dragging) {
+                                dragY = (dragY + delta.y).coerceAtLeast(0f)
+                                change.consume()
+                            }
                         }
                     } while (event.changes.any { it.pressed })
+                    if (dragging) {
+                        val velocity = tracker.calculateVelocity().y
+                        if (dragY > dismissRange || velocity > DismissVelocity) {
+                            currentOnDismiss()
+                        } else {
+                            scope.launch { animate(dragY, 0f, animationSpec = tween(220, easing = FastOutSlowInEasing)) { v, _ -> dragY = v } }
+                        }
+                    }
                 }
             },
         contentAlignment = Alignment.Center,
@@ -449,10 +594,11 @@ private fun ZoomableMedia(
                 .fillMaxSize()
                 .padding(vertical = 12.dp)
                 .graphicsLayer {
-                    val s = 1f - morph * .82f
+                    // 끌어내리는 만큼 조금 작아진다
+                    val s = (1f - morph * .82f) * (1f - (dragY / (dismissRange * 2.5f)).coerceIn(0f, 1f) * .2f)
                     scaleX = s
                     scaleY = s
-                    translationY = fall * 220.dp.toPx()
+                    translationY = fall * 220.dp.toPx() + dragY
                     alpha = 1f - fall
                     if (morph > 0f) {
                         shape = DropShape(morph)
@@ -471,7 +617,6 @@ private fun ZoomableMedia(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Box(
                     (if (ratio != null) Modifier.aspectRatio(ratio) else Modifier.fillMaxSize())
-                        .sharedPhoto(sharedKey)
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale

@@ -59,6 +59,12 @@ import app.wend.sea.core.designsystem.component.rememberThumbnail
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.data.MediaThumbnail
+import app.wend.sea.feature.viewer.PickPhoto
+import app.wend.sea.feature.viewer.PickViewer
+import app.wend.sea.feature.viewer.ViewerAction
+import app.wend.sea.feature.viewer.ViewerInk
+import app.wend.sea.feature.viewer.ViewerItem
+import androidx.compose.material.icons.outlined.StarOutline
 import coil3.compose.AsyncImage
 
 /**
@@ -79,70 +85,96 @@ fun BestShotScreen(
     val currentOnDone by rememberUpdatedState(onDone)
     LaunchedEffect(viewModel) { viewModel.done.collect { currentOnDone(it) } }
 
-    Column(Modifier.fillMaxSize().background(colors.surface)) {
-        WendTopAppBar(onBack = onBack, title = { Text("베스트샷 고르기") })
-        if (!uiState.loaded) return@Column
-        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)) {
-            item(key = "intro") {
-                Text(
-                    when {
-                        uiState.places.isNotEmpty() ->
-                            "같은 장면을 여러 번 찍은 사진끼리 모았어요. 장면마다 마음에 드는 한 장을 골라 주세요. 안 골라도 돼요. 고른 사진은 여행의 대표 사진이 돼요."
-                        uiState.pending -> "아직 사진을 살펴보는 중이에요. 잠시 뒤에 다시 열어 주세요."
-                        else -> "이 여행에는 같은 장면을 여러 번 찍은 사진이 없어요."
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
-                )
-            }
-            uiState.places.forEach { place ->
-                item(key = "place-${place.index}") {
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().background(colors.surface)) {
+            WendTopAppBar(onBack = onBack, title = { Text("베스트샷 고르기") })
+            if (!uiState.loaded) return@Column
+            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)) {
+                item(key = "intro") {
                     Text(
-                        "${place.number}. ${place.name}",
-                        style = PlaceHeadStyle,
-                        color = colors.onSurface,
-                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp),
+                        when {
+                            uiState.places.isNotEmpty() ->
+                                "같은 장면을 여러 번 찍은 사진끼리 모았어요. 장면마다 마음에 드는 한 장을 골라 주세요. 안 골라도 돼요. 고른 사진은 여행의 대표 사진이 돼요."
+                            uiState.pending -> "아직 사진을 살펴보는 중이에요. 잠시 뒤에 다시 열어 주세요."
+                            else -> "이 여행에는 같은 장면을 여러 번 찍은 사진이 없어요."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
                     )
                 }
-                items(place.scenes, key = { it.key }) { scene ->
-                    Column {
+                uiState.places.forEach { place ->
+                    item(key = "place-${place.index}") {
                         Text(
-                            "${time(scene.start)} · 비슷한 사진 ${scene.photos.size}장",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp),
+                            "${place.number}. ${place.name}",
+                            style = PlaceHeadStyle,
+                            color = colors.onSurface,
+                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp),
                         )
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-                        ) {
-                            items(scene.photos, key = { it.mediaId }) { photo ->
-                                val index = scene.photos.indexOf(photo)
-                                ScenePhoto(
-                                    photo = photo,
-                                    picked = uiState.picks[scene.key] == photo,
-                                    label = "${place.name} ${time(scene.start)} 비슷한 사진 ${index + 1}",
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                        viewModel.pick(scene.key, photo)
-                                    },
-                                )
+                    }
+                    items(place.scenes, key = { it.key }) { scene ->
+                        Column {
+                            Text(
+                                "${time(scene.start)} · 비슷한 사진 ${scene.photos.size}장",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp),
+                            )
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                            ) {
+                                items(scene.photos, key = { it.mediaId }) { photo ->
+                                    val index = scene.photos.indexOf(photo)
+                                    ScenePhoto(
+                                        photo = photo,
+                                        picked = uiState.picks[scene.key] == photo,
+                                        label = "${place.name} ${time(scene.start)} 비슷한 사진 ${index + 1}",
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                            viewModel.pick(scene.key, photo)
+                                        },
+                                        onZoom = { viewModel.view(scene.key, index) },
+                                    )
+                                }
                             }
                         }
                     }
+                    item(key = "gap-${place.index}") { Box(Modifier.padding(bottom = 6.dp)) }
                 }
-                item(key = "gap-${place.index}") { Box(Modifier.padding(bottom = 6.dp)) }
+            }
+            if (uiState.places.isNotEmpty()) {
+                val count = uiState.picks.size
+                Box(Modifier.background(colors.surface).navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    WendPrimaryButton(
+                        text = if (count > 0) "${count}장으로 정하기" else "사진을 골라 주세요",
+                        onClick = viewModel::save,
+                        enabled = count > 0,
+                    )
+                }
             }
         }
-        if (uiState.places.isNotEmpty()) {
-            val count = uiState.picks.size
-            Box(Modifier.background(colors.surface).navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                WendPrimaryButton(
-                    text = if (count > 0) "${count}장으로 정하기" else "사진을 골라 주세요",
-                    onClick = viewModel::save,
-                    enabled = count > 0,
-                )
+        // 시안 ⑮ 크게 보기: 같은 장면끼리 넘기며 "이 사진 고르기" — 고른 것은 목록에 그대로
+        uiState.viewing?.let { (key, index) ->
+            val place = uiState.places.firstOrNull { p -> p.scenes.any { it.key == key } }
+            val scene = place?.scenes?.firstOrNull { it.key == key }
+            if (place != null && scene != null) {
+                PickViewer(
+                    photos = scene.photos.map { PickPhoto(ViewerItem(it, uiState.takenAt[it]), place.name, place.day) },
+                    startIndex = index,
+                    best = { uiState.picks[key] == it.media },
+                    onBack = { viewModel.view(null) },
+                ) { item ->
+                    val picked = uiState.picks[key] == item.media
+                    ViewerAction(
+                        if (picked) Icons.Rounded.Star else Icons.Outlined.StarOutline,
+                        if (picked) "골랐어요" else "이 사진 고르기",
+                        iconTint = if (picked) StarGold else ViewerInk,
+                    ) {
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                        viewModel.pick(key, item.media)
+                    }
+                }
             }
         }
     }
@@ -150,7 +182,7 @@ fun BestShotScreen(
 
 /** 시안 `.bs-row button`: 104dp 정사각, 고르지 않은 사진은 살짝 바래게, 고른 사진은 떠오르고 노란 테두리 + 별 */
 @Composable
-private fun ScenePhoto(photo: MediaThumbnail, picked: Boolean, label: String, onClick: () -> Unit) {
+private fun ScenePhoto(photo: MediaThumbnail, picked: Boolean, label: String, onClick: () -> Unit, onZoom: () -> Unit) {
     // cubic-bezier(.3,1.5,.5,1) 처럼 살짝 넘쳤다 돌아오는 움직임
     val bouncy = spring<Float>(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow)
     val lift by animateDpAsState(if (picked) (-4).dp else 0.dp, spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow), label = "lift")
@@ -190,6 +222,7 @@ private fun ScenePhoto(photo: MediaThumbnail, picked: Boolean, label: String, on
         ) {
             Icon(Icons.Rounded.Star, contentDescription = null, tint = StarInk, modifier = Modifier.size(17.dp))
         }
+        ZoomButton("$label 크게 보기", onZoom, Modifier.align(Alignment.BottomStart))
     }
 }
 
