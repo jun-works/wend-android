@@ -34,7 +34,9 @@ android {
             if (storeScreenshots) applicationIdSuffix = ".screenshots"
         }
         release {
-            isMinifyEnabled = false
+            // R8: 안 쓰는 코드·리소스를 빼고 클래스·메서드 이름을 난독화
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -9,6 +9,9 @@
 .externalNativeBuild
 .cxx
 /CLAUDE.md
+*.jks
+*.aab
+*.apk
 
 # 문서는 공개하지 않는다. README.md만 포함한다.
 *.md
