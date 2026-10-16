@@ -1,1 +1,3 @@
 /build
+# Firebase 설정(프로젝트 키) — 저장소에 올리지 않는다
+google-services.json
