@@ -54,6 +54,8 @@ fun FoundScreen(
 ) {
     val currentOnOpenTrips by rememberUpdatedState(onOpenTrips)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 사진을 모두 허용했으면 처음부터 다시 찾을지 묻는다(다시 찾기는 초기화)
+    if (uiState.confirmReanalyze) ReanalyzeDialog(onConfirm = viewModel::onReanalyzeConfirmed, onDismiss = viewModel::onReanalyzeDismissed)
     val summary = uiState.summary
     val partial = summary?.partial == true
     val currentOnReanalyze by rememberUpdatedState(onReanalyze)
@@ -61,7 +63,7 @@ fun FoundScreen(
     val haptic = LocalHapticFeedback.current
     val permission = rememberMediaPermissionRequest(
         onResult = viewModel::onRequestResult,
-        onReturnFromSettings = { viewModel.checkAccess() },
+        onReturnFromSettings = { viewModel.checkAccess(fromUser = true) },
     )
 
     LaunchedEffect(Unit) { haptic.performHapticFeedback(HapticFeedbackType.Confirm) }

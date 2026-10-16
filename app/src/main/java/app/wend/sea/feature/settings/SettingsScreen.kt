@@ -82,6 +82,7 @@ import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
 import app.wend.sea.core.designsystem.theme.IncludedGreen
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.feature.analysis.ReanalyzeDialog
 import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.nickname.NicknameHelp
 import app.wend.sea.feature.nickname.NicknameUiState
@@ -229,17 +230,13 @@ fun SettingsScreen(
             dialog = null
         }
         TAG -> LocationTagSheet(onDismiss = { dialog = null })
-        RESCAN -> ConfirmDialog(
-            icon = Icons.Outlined.TravelExplore,
-            title = "처음부터 다시 찾을까요?",
-            text = "모든 사진을 다시 읽어서 여행을 찾아요. 직접 넣고 뺀 사진, 만든 여행, 베스트샷, 바꾼 이름이 모두 처음으로 돌아가요.",
-            confirm = "다시 찾기",
-            confirmColor = Accent,
+        RESCAN -> ReanalyzeDialog(
+            onConfirm = {
+                dialog = null
+                viewModel.rescan()
+            },
             onDismiss = { dialog = null },
-        ) {
-            dialog = null
-            viewModel.rescan()
-        }
+        )
         WIPE -> ConfirmDialog(
             icon = Icons.Outlined.DeleteForever,
             title = "Wend 데이터를 지울까요?",

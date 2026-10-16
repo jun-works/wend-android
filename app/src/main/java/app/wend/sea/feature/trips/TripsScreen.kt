@@ -98,6 +98,7 @@ import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.Trip
 import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.analysis.name
+import app.wend.sea.feature.analysis.ReanalyzeDialog
 import app.wend.sea.feature.analysis.period
 import app.wend.sea.feature.analysis.tripDots
 import app.wend.sea.feature.permission.rememberMediaPermissionRequest
@@ -128,6 +129,8 @@ fun TripsScreen(
     viewModel: TripsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 사진을 모두 허용했으면 처음부터 다시 찾을지 묻는다(다시 찾기는 초기화)
+    if (uiState.confirmReanalyze) ReanalyzeDialog(onConfirm = viewModel::onReanalyzeConfirmed, onDismiss = viewModel::onReanalyzeDismissed)
     val currentOnReanalyze by rememberUpdatedState(onReanalyze)
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
@@ -136,7 +139,7 @@ fun TripsScreen(
     val listState = rememberLazyListState()
     val permission = rememberMediaPermissionRequest(
         onResult = viewModel::onRequestResult,
-        onReturnFromSettings = { viewModel.checkAccess() },
+        onReturnFromSettings = { viewModel.checkAccess(fromUser = true) },
     )
 
     var renaming by rememberSaveable { mutableStateOf<Int?>(null) }

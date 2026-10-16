@@ -33,12 +33,13 @@ data class TripsUiState(
     /** 방금 이름을 바꾼 여행 — 카드 이름이 한 번 빛난다. [renamedToken] 이 바뀔 때마다 다시 */
     val renamed: Int? = null,
     val renamedToken: Long = 0,
+    /** 여행에 담기지 않은 사진·영상 수 — 빠진 사진 화면과 같이 지금 기기 사진으로 센다 */
+    val leftCount: Int = 0,
+    /** 사진을 모두 허용했다 — 처음부터 다시 찾을지 묻는 중 */
+    val confirmReanalyze: Boolean = false,
 ) {
     val partial: Boolean get() = summary?.partial == true
     val includedCount: Int get() = trips.sumOf { it.mediaCount }
-
-    /** 여행에 담기지 않은 사진·영상 수 */
-    val leftCount: Int get() = ((summary?.total ?: 0) - includedCount).coerceAtLeast(0)
 
     /** 최신순 연도별 묶음 */
     val years: List<Pair<Int, List<Trip>>>
@@ -70,6 +71,9 @@ class TripsViewModel @Inject constructor(
 
     private var restarting = false
 
+    /** 다시 찾기를 한 번 미뤘다 — 화면에 돌아올 때마다 다시 묻지 않는다(일부 허용 안내를 직접 누르면 다시 묻는다) */
+    private var declined = false
+
     init {
         viewModelScope.launch {
             val trips = analysisRepository.trips()
@@ -79,6 +83,7 @@ class TripsViewModel @Inject constructor(
                     trips = trips,
                     covers = analysisRepository.covers(),
                     summary = analysisRepository.summary.firstOrNull(),
+                    leftCount = analysisRepository.leftMedia().size,
                 )
             }
             // 최근 여행(목록 위쪽)의 상세를 미리 읽어 두어, 열 때 방울이 걷히자마자 내용이 보이게
@@ -90,7 +95,7 @@ class TripsViewModel @Inject constructor(
     fun onRequestResult(access: MediaAccess, showRationale: Boolean) {
         viewModelScope.launch {
             resultHandler.record(access, showRationale)
-            restartIfAllowedAll(access)
+            restartIfAllowedAll(access, fromUser = true)
         }
     }
 
@@ -103,7 +108,8 @@ class TripsViewModel @Inject constructor(
             // 빠진 사진에서 넣거나 새 여행을 만들고 오면 대표 사진·요약도 바뀐다
             val covers = analysisRepository.covers()
             val summary = analysisRepository.summary.firstOrNull()
-            _uiState.update { it.copy(trips = trips, covers = covers, summary = summary) }
+            val left = analysisRepository.leftMedia().size
+            _uiState.update { it.copy(trips = trips, covers = covers, summary = summary, leftCount = left) }
         }
     }
 
@@ -127,14 +133,28 @@ class TripsViewModel @Inject constructor(
         viewModelScope.launch { analysisRepository.renameTrip(number, userName) }
     }
 
-    fun checkAccess() {
-        viewModelScope.launch { restartIfAllowedAll(mediaRepository.currentAccess()) }
+    /** 화면 복귀([fromUser] = false) · 설정에서 돌아옴(true) */
+    fun checkAccess(fromUser: Boolean = false) {
+        viewModelScope.launch { restartIfAllowedAll(mediaRepository.currentAccess(), fromUser) }
     }
 
-    private suspend fun restartIfAllowedAll(access: MediaAccess) {
+    /** 모두 허용이 됐으면 처음부터 다시 찾을지 묻는다 — 다시 찾기는 초기화라 묻지 않고 돌리지 않는다 */
+    private fun restartIfAllowedAll(access: MediaAccess, fromUser: Boolean) {
         if (restarting || access != MediaAccess.All || !_uiState.value.partial) return
+        if (declined && !fromUser) return
+        _uiState.update { it.copy(confirmReanalyze = true) }
+    }
+
+    fun onReanalyzeConfirmed() {
+        _uiState.update { it.copy(confirmReanalyze = false) }
+        if (restarting) return
         restarting = true
         analysisRepository.start()
-        _events.send(TripsEvent.Reanalyze)
+        _events.trySend(TripsEvent.Reanalyze)
+    }
+
+    fun onReanalyzeDismissed() {
+        declined = true
+        _uiState.update { it.copy(confirmReanalyze = false) }
     }
 }

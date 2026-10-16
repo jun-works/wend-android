@@ -26,6 +26,8 @@ data class ResultUiState(
     val summary: AnalysisSummary? = null,
     /** 찍은 순서(오래된 것부터) */
     val trips: List<Trip> = emptyList(),
+    /** 사진을 모두 허용했다 — 처음부터 다시 찾을지 묻는 중 */
+    val confirmReanalyze: Boolean = false,
 )
 
 sealed interface ResultEvent {
@@ -55,6 +57,9 @@ class ResultViewModel @Inject constructor(
 
     private var restarting = false
 
+    /** 다시 찾기를 한 번 미뤘다 — 화면에 돌아올 때마다 다시 묻지 않는다 */
+    private var declined = false
+
     init {
         viewModelScope.launch {
             val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME
@@ -75,23 +80,32 @@ class ResultViewModel @Inject constructor(
     fun onRequestResult(access: MediaAccess, showRationale: Boolean) {
         viewModelScope.launch {
             resultHandler.record(access, showRationale)
-            restartIfAllowedAll(access)
+            restartIfAllowedAll(access, fromUser = true)
         }
     }
 
-    /** 설정에서 돌아옴 · 화면 복귀 */
-    fun checkAccess() {
-        viewModelScope.launch { restartIfAllowedAll(mediaRepository.currentAccess()) }
+    /** 화면 복귀([fromUser] = false) · 설정에서 돌아옴(true) */
+    fun checkAccess(fromUser: Boolean = false) {
+        viewModelScope.launch { restartIfAllowedAll(mediaRepository.currentAccess(), fromUser) }
     }
 
-    private suspend fun restartIfAllowedAll(access: MediaAccess) {
-        if (access == MediaAccess.All && _uiState.value.summary?.partial == true) restart()
+    /** 모두 허용이 됐으면 처음부터 다시 찾을지 묻는다 — 다시 찾기는 초기화라 묻지 않고 돌리지 않는다 */
+    private fun restartIfAllowedAll(access: MediaAccess, fromUser: Boolean) {
+        if (restarting || access != MediaAccess.All || _uiState.value.summary?.partial != true) return
+        if (declined && !fromUser) return
+        _uiState.update { it.copy(confirmReanalyze = true) }
     }
 
-    private suspend fun restart() {
+    fun onReanalyzeConfirmed() {
+        _uiState.update { it.copy(confirmReanalyze = false) }
         if (restarting) return
         restarting = true
         analysisRepository.start()
-        _events.send(ResultEvent.Reanalyze)
+        _events.trySend(ResultEvent.Reanalyze)
+    }
+
+    fun onReanalyzeDismissed() {
+        declined = true
+        _uiState.update { it.copy(confirmReanalyze = false) }
     }
 }
