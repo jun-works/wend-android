@@ -8,6 +8,7 @@
 /captures
 .externalNativeBuild
 .cxx
+/CLAUDE.md
 
 # 문서는 공개하지 않는다. README.md만 포함한다.
 *.md
