@@ -780,10 +780,12 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .sv2{background-size:106% 106%;background-position:70% 60%;filter:brightness(1.06)}
 .sv3{background-size:118% 118%;background-position:50% 25%}
 .bs-row{display:flex;gap:10px;overflow-x:auto;padding:8px 20px 8px;scrollbar-width:none}
-.bs-row button{position:relative;flex:none;width:104px;height:104px;border:0;border-radius:16px;padding:0;cursor:pointer;transition:transform .35s cubic-bezier(.3,1.5,.5,1),box-shadow .3s;filter:saturate(.75) brightness(.97)}
-.bs-row button.on{transform:translateY(-4px) scale(1.04);box-shadow:0 0 0 3px #f2b33d,0 8px 16px -8px rgba(31,26,22,.5);filter:none}
+.bs-tile{position:relative;flex:none;width:104px;height:104px;transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.bs-tile.on{transform:translateY(-4px) scale(1.04)}
+.bs-tile .pick{position:relative;display:block;width:100%;height:100%;border:0;border-radius:16px;padding:0;cursor:pointer;transition:box-shadow .3s;filter:saturate(.75) brightness(.97)}
+.bs-tile.on .pick{box-shadow:0 0 0 3px #f2b33d,0 8px 16px -8px rgba(31,26,22,.5);filter:none}
 .bs-row .star{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:#f2b33d;color:#3a2a06;display:grid;place-items:center;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
-.bs-row .on .star{transform:none}
+.bs-tile.on .star{transform:none}
 .bs-row .star .ms{--ms-size:17px}
 
 /* ── clean up ── */
@@ -791,15 +793,19 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .cl-cat b{font:700 16px/1.3 var(--font-display)}
 .cl-cat span{font:var(--body-s);color:var(--on-surface-variant)}
 .cl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 20px 6px}
-.cl-grid button{position:relative;aspect-ratio:1;border:0;border-radius:12px;padding:0;cursor:pointer;overflow:hidden}
-.cl-grid button i{position:absolute;inset:0}
+.cl-tile{position:relative;aspect-ratio:1}
+.cl-tile .pick{position:relative;display:block;width:100%;height:100%;border:0;border-radius:12px;padding:0;cursor:pointer;overflow:hidden}
+.cl-tile .pick i{position:absolute;inset:0}
 .cl-grid .blur i{filter:blur(4px);transform:scale(1.2)}
 .cl-grid .dark i{filter:brightness(.32)}
 .cl-grid .ck{position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.18);display:grid;place-items:center;color:#fff}
 .cl-grid .ck .ms{--ms-size:15px;opacity:0}
-.cl-grid button.on .ck{background:var(--error);border-color:var(--error)}
-.cl-grid button.on .ck .ms{opacity:1}
-.cl-grid button:not(.on){opacity:.55}
+.cl-tile.on .ck{background:var(--error);border-color:var(--error)}
+.cl-tile.on .ck .ms{opacity:1}
+.cl-tile:not(.on) .pick{opacity:.55}
+/* 크게 보기: 사진 칸 왼쪽 아래 — 칸의 나머지는 고르기/체크. 보이는 원은 26, 누르는 곳은 40 */
+.zoom{position:absolute;left:0;bottom:0;z-index:1;width:40px;height:40px;border:0;padding:0;background:none;display:grid;place-items:center;cursor:pointer}
+.zoom .ms{--ms-size:16px;width:26px;height:26px;border-radius:50%;background:rgba(31,26,22,.55);color:#fff;display:grid;place-items:center}
 .cl-note{display:flex;gap:8px;align-items:center;padding:8px 4px 10px;font:var(--body-s);color:var(--on-surface-variant)}
 .cl-note .ms{--ms-size:18px}
 #clean .bottom-bar,#best .bottom-bar{background:var(--surface);flex-direction:column;align-items:stretch;gap:0}
@@ -878,6 +884,9 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .vw-act .ms{--ms-size:24px}
 .vw-act.on .ms{color:#f2b33d}
 .vw-act.warn{color:#ffb4a8}
+.vw-act.del .ms{color:#ffb4a8}
+.vw-slide i.blur{filter:blur(5px)}
+.vw-slide i.dark{filter:brightness(.32)}
 /* 여행에서 빼기: 70% 동안 둥글게 줄며 그날 색으로 물들고, 남은 30% 동안 방울이 떨어지며 사라짐 (0.8s) */
 .vw-slide i.out{animation:vw-out .8s cubic-bezier(.4,0,.2,1) forwards;overflow:hidden}
 .vw-slide i.out::after{content:"";position:absolute;inset:0;background:var(--d);animation:vw-tint .8s forwards}
@@ -3223,17 +3232,20 @@ function glowPlaces(idx) {
 /* ── best shots: Wend only groups photos shot again and again (same scene); the user picks one per scene, or none ── */
 function bsPhoto(s, k) { return tripPhotos(s).filter(function (it) { return it.k === k; })[0]; }
 function renderBest() {
-  var d = App.state.bestDraft = {};
-  for (var key in App.state.best) d[key] = App.state.best[key];
+  // 크게 보기에서 돌아올 때는 고르던 것을 그대로 둔다
+  var d = App.state.keepPick ? App.state.bestDraft : (App.state.bestDraft = {});
+  if (!App.state.keepPick) for (var key in App.state.best) d[key] = App.state.best[key];
+  App.state.keepPick = false;
   document.getElementById('bs-list').innerHTML = BUSAN.stops.map(function (s, i) {
     var rows = (s.sc || []).map(function (ks, j) {
       var items = ks.map(function (k) { return bsPhoto(i, k); }).filter(Boolean);
       if (items.length < 2) return '';
       return '<div class="bs-scene"><p>' + items[0].t + ' · 비슷한 사진 ' + items.length + '장</p><div class="bs-row">' +
         items.map(function (it, n) {
-          var on = !!d[i + ':' + j] && d[i + ':' + j].k === it.k;
-          return '<button class="' + it.c + (on ? ' on' : '') + '" data-action="pickBest" data-key="' + i + ':' + j + '" data-s="' + i + '" data-k="' + it.k + '" aria-pressed="' + on + '" aria-label="' + s.place + ' ' + items[0].t + ' 비슷한 사진 ' + (n + 1) + '">' +
-            '<span class="star"><span class="ms fill">star</span></span></button>';
+          var on = !!d[i + ':' + j] && d[i + ':' + j].k === it.k, name = s.place + ' ' + items[0].t + ' 비슷한 사진 ' + (n + 1);
+          return '<div class="bs-tile' + (on ? ' on' : '') + '" data-k="' + it.k + '"><button class="pick ' + it.c + '" data-action="pickBest" data-key="' + i + ':' + j + '" data-s="' + i + '" data-k="' + it.k + '" aria-pressed="' + on + '" aria-label="' + name + '">' +
+            '<span class="star"><span class="ms fill">star</span></span></button>' +
+            '<button class="zoom" data-action="viewBest" data-key="' + i + ':' + j + '" data-k="' + it.k + '" aria-label="' + name + ' 크게 보기"><span class="ms">open_in_full</span></button></div>';
         }).join('') + '</div></div>';
     }).join('');
     return rows ? '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '</h3>' + rows + '</div>' : '';
@@ -3254,13 +3266,19 @@ App.onEnter('best', renderBest);
 /* tap picks one in that scene; tapping the picked one again clears it (a scene may stay without a best shot) */
 App.actions.pickBest = function (el) {
   var key = el.getAttribute('data-key'), s = +el.getAttribute('data-s'), k = +el.getAttribute('data-k'), d = App.state.bestDraft;
-  if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
-  el.parentNode.querySelectorAll('button').forEach(function (b) {
-    var on = !!d[key] && d[key].k === +b.getAttribute('data-k');
-    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  togglePick(key, s, k);
+  el.closest('.bs-row').querySelectorAll('.bs-tile').forEach(function (t) {
+    var on = !!d[key] && d[key].k === +t.getAttribute('data-k');
+    t.classList.toggle('on', on); t.querySelector('.pick').setAttribute('aria-pressed', on);
   });
   bestCount();
 };
+/* 장면마다 한 장 — 고른 사진을 다시 고르면 그 장면은 고르지 않은 채로(목록과 크게 보기가 같이 쓴다) */
+function togglePick(key, s, k) {
+  var d = App.state.bestDraft;
+  if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
+}
+App.actions.viewBest = function (el) { App.state.keepPick = true; openViewer('best', el.getAttribute('data-key'), +el.getAttribute('data-k')); return false; };
 App.actions.bestDone = function () {
   App.state.best = App.state.bestDraft;
   var n = Object.keys(App.state.best).length;
@@ -3281,8 +3299,10 @@ function renderClean() {
   document.getElementById('cl-list').innerHTML = CLEAN.map(function (c, ci) {
     return '<div class="cl-cat"><b>' + c.t + '</b><span>' + (c.sub ? c.sub + ' · ' : '') + c.items.length + '장</span></div><div class="cl-grid">' +
       c.items.map(function (it, k) {
-        return '<button class="' + c.cls + (App.state.cleanSel[ci][k] ? ' on' : '') + '" data-action="toggleClean" data-c="' + ci + '" data-k="' + k + '" aria-label="' + c.t + ' ' + (k + 1) + ', ' + BUSAN.stops[it[0]].place + '">' +
-          '<i class="' + it[1] + '"></i><span class="ck"><span class="ms">check</span></span></button>';
+        var name = c.t + ' ' + (k + 1) + ', ' + BUSAN.stops[it[0]].place;
+        return '<div class="cl-tile' + (App.state.cleanSel[ci][k] ? ' on' : '') + '"><button class="pick ' + c.cls + '" data-action="toggleClean" data-c="' + ci + '" data-k="' + k + '" aria-pressed="' + !!App.state.cleanSel[ci][k] + '" aria-label="' + name + '">' +
+          '<i class="' + it[1] + '"></i><span class="ck"><span class="ms">check</span></span></button>' +
+          '<button class="zoom" data-action="viewClean" data-c="' + ci + '" data-k="' + k + '" aria-label="' + name + ' 크게 보기"><span class="ms">open_in_full</span></button></div>';
       }).join('') + '</div>';
   }).join('');
   cleanCount();
@@ -3294,13 +3314,20 @@ function cleanCount() {
   b.disabled = !n;
   return n;
 }
-App.onEnter('clean', function () { App.state.cleanSel = null; renderClean(); });
+App.onEnter('clean', function () {
+  // 크게 보기에서 돌아올 때는 체크를 그대로 둔다
+  if (!App.state.keepPick) App.state.cleanSel = null;
+  App.state.keepPick = false;
+  renderClean();
+});
 App.actions.toggleClean = function (el) {
   var c = +el.getAttribute('data-c'), k = +el.getAttribute('data-k');
   App.state.cleanSel[c][k] = !App.state.cleanSel[c][k];
-  el.classList.toggle('on', App.state.cleanSel[c][k]);
+  el.parentNode.classList.toggle('on', App.state.cleanSel[c][k]);
+  el.setAttribute('aria-pressed', App.state.cleanSel[c][k]);
   cleanCount();
 };
+App.actions.viewClean = function (el) { App.state.keepPick = true; openViewer('clean', +el.getAttribute('data-c'), +el.getAttribute('data-k')); return false; };
 App.actions.trashAsk = function () { document.getElementById('tr-n').textContent = cleanCount() + '개'; };
 App.actions.trashOk = function () {
   var n = 0;
@@ -3502,7 +3529,8 @@ App.actions.makeTrip = function () {
 /* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════
    One viewer for every photo grid. It pages through the set it was opened from (swipe sideways); the header shows
    when and where; only the bottom actions change with the place it was opened from:
-   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
+   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통
+   best → 이 사진 고르기(같은 장면끼리 넘김) · 공유  clean → 정리하기 ✓ / 남기기(같은 이유끼리 넘김) · 공유 */
 var TRIP_DATES = ['2026-05-03', '2026-05-04', '2026-05-05'];
 function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
   var am = t.indexOf('오전') === 0, hm = t.split(' ')[1].split(':'), h = +hm[0] % 12 + (am ? 0 : 12), min = h * 60 + +hm[1] + m;
@@ -3511,10 +3539,21 @@ function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
 }
 function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '월 ' + +p[2] + '일'; }
 
-/* open from a trip stop (s = stop, k = photo) or from the left-out list (id) */
+/* open from a trip stop (s = stop, k = photo), the left-out list (id), a best-shot scene (key, k) or a clean-up reason (ci, n) */
 function openViewer(ctx, a, b) {
   var items, i = 0;
-  if (ctx === 'trip') {
+  if (ctx === 'best') {
+    var sk = a.split(':'), st = +sk[0];
+    items = BUSAN.stops[st].sc[+sk[1]].map(function (k) { return bsPhoto(st, k); }).filter(Boolean)
+      .map(function (it) { return Object.assign({ key: a }, it); });
+    i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
+  } else if (ctx === 'clean') {
+    items = CLEAN[a].items.map(function (r, n) {
+      var ph = tripPhotos(r[0]), p = ph[n % Math.max(1, ph.length)] || {};
+      return { c: r[1] + (CLEAN[a].cls ? ' ' + CLEAN[a].cls : ''), d: p.d || TRIP_DATES[0], t: p.t || '오후 1:40', place: BUSAN.stops[r[0]].place, col: p.col, ci: a, n: n };
+    });
+    i = b;
+  } else if (ctx === 'trip') {
     items = tripPhotos(a);
     i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
   } else {
@@ -3541,7 +3580,13 @@ function act(icon, label, action, extra) {
 }
 function vwActions() {
   var v = App.state.vw, it = vwCur(), html;
-  if (v.ctx === 'trip') {
+  if (v.ctx === 'best') {
+    var d = App.state.bestDraft[it.key], picked = !!d && d.k === it.k;
+    html = act('star', picked ? '골랐어요' : '이 사진 고르기', 'vwPick', picked ? ' on' : '') + act('share', '공유', 'vwShare');
+  } else if (v.ctx === 'clean') {
+    var on = App.state.cleanSel[it.ci][it.n];
+    html = act(on ? 'check_circle' : 'radio_button_unchecked', on ? '정리하기' : '남기기', 'vwClean', on ? ' del' : '') + act('share', '공유', 'vwShare');
+  } else if (v.ctx === 'trip') {
     var best = isBest(it.s, it.k);
     html = act('star', best ? '베스트샷' : '베스트샷으로', 'vwBest', best ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
       act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
@@ -3553,7 +3598,8 @@ function vwActions() {
 function vwSlides() {
   var v = App.state.vw;
   document.getElementById('vw-track').innerHTML = v.items.map(function (it) {
-    var star = v.ctx === 'trip' && isBest(it.s, it.k) ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
+    var d = v.ctx === 'best' && App.state.bestDraft[it.key];
+    var star = (v.ctx === 'trip' && isBest(it.s, it.k)) || (d && d.k === it.k) ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
     return '<div class="vw-slide"><i class="' + it.c + '">' + star + '</i></div>';
   }).join('');
 }
@@ -3569,6 +3615,11 @@ document.getElementById('vw-track').addEventListener('scroll', function () {
   var i = Math.round(this.scrollLeft / this.clientWidth);
   if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
 }, { passive: true });
+
+/* ── best / clean: the same choice as the list, made while looking at the photo large ── */
+function vwRefresh() { vwSlides(); vwActions(); var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth; }
+App.actions.vwPick = function () { var it = vwCur(); togglePick(it.key, it.s, it.k); vwRefresh(); };
+App.actions.vwClean = function () { var it = vwCur(); App.state.cleanSel[it.ci][it.n] = !App.state.cleanSel[it.ci][it.n]; vwActions(); };
 
 /* ── trip actions ── */
 App.actions.vwBest = function () {

@@ -20,6 +20,9 @@
 .vw-act .ms{--ms-size:24px}
 .vw-act.on .ms{color:#f2b33d}
 .vw-act.warn{color:#ffb4a8}
+.vw-act.del .ms{color:#ffb4a8}
+.vw-slide i.blur{filter:blur(5px)}
+.vw-slide i.dark{filter:brightness(.32)}
 /* 여행에서 빼기: 70% 동안 둥글게 줄며 그날 색으로 물들고, 남은 30% 동안 방울이 떨어지며 사라짐 (0.8s) */
 .vw-slide i.out{animation:vw-out .8s cubic-bezier(.4,0,.2,1) forwards;overflow:hidden}
 .vw-slide i.out::after{content:"";position:absolute;inset:0;background:var(--d);animation:vw-tint .8s forwards}

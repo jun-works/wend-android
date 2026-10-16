@@ -2,7 +2,8 @@
 /* ═══ Common · 사진 크게 보기 ═══════════════════════════════════════════
    One viewer for every photo grid. It pages through the set it was opened from (swipe sideways); the header shows
    when and where; only the bottom actions change with the place it was opened from:
-   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
+   trip → 베스트샷 · 여행에서 빼기 · 공유 · 휴지통      left → 여행에 넣기 · 새 여행 · 공유 · 휴지통
+   best → 이 사진 고르기(같은 장면끼리 넘김) · 공유  clean → 정리하기 ✓ / 남기기(같은 이유끼리 넘김) · 공유 */
 var TRIP_DATES = ['2026-05-03', '2026-05-04', '2026-05-05'];
 function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
   var am = t.indexOf('오전') === 0, hm = t.split(' ')[1].split(':'), h = +hm[0] % 12 + (am ? 0 : 12), min = h * 60 + +hm[1] + m;
@@ -11,10 +12,21 @@ function addMin(t, m) {   // '오후 1:40' + 7 → '오후 1:47'
 }
 function longDate(d) { var p = d.split('-'); return +p[0] + '년 ' + +p[1] + '월 ' + +p[2] + '일'; }
 
-/* open from a trip stop (s = stop, k = photo) or from the left-out list (id) */
+/* open from a trip stop (s = stop, k = photo), the left-out list (id), a best-shot scene (key, k) or a clean-up reason (ci, n) */
 function openViewer(ctx, a, b) {
   var items, i = 0;
-  if (ctx === 'trip') {
+  if (ctx === 'best') {
+    var sk = a.split(':'), st = +sk[0];
+    items = BUSAN.stops[st].sc[+sk[1]].map(function (k) { return bsPhoto(st, k); }).filter(Boolean)
+      .map(function (it) { return Object.assign({ key: a }, it); });
+    i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
+  } else if (ctx === 'clean') {
+    items = CLEAN[a].items.map(function (r, n) {
+      var ph = tripPhotos(r[0]), p = ph[n % Math.max(1, ph.length)] || {};
+      return { c: r[1] + (CLEAN[a].cls ? ' ' + CLEAN[a].cls : ''), d: p.d || TRIP_DATES[0], t: p.t || '오후 1:40', place: BUSAN.stops[r[0]].place, col: p.col, ci: a, n: n };
+    });
+    i = b;
+  } else if (ctx === 'trip') {
     items = tripPhotos(a);
     i = Math.max(0, items.findIndex(function (it) { return it.k === b; }));
   } else {
@@ -41,7 +53,13 @@ function act(icon, label, action, extra) {
 }
 function vwActions() {
   var v = App.state.vw, it = vwCur(), html;
-  if (v.ctx === 'trip') {
+  if (v.ctx === 'best') {
+    var d = App.state.bestDraft[it.key], picked = !!d && d.k === it.k;
+    html = act('star', picked ? '골랐어요' : '이 사진 고르기', 'vwPick', picked ? ' on' : '') + act('share', '공유', 'vwShare');
+  } else if (v.ctx === 'clean') {
+    var on = App.state.cleanSel[it.ci][it.n];
+    html = act(on ? 'check_circle' : 'radio_button_unchecked', on ? '정리하기' : '남기기', 'vwClean', on ? ' del' : '') + act('share', '공유', 'vwShare');
+  } else if (v.ctx === 'trip') {
     var best = isBest(it.s, it.k);
     html = act('star', best ? '베스트샷' : '베스트샷으로', 'vwBest', best ? ' on' : '') + act('remove_circle_outline', '여행에서 빼기', 'vwOut') +
       act('share', '공유', 'vwShare') + act('delete', '휴지통', 'vwTrash', ' warn');
@@ -53,7 +71,8 @@ function vwActions() {
 function vwSlides() {
   var v = App.state.vw;
   document.getElementById('vw-track').innerHTML = v.items.map(function (it) {
-    var star = v.ctx === 'trip' && isBest(it.s, it.k) ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
+    var d = v.ctx === 'best' && App.state.bestDraft[it.key];
+    var star = (v.ctx === 'trip' && isBest(it.s, it.k)) || (d && d.k === it.k) ? '<span class="star"><span class="ms fill">star</span>베스트샷</span>' : '';
     return '<div class="vw-slide"><i class="' + it.c + '">' + star + '</i></div>';
   }).join('');
 }
@@ -69,6 +88,11 @@ document.getElementById('vw-track').addEventListener('scroll', function () {
   var i = Math.round(this.scrollLeft / this.clientWidth);
   if (i !== v.i && v.items[i]) { v.i = i; vwHeader(); }
 }, { passive: true });
+
+/* ── best / clean: the same choice as the list, made while looking at the photo large ── */
+function vwRefresh() { vwSlides(); vwActions(); var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth; }
+App.actions.vwPick = function () { var it = vwCur(); togglePick(it.key, it.s, it.k); vwRefresh(); };
+App.actions.vwClean = function () { var it = vwCur(); App.state.cleanSel[it.ci][it.n] = !App.state.cleanSel[it.ci][it.n]; vwActions(); };
 
 /* ── trip actions ── */
 App.actions.vwBest = function () {

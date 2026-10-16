@@ -285,17 +285,20 @@ function glowPlaces(idx) {
 /* ── best shots: Wend only groups photos shot again and again (same scene); the user picks one per scene, or none ── */
 function bsPhoto(s, k) { return tripPhotos(s).filter(function (it) { return it.k === k; })[0]; }
 function renderBest() {
-  var d = App.state.bestDraft = {};
-  for (var key in App.state.best) d[key] = App.state.best[key];
+  // 크게 보기에서 돌아올 때는 고르던 것을 그대로 둔다
+  var d = App.state.keepPick ? App.state.bestDraft : (App.state.bestDraft = {});
+  if (!App.state.keepPick) for (var key in App.state.best) d[key] = App.state.best[key];
+  App.state.keepPick = false;
   document.getElementById('bs-list').innerHTML = BUSAN.stops.map(function (s, i) {
     var rows = (s.sc || []).map(function (ks, j) {
       var items = ks.map(function (k) { return bsPhoto(i, k); }).filter(Boolean);
       if (items.length < 2) return '';
       return '<div class="bs-scene"><p>' + items[0].t + ' · 비슷한 사진 ' + items.length + '장</p><div class="bs-row">' +
         items.map(function (it, n) {
-          var on = !!d[i + ':' + j] && d[i + ':' + j].k === it.k;
-          return '<button class="' + it.c + (on ? ' on' : '') + '" data-action="pickBest" data-key="' + i + ':' + j + '" data-s="' + i + '" data-k="' + it.k + '" aria-pressed="' + on + '" aria-label="' + s.place + ' ' + items[0].t + ' 비슷한 사진 ' + (n + 1) + '">' +
-            '<span class="star"><span class="ms fill">star</span></span></button>';
+          var on = !!d[i + ':' + j] && d[i + ':' + j].k === it.k, name = s.place + ' ' + items[0].t + ' 비슷한 사진 ' + (n + 1);
+          return '<div class="bs-tile' + (on ? ' on' : '') + '" data-k="' + it.k + '"><button class="pick ' + it.c + '" data-action="pickBest" data-key="' + i + ':' + j + '" data-s="' + i + '" data-k="' + it.k + '" aria-pressed="' + on + '" aria-label="' + name + '">' +
+            '<span class="star"><span class="ms fill">star</span></span></button>' +
+            '<button class="zoom" data-action="viewBest" data-key="' + i + ':' + j + '" data-k="' + it.k + '" aria-label="' + name + ' 크게 보기"><span class="ms">open_in_full</span></button></div>';
         }).join('') + '</div></div>';
     }).join('');
     return rows ? '<div class="bs-grp"><h3>' + (i + 1) + '. ' + s.place + '</h3>' + rows + '</div>' : '';
@@ -316,13 +319,19 @@ App.onEnter('best', renderBest);
 /* tap picks one in that scene; tapping the picked one again clears it (a scene may stay without a best shot) */
 App.actions.pickBest = function (el) {
   var key = el.getAttribute('data-key'), s = +el.getAttribute('data-s'), k = +el.getAttribute('data-k'), d = App.state.bestDraft;
-  if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
-  el.parentNode.querySelectorAll('button').forEach(function (b) {
-    var on = !!d[key] && d[key].k === +b.getAttribute('data-k');
-    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  togglePick(key, s, k);
+  el.closest('.bs-row').querySelectorAll('.bs-tile').forEach(function (t) {
+    var on = !!d[key] && d[key].k === +t.getAttribute('data-k');
+    t.classList.toggle('on', on); t.querySelector('.pick').setAttribute('aria-pressed', on);
   });
   bestCount();
 };
+/* 장면마다 한 장 — 고른 사진을 다시 고르면 그 장면은 고르지 않은 채로(목록과 크게 보기가 같이 쓴다) */
+function togglePick(key, s, k) {
+  var d = App.state.bestDraft;
+  if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
+}
+App.actions.viewBest = function (el) { App.state.keepPick = true; openViewer('best', el.getAttribute('data-key'), +el.getAttribute('data-k')); return false; };
 App.actions.bestDone = function () {
   App.state.best = App.state.bestDraft;
   var n = Object.keys(App.state.best).length;
@@ -343,8 +352,10 @@ function renderClean() {
   document.getElementById('cl-list').innerHTML = CLEAN.map(function (c, ci) {
     return '<div class="cl-cat"><b>' + c.t + '</b><span>' + (c.sub ? c.sub + ' · ' : '') + c.items.length + '장</span></div><div class="cl-grid">' +
       c.items.map(function (it, k) {
-        return '<button class="' + c.cls + (App.state.cleanSel[ci][k] ? ' on' : '') + '" data-action="toggleClean" data-c="' + ci + '" data-k="' + k + '" aria-label="' + c.t + ' ' + (k + 1) + ', ' + BUSAN.stops[it[0]].place + '">' +
-          '<i class="' + it[1] + '"></i><span class="ck"><span class="ms">check</span></span></button>';
+        var name = c.t + ' ' + (k + 1) + ', ' + BUSAN.stops[it[0]].place;
+        return '<div class="cl-tile' + (App.state.cleanSel[ci][k] ? ' on' : '') + '"><button class="pick ' + c.cls + '" data-action="toggleClean" data-c="' + ci + '" data-k="' + k + '" aria-pressed="' + !!App.state.cleanSel[ci][k] + '" aria-label="' + name + '">' +
+          '<i class="' + it[1] + '"></i><span class="ck"><span class="ms">check</span></span></button>' +
+          '<button class="zoom" data-action="viewClean" data-c="' + ci + '" data-k="' + k + '" aria-label="' + name + ' 크게 보기"><span class="ms">open_in_full</span></button></div>';
       }).join('') + '</div>';
   }).join('');
   cleanCount();
@@ -356,13 +367,20 @@ function cleanCount() {
   b.disabled = !n;
   return n;
 }
-App.onEnter('clean', function () { App.state.cleanSel = null; renderClean(); });
+App.onEnter('clean', function () {
+  // 크게 보기에서 돌아올 때는 체크를 그대로 둔다
+  if (!App.state.keepPick) App.state.cleanSel = null;
+  App.state.keepPick = false;
+  renderClean();
+});
 App.actions.toggleClean = function (el) {
   var c = +el.getAttribute('data-c'), k = +el.getAttribute('data-k');
   App.state.cleanSel[c][k] = !App.state.cleanSel[c][k];
-  el.classList.toggle('on', App.state.cleanSel[c][k]);
+  el.parentNode.classList.toggle('on', App.state.cleanSel[c][k]);
+  el.setAttribute('aria-pressed', App.state.cleanSel[c][k]);
   cleanCount();
 };
+App.actions.viewClean = function (el) { App.state.keepPick = true; openViewer('clean', +el.getAttribute('data-c'), +el.getAttribute('data-k')); return false; };
 App.actions.trashAsk = function () { document.getElementById('tr-n').textContent = cleanCount() + '개'; };
 App.actions.trashOk = function () {
   var n = 0;
