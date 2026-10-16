@@ -2,7 +2,6 @@ package app.wend.sea.feature.viewer
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -260,13 +259,11 @@ fun ViewerScreen(
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     context.startActivity(Intent.createChooser(intent, null))
                 }
-                // 휴지통은 Android 11+ 시스템 확인창(MediaStore.createTrashRequest)으로만 — Wend 가 직접 지우지 않는다
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ViewerAction(Icons.Outlined.Delete, "휴지통", tint = ViewerWarn) {
-                        val request = MediaStore.createTrashRequest(context.contentResolver, listOf(current.media.uri), true)
-                        trashing = current
-                        trashLauncher.launch(IntentSenderRequest.Builder(request.intentSender).build())
-                    }
+                // 휴지통은 시스템 확인창(MediaStore.createTrashRequest)으로만 — Wend 가 직접 지우지 않는다
+                ViewerAction(Icons.Outlined.Delete, "휴지통", tint = ViewerWarn) {
+                    val request = MediaStore.createTrashRequest(context.contentResolver, listOf(current.media.uri), true)
+                    trashing = current
+                    trashLauncher.launch(IntentSenderRequest.Builder(request.intentSender).build())
                 }
             }
         }

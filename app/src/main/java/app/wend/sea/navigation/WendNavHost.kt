@@ -1,6 +1,5 @@
 package app.wend.sea.navigation
 
-import android.os.Build
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.EnterExitState
@@ -336,19 +335,16 @@ fun WendNavHost() {
             )
         }
         composable<CleanUpRoute> {
-            // 정리하기 버튼은 Android 11+ 에서만 보인다(시스템 휴지통 확인창)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                CleanUpScreen(
-                    onBack = { navController.popBackStack() },
-                    onDone = { count ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                            TripDetailViewModel.VIEWER_RESULT,
-                            "${count}장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요",
-                        )
-                        navController.popBackStack()
-                    },
-                )
-            }
+            CleanUpScreen(
+                onBack = { navController.popBackStack() },
+                onDone = { count ->
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        TripDetailViewModel.VIEWER_RESULT,
+                        "${count}장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요",
+                    )
+                    navController.popBackStack()
+                },
+            )
         }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }

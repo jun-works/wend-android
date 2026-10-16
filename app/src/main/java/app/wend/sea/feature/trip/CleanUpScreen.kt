@@ -1,12 +1,10 @@
 package app.wend.sea.feature.trip
 
 import android.app.Activity
-import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -73,9 +71,7 @@ import coil3.compose.AsyncImage
 /**
  * 시안 ⑯ 사진 정리하기: 이유별 머리 + 4열 사진, 전부 체크된 채로 시작하고 남길 사진만 눌러서 뺀다.
  * 아래 버튼은 체크된 장수만큼 "N장 휴지통으로 옮기기" → Android 시스템 확인창 → 허용되면 상세로 돌아가 안내.
- * 휴지통 요청은 Android 11+ 에만 있어, 상세의 정리하기 버튼도 그 버전에서만 보인다.
  */
-@RequiresApi(Build.VERSION_CODES.R)
 @Composable
 fun CleanUpScreen(
     onBack: () -> Unit,

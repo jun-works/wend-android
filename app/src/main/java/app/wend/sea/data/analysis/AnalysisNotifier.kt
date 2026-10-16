@@ -51,11 +51,7 @@ class AnalysisNotifier @Inject constructor(
             .setOnlyAlertOnce(true)
             .setContentIntent(openApp())
             .build()
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(ID_PROGRESS, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
-            ForegroundInfo(ID_PROGRESS, notification)
-        }
+        return ForegroundInfo(ID_PROGRESS, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }
 
     /** 새로 찾기 시작하면 지난 결과 알림은 치운다 */
