@@ -1,5 +1,6 @@
 package app.wend.sea.navigation
 
+import android.os.Build
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.EnterExitState
@@ -28,6 +29,7 @@ import app.wend.sea.core.designsystem.component.LocalNavAnimatedScope
 import app.wend.sea.core.designsystem.component.LocalSharedTransitionScope
 import app.wend.sea.core.designsystem.component.PhotoEasing
 import app.wend.sea.feature.trip.BestShotScreen
+import app.wend.sea.feature.trip.CleanUpScreen
 import app.wend.sea.feature.trip.PlacePhotosScreen
 import app.wend.sea.feature.trip.PlacePhotosViewModel
 import androidx.compose.runtime.Composable
@@ -85,9 +87,10 @@ import kotlinx.serialization.Serializable
 @Serializable data class PlacePhotosRoute(val trip: Int, val place: Int, val x: Float = -1f, val y: Float = -1f, val w: Float = -1f, val h: Float = -1f)
 @Serializable data object LicensesRoute
 @Serializable data class BestShotRoute(val trip: Int)
+@Serializable data class CleanUpRoute(val trip: Int)
 
 /** 상세 위에 겹쳐 열리는 화면(상세는 아래에 그대로 남고, 돌아와도 다시 퍼지지 않는다) */
-private fun NavDestination.overTrip() = hasRoute<ViewerRoute>() || hasRoute<PlacePhotosRoute>() || hasRoute<BestShotRoute>()
+private fun NavDestination.overTrip() = hasRoute<ViewerRoute>() || hasRoute<PlacePhotosRoute>() || hasRoute<BestShotRoute>() || hasRoute<CleanUpRoute>()
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -245,6 +248,7 @@ fun WendNavHost() {
                             navController.navigate(PlacePhotosRoute(number, place, tile.left, tile.top, tile.width, tile.height))
                         },
                         onBestShots = { navController.navigate(BestShotRoute(number)) },
+                        onCleanUp = { navController.navigate(CleanUpRoute(number)) },
                     )
                 }
             }
@@ -330,6 +334,21 @@ fun WendNavHost() {
                     navController.popBackStack()
                 },
             )
+        }
+        composable<CleanUpRoute> {
+            // 정리하기 버튼은 Android 11+ 에서만 보인다(시스템 휴지통 확인창)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                CleanUpScreen(
+                    onBack = { navController.popBackStack() },
+                    onDone = { count ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            TripDetailViewModel.VIEWER_RESULT,
+                            "${count}장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요",
+                        )
+                        navController.popBackStack()
+                    },
+                )
+            }
         }
         composable<DeniedRoute> { DeniedScreen(onResult = navController::showMediaResult) }
     }

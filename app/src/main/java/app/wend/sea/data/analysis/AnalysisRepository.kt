@@ -16,6 +16,7 @@ import app.wend.sea.data.geo.CityFinder
 import app.wend.sea.data.local.MediaFeatureDao
 import app.wend.sea.data.local.TripDao
 import app.wend.sea.data.local.TripEntity
+import app.wend.sea.data.local.TripMediaEntity
 import app.wend.sea.data.local.UserNameEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,17 @@ data class SimilarScene(val start: Long, val photos: List<MediaThumbnail>)
 
 /** 장소마다 장면 묶음. [pending] 이면 아직 값을 계산하지 않은 사진이 있다(뒤에서 계산 중) */
 data class SimilarScenes(val places: List<List<SimilarScene>>, val pending: Boolean)
+
+/**
+ * 사진 정리하기 후보(시안 ⑯). [similar] 는 베스트샷을 고른 장면의 나머지 사진, [dark] 는 너무 어두운 사진 — 한 장은 한 곳에만.
+ * 베스트샷은 어느 쪽에도 들지 않는다. [hasBestShots] 는 이 여행에 고른 베스트샷이 있는지(없으면 비슷한 사진이 나올 수 없음).
+ */
+data class CleanUpCandidates(
+    val similar: List<MediaThumbnail>,
+    val dark: List<MediaThumbnail>,
+    val pending: Boolean,
+    val hasBestShots: Boolean,
+)
 
 sealed interface AnalysisState {
     /** 분석을 시작한 적 없음 */
@@ -103,18 +115,29 @@ class AnalysisRepository @Inject constructor(
         val cities = cityFinder.byIds(entities.mapNotNull { it.cityId })
         val locale = locale()
         val userNames = tripDao.tripNameCounts().groupBy { it.tripNumber }.mapValues { (_, c) -> c.maxBy { it.count }.name }
-        return entities.map { Trip(it.number, it.start, it.end, it.mediaCount, title(it, cities, locale), userNames[it.number]) }
+        // 장수는 지금 보이는 사진으로 센다 — 휴지통에 옮긴 사진은 빠지고, 갤러리에서 되살리면 다시 들어간다
+        val counts = visibleMedia().groupingBy { it.tripNumber }.eachCount()
+        return entities.mapNotNull { e ->
+            val count = counts[e.number] ?: return@mapNotNull null
+            Trip(e.number, e.start, e.end, count, title(e, cities, locale), userNames[e.number])
+        }
     }
 
     /**
      * 여행 상세는 장소 묶기·지명 찾기로 0.5초쯤 걸려서, 목록이 뜰 때 미리 읽어 두고(prefetch) 열 때 바로 쓴다.
-     * 여행 행(장수·기간·도시)이나 사용자 이름, 언어가 바뀌면 다시 계산한다.
+     * 여행 행(장수·기간·도시)이나 보이는 사진(휴지통으로 옮김·되살림), 사용자 이름, 언어가 바뀌면 다시 계산한다.
      */
     private val detailLock = Mutex()
     private val detailCache = java.util.concurrent.ConcurrentHashMap<Int, CachedDetail>()
     private var namesVersion = 0
 
-    private data class CachedDetail(val entity: TripEntity, val namesVersion: Int, val locale: Locale, val detail: TripDetail)
+    private data class CachedDetail(
+        val entity: TripEntity,
+        val visible: Set<Pair<Boolean, Long>>,
+        val namesVersion: Int,
+        val locale: Locale,
+        val detail: TripDetail,
+    )
 
     /** 목록에 보이는 여행들의 상세를 미리 읽는다 */
     suspend fun prefetchTripDetails(numbers: List<Int>) = numbers.forEach { tripDetail(it) }
@@ -126,13 +149,16 @@ class AnalysisRepository @Inject constructor(
     suspend fun tripDetail(number: Int): TripDetail? = detailLock.withLock {
         val entity = tripDao.trip(number) ?: return@withLock null
         val locale = locale()
-        detailCache[number]?.takeIf { it.entity == entity && it.namesVersion == namesVersion && it.locale == locale }?.let { return@withLock it.detail }
-        loadTripDetail(entity).also { if (it != null) detailCache[number] = CachedDetail(entity, namesVersion, locale, it) }
+        val visible = mediaRepository.visible(tripDao.media(number).map { it.video to it.mediaId })
+        detailCache[number]?.takeIf { it.entity == entity && it.visible == visible && it.namesVersion == namesVersion && it.locale == locale }
+            ?.let { return@withLock it.detail }
+        loadTripDetail(entity).also { if (it != null) detailCache[number] = CachedDetail(entity, visible, namesVersion, locale, it) }
     }
 
     private suspend fun loadTripDetail(entity: TripEntity): TripDetail? {
         val number = entity.number
         val keys = tripDao.media(number).map { it.video to it.mediaId }
+        // 휴지통에 있는 사진은 여기서 빠진다(여행에서 지우지는 않음 — 되살리면 돌아온다)
         val points = mediaRepository.points(keys)
         val places = withContext(Dispatchers.Default) { PlaceGrouper().group(points) }
         val locale = locale()
@@ -174,6 +200,22 @@ class AnalysisRepository @Inject constructor(
         return SimilarScenes(places, pending = photoIds.any { it !in hashes })
     }
 
+    /** 사진 정리하기 후보 — 앱이 좋은 사진을 고르지 않으므로 비슷한 사진은 사용자가 베스트샷을 고른 장면에서만 */
+    suspend fun cleanUpCandidates(detail: TripDetail): CleanUpCandidates {
+        val scenes = similarScenes(detail)
+        val best = bestShots()
+        val similar = scenes.places.flatten()
+            .filter { s -> s.photos.any { it.mediaId in best } }
+            .flatMap { s -> s.photos.filter { it.mediaId !in best } }
+        val photoIds = detail.places.flatMap { p -> p.media.filter { !it.video }.map { it.id } }
+        val taken = similar.map { it.mediaId }.toSet()
+        val features = featureDao.features(photoIds).associateBy { it.mediaId }
+        val dark = photoIds.filter { id ->
+            id !in best && id !in taken && features[id]?.let { PhotoQuality.tooDark(it.brightness, it.darkClip, it.peak) } == true
+        }.map { MediaThumbnail(it, video = false) }
+        return CleanUpCandidates(similar, dark, scenes.pending, photoIds.any { it in best })
+    }
+
     /** 사용자가 고른 베스트샷(사진 id) */
     suspend fun bestShots(): Set<Long> = tripDao.bestShots().toSet()
 
@@ -191,10 +233,6 @@ class AnalysisRepository @Inject constructor(
     /** 사진 한 장을 여행에서 뺀다. 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
     suspend fun excludeFromTrip(number: Int, media: MediaThumbnail) =
         tripDao.removeFromTrip(number, media.mediaId, media.video, exclude = true)
-
-    /** 휴지통으로 옮긴 사진을 여행에서 덜어 낸다 */
-    suspend fun removeTrashed(number: Int, media: MediaThumbnail) =
-        tripDao.removeFromTrip(number, media.mediaId, media.video, exclude = false)
 
     /** 여행 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
     suspend fun renameTrip(number: Int, name: String?) {
@@ -224,12 +262,19 @@ class AnalysisRepository @Inject constructor(
     /** 여행마다 카드에 보일 사진 3장: 고른 베스트샷 먼저, 그다음 첫 장 · 가운데 장 · 마지막 장 */
     suspend fun covers(): Map<Int, List<MediaThumbnail>> {
         val best = tripDao.bestShots().toSet()
-        return tripDao.allMedia().groupBy { it.tripNumber }.mapValues { (_, media) ->
+        return visibleMedia().groupBy { it.tripNumber }.mapValues { (_, media) ->
             val auto = listOf(0, media.size / 2, media.lastIndex).distinct().filter { it in media.indices }.map { media[it] }
             // 사용자가 고른 베스트샷이 대표 사진 — 모자라면 첫 장 · 가운데 장 · 마지막 장으로 채운다
             (media.filter { !it.video && it.mediaId in best } + auto).distinct().take(3)
                 .map { MediaThumbnail(it.mediaId, it.video) }
         }
+    }
+
+    /** 여행에 담긴 사진 가운데 지금 보이는 것(휴지통에 있는 것은 빠짐) */
+    private suspend fun visibleMedia(): List<TripMediaEntity> {
+        val all = tripDao.allMedia()
+        val visible = mediaRepository.visible(all.map { it.video to it.mediaId })
+        return all.filter { (it.video to it.mediaId) in visible }
     }
 
     private companion object {

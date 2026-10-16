@@ -135,7 +135,7 @@ interface TripDao {
     @Query("UPDATE trip SET mediaCount = mediaCount - 1 WHERE number = :number")
     suspend fun decrementCount(number: Int)
 
-    /** 사진 한 장을 여행에서 덜어 낸다(빼기 · 휴지통). [exclude] 면 다시 분석해도 넣지 않는다 */
+    /** 사진 한 장을 여행에서 덜어 낸다(여행에서 빼기). [exclude] 면 다시 분석해도 넣지 않는다. 휴지통은 여기를 쓰지 않는다 — 되살리면 돌아와야 해서 */
     @Transaction
     suspend fun removeFromTrip(tripNumber: Int, mediaId: Long, video: Boolean, exclude: Boolean) {
         if (exclude) exclude(ExcludedMediaEntity(mediaId, video))

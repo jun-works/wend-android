@@ -1,5 +1,6 @@
 package app.wend.sea.feature.trip
 
+import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
@@ -120,6 +121,8 @@ fun TripDetailScreen(
     /** `+N / 전체 보기` 타일 — [tile] 은 타일 자리(화면 좌표), 앨범이 그 자리에서 펼쳐진다 */
     onOpenPlace: (place: Int, tile: Rect) -> Unit,
     onBestShots: () -> Unit,
+    /** 사진 정리하기 — 시스템 휴지통 확인창이 있는 Android 11+ 에서만 버튼이 보인다 */
+    onCleanUp: () -> Unit,
     viewModel: TripDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -248,15 +251,17 @@ fun TripDetailScreen(
                             contentPadding = PaddingValues(horizontal = 12.dp),
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                         ) { ActionLabel(Icons.Rounded.Star, "베스트샷 고르기") }
-                        OutlinedButton(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                                viewModel.onCleanUp()
-                            },
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                            contentPadding = PaddingValues(horizontal = 12.dp),
-                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                        ) { ActionLabel(Icons.Outlined.AutoDelete, "사진 정리하기") }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            OutlinedButton(
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                    onCleanUp()
+                                },
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                            ) { ActionLabel(Icons.Outlined.AutoDelete, "사진 정리하기") }
+                        }
                     }
                 }
                 uiState.days.forEach { day ->

@@ -119,10 +119,12 @@ class ViewerViewModel @Inject constructor(
         }
     }
 
-    /** 시스템 확인창에서 허용된 뒤: 여행에서 덜어 내고 보던 목록에서도 뺀다 */
+    /**
+     * 시스템 확인창에서 허용된 뒤: 보던 목록에서 뺀다. 여행에서는 지우지 않는다 —
+     * 휴지통에 있는 동안은 보이지 않아 저절로 빠지고, 갤러리에서 되살리면 원래 여행으로 돌아온다
+     */
     fun onTrashed(item: ViewerItem) {
         viewModelScope.launch {
-            analysisRepository.removeTrashed(trip, item.media)
             _uiState.update { it.copy(items = it.items - item) }
             _events.send(ViewerEvent.ShowMessage("1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요"))
         }

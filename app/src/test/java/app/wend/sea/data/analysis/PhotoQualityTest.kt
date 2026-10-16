@@ -45,4 +45,19 @@ class PhotoQualityTest {
         assertTrue(PhotoQuality.hashDistance(a, PhotoQuality.of(brighter, w, h).hash) <= 4)
         assertTrue(PhotoQuality.hashDistance(a, PhotoQuality.of(other, w, h).hash) > 16)
     }
+
+    @Test
+    fun `너무 어두운 사진은 밝은 것이 하나도 없을 때만`() {
+        fun dark(q: PhotoQuality) = PhotoQuality.tooDark(q.brightness, q.darkClip, q.peak)
+        // 주머니 속처럼 거의 다 검다
+        assertTrue(dark(PhotoQuality.of(IntArray(w * h) { 4 }, w, h)))
+        // 검은 하늘의 달: 평균은 아주 낮아도 밝은 덩어리가 있다
+        val moon = PhotoQuality.of(IntArray(w * h) { i -> if ((i % w - 48) * (i % w - 48) + (i / w - 32) * (i / w - 32) < 16) 180 else 2 }, w, h)
+        assertTrue(moon.brightness < PhotoQuality.TOO_DARK_BRIGHTNESS)
+        assertTrue(!dark(moon))
+        // 밤 풍경: 대부분 검어도 불빛이 있어 평균이 밝다
+        assertTrue(!dark(PhotoQuality.of(IntArray(w * h) { i -> if (i % 5 == 0) 200 else 6 }, w, h)))
+        // 어둑한 실내: 평균은 낮아도 검은 픽셀이 많지 않다
+        assertTrue(!dark(PhotoQuality.of(IntArray(w * h) { 18 }, w, h)))
+    }
 }

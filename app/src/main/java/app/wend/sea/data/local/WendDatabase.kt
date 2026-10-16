@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class, MediaFeatureEntity::class, BestShotEntity::class],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
@@ -55,7 +55,7 @@ abstract class WendDatabase : RoomDatabase() {
         }
 
         private const val CREATE_MEDIA_FEATURE =
-            "CREATE TABLE IF NOT EXISTS `media_feature` (`mediaId` INTEGER NOT NULL, `modified` INTEGER NOT NULL, `brightness` REAL NOT NULL, `darkClip` REAL NOT NULL, `brightClip` REAL NOT NULL, `hash` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))"
+            "CREATE TABLE IF NOT EXISTS `media_feature` (`mediaId` INTEGER NOT NULL, `modified` INTEGER NOT NULL, `brightness` REAL NOT NULL, `darkClip` REAL NOT NULL, `brightClip` REAL NOT NULL, `hash` INTEGER NOT NULL, `peak` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))"
 
         /** 6 → 7: 베스트샷 장면 묶기·사진 정리에 쓰는 사진 값 */
         val MIGRATION_6_7 = object : Migration(6, 7) {
@@ -76,6 +76,14 @@ abstract class WendDatabase : RoomDatabase() {
         val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `best_shot` (`mediaId` INTEGER NOT NULL, PRIMARY KEY(`mediaId`))")
+            }
+        }
+
+        /** 9 → 10: 너무 어두운 사진에서 달·불빛을 가려내는 가장 밝은 부분 값 — 사진 값을 다시 계산한다(베스트샷은 그대로) */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `media_feature`")
+                db.execSQL(CREATE_MEDIA_FEATURE)
             }
         }
     }

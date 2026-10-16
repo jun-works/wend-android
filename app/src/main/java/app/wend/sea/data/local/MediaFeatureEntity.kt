@@ -20,10 +20,12 @@ data class MediaFeatureEntity(
     val darkClip: Float,
     val brightClip: Float,
     val hash: Long,
+    /** 가장 밝은 부분의 밝기 — PhotoQuality.peak */
+    val peak: Int,
 ) {
     companion object {
         fun of(mediaId: Long, modified: Long, q: PhotoQuality) =
-            MediaFeatureEntity(mediaId, modified, q.brightness, q.darkClip, q.brightClip, q.hash)
+            MediaFeatureEntity(mediaId, modified, q.brightness, q.darkClip, q.brightClip, q.hash, q.peak)
     }
 }
 

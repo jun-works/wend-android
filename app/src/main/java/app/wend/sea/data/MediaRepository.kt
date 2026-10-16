@@ -83,6 +83,27 @@ class MediaRepository @Inject constructor(
     }
 
     /**
+     * [keys] 가운데 지금 기기에서 보이는 것 — 휴지통에 있거나 지워진 것은 빠진다.
+     * 휴지통에서 되살리면 다시 보이므로, 여행은 이것으로 장수·대표 사진을 센다.
+     */
+    suspend fun visible(keys: List<Pair<Boolean, Long>>): Set<Pair<Boolean, Long>> = withContext(Dispatchers.IO) {
+        keys.groupBy({ it.first }, { it.second }).flatMap { (video, ids) ->
+            val collection = if (video) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ids.chunked(500).flatMap { chunk ->
+                context.contentResolver.query(
+                    collection,
+                    arrayOf(MediaStore.MediaColumns._ID),
+                    "${MediaStore.MediaColumns._ID} IN (${chunk.joinToString(",")})",
+                    null,
+                    null,
+                )?.use { cursor ->
+                    buildList { while (cursor.moveToNext()) add(video to cursor.getLong(0)) }
+                } ?: emptyList()
+            }
+        }.toSet()
+    }
+
+    /**
      * 사진·영상의 화면에 보이는 가로/세로 비율(돌려 찍은 것은 돌린 뒤). 크기를 모르면 빠진다.
      * 크게 보기에서 썸네일(정사각 Crop)이 원본 비율로 자라게 할 때 쓴다.
      */
