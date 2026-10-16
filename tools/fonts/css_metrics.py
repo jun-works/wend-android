@@ -14,7 +14,10 @@ desc = upm - asc
 hhea.ascent, hhea.descent, hhea.lineGap = asc, -desc, 0
 os2.sTypoAscender, os2.sTypoDescender, os2.sTypoLineGap = asc, -desc, 0
 os2.usWinAscent, os2.usWinDescent = asc, desc
+# 이름 칸만 바꾼다 — 저작권(0)·상표(7)·라이선스(13, 14) 칸의 원저작자 표시는 그대로 둔다
 for rec in f['name'].names:
+    if rec.nameID in (0, 7, 13, 14):
+        continue
     s = rec.toUnicode()
     t = s.replace(old_family, new_family).replace(old_ps, new_ps)
     if t != s:
