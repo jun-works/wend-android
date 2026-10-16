@@ -6,7 +6,13 @@ import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
+import app.wend.sea.data.analysis.TripChoice
 import app.wend.sea.data.analysis.TripDetail
+import app.wend.sea.feature.analysis.name
+import app.wend.sea.feature.left.NewTripUi
+import app.wend.sea.feature.left.dateTripName
+import app.wend.sea.feature.left.rangeText
+import app.wend.sea.feature.left.tripPhrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +40,11 @@ data class ViewerUiState(
     val album: Boolean = false,
     /** 사용자가 고른 베스트샷(사진 id) */
     val best: Set<Long> = emptySet(),
+    /** 빠진 사진에서 열었다 — 아래 버튼이 여행에 넣기 · 새 여행 · 공유 · 휴지통 */
+    val left: Boolean = false,
+    /** 여행에 넣기 시트(가까운 여행부터), 닫혀 있으면 null */
+    val choices: List<TripChoice>? = null,
+    val newTrip: NewTripUi? = null,
 )
 
 sealed interface ViewerEvent {
@@ -44,11 +55,14 @@ sealed interface ViewerEvent {
 
     /** 베스트샷을 바꿨다 — 상세·장소 사진이 별을 다시 그린다 */
     data class BestChanged(val message: String) : ViewerEvent
+
+    /** 빠진 사진을 여행에 넣었다 — 화면을 닫고 빠진 사진에서 알린다 */
+    data class Moved(val message: String) : ViewerEvent
 }
 
 /**
- * 사진 크게 보기(여행 상세에서). 그 장소의 사진을 옆으로 넘겨 본다.
- * 아래 버튼: 베스트샷으로 · 여행에서 빼기 · 공유 · 휴지통.
+ * 사진 크게 보기. 여행 상세·장소 사진에서는 그 장소의 사진을, 빠진 사진에서는 빠진 사진 전체를 옆으로 넘겨 본다.
+ * 아래 버튼은 들어온 곳에 따라: 베스트샷으로 · 여행에서 빼기 · 공유 · 휴지통 / 여행에 넣기 · 새 여행 · 공유 · 휴지통.
  */
 @HiltViewModel
 class ViewerViewModel @Inject constructor(
@@ -62,6 +76,7 @@ class ViewerViewModel @Inject constructor(
     private val place: Int = checkNotNull(savedStateHandle["place"])
     private val index: Int = checkNotNull(savedStateHandle["index"])
     private val album: Boolean = savedStateHandle["album"] ?: false
+    private val left: Boolean = savedStateHandle["left"] ?: false
 
     private val _uiState = MutableStateFlow(ViewerUiState())
     val uiState: StateFlow<ViewerUiState> = _uiState.asStateFlow()
@@ -70,6 +85,27 @@ class ViewerViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        if (left) loadLeft() else loadTrip()
+    }
+
+    /** 빠진 사진의 촬영 시각(없는 것은 빠짐) — 가까운 여행·새 여행 날짜에 쓴다 */
+    private var leftTimes: Map<MediaThumbnail, Long> = emptyMap()
+
+    private fun loadLeft() {
+        viewModelScope.launch {
+            val items = analysisRepository.leftMedia()
+            leftTimes = items.filter { it.dated }.associate { it.media to it.time }
+            val ratios = mediaRepository.aspectRatios(items.map { it.media.video to it.media.mediaId })
+            _uiState.value = ViewerUiState(
+                loaded = true,
+                items = items.map { ViewerItem(it.media, it.time.takeIf { _ -> it.dated }, ratios[it.media.video to it.media.mediaId]) },
+                startIndex = index.coerceIn(0, (items.size - 1).coerceAtLeast(0)),
+                left = true,
+            )
+        }
+    }
+
+    private fun loadTrip() {
         // 썸네일에서 사진이 날아오려면 첫 그림부터 사진이 있어야 한다 — 상세가 읽어 둔 것으로 바로 채운다
         analysisRepository.cachedTripDetail(trip)?.let { build(it, emptyMap()) }?.let { _uiState.value = it }
         viewModelScope.launch {
@@ -111,7 +147,48 @@ class ViewerViewModel @Inject constructor(
         }
     }
 
-    /** 여행에서 빼기: 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
+    /** 빠진 사진 한 장을 넣을 여행 — 가까운 여행부터 */
+    fun askAdd(item: ViewerItem) {
+        viewModelScope.launch {
+            val choices = analysisRepository.tripChoices(listOfNotNull(leftTimes[item.media]))
+            _uiState.update { it.copy(choices = choices) }
+        }
+    }
+
+    fun askNew(item: ViewerItem) {
+        viewModelScope.launch {
+            val time = leftTimes[item.media] ?: run {
+                _events.send(ViewerEvent.ShowMessage("찍은 날짜가 있는 사진이어야 여행을 만들 수 있어요"))
+                return@launch
+            }
+            val suggested = analysisRepository.suggestTripName(listOf(item.media)) ?: dateTripName(listOf(time))
+            _uiState.update { it.copy(newTrip = NewTripUi("${rangeText(listOf(time))} · 1장", suggested)) }
+        }
+    }
+
+    fun dismissPickers() = _uiState.update { it.copy(choices = null, newTrip = null) }
+
+    fun addTo(item: ViewerItem, choice: TripChoice) {
+        _uiState.update { it.copy(choices = null) }
+        viewModelScope.launch {
+            analysisRepository.addToTrip(choice.trip.number, listOf(item.media))
+            _events.send(ViewerEvent.Moved("1장을 ${tripPhrase(choice.trip.name)}에 넣었어요"))
+        }
+    }
+
+    fun makeTrip(item: ViewerItem, name: String) {
+        _uiState.update { it.copy(newTrip = null) }
+        viewModelScope.launch {
+            val made = analysisRepository.newTrip(listOf(item.media), name) != null
+            if (made) {
+                _events.send(ViewerEvent.Moved("‘$name’ 여행을 만들었어요. 여행 목록에서 볼 수 있어요"))
+            } else {
+                _events.send(ViewerEvent.ShowMessage("찍은 날짜가 있는 사진이어야 여행을 만들 수 있어요"))
+            }
+        }
+    }
+
+    /** 여행에서 빼기: 빠진 사진에 남는다 */
     fun onRemoveFromTrip(item: ViewerItem) {
         viewModelScope.launch {
             analysisRepository.excludeFromTrip(trip, item.media)

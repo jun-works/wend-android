@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import app.wend.sea.data.AnalysisSummary
+import app.wend.sea.data.LibraryItem
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import app.wend.sea.data.local.TripMediaEntity
 import app.wend.sea.data.local.UserNameEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.ZoneId
 import java.util.Locale
@@ -40,6 +42,9 @@ data class Trip(
     val city: String? = null,
     val userName: String? = null,
 )
+
+/** 여행에 넣기 후보: 여행과, 고른 사진과의 날짜 차이 */
+data class TripChoice(val trip: Trip, val gapDays: Int?)
 
 /** 여행 상세: 장소들과, 장소마다 자동 이름(가장 가까운 도시의 사용자 언어 이름, 없으면 null)과 사용자가 바꾼 이름 */
 data class TripDetail(val trip: Trip, val places: List<Place>, val placeCities: List<String?>, val placeUserNames: List<String?>)
@@ -230,9 +235,94 @@ class AnalysisRepository @Inject constructor(
         tripDao.replaceBestShots(scene?.photos?.map { it.mediaId } ?: listOf(media.mediaId), listOf(media.mediaId))
     }
 
-    /** 사진 한 장을 여행에서 뺀다. 다시 분석해도 넣지 않고, 빠진 사진에 남는다 */
+    /** 사진 한 장을 여행에서 뺀다. 빠진 사진에 남는다 */
     suspend fun excludeFromTrip(number: Int, media: MediaThumbnail) =
         tripDao.removeFromTrip(number, media.mediaId, media.video, exclude = true)
+
+    /** 여행에 담기지 않은 사진·영상 전체(캡처 포함). 촬영 시각이 있는 것을 최신순으로, 그 뒤에 촬영 시각이 없는 것 */
+    suspend fun leftMedia(): List<LibraryItem> {
+        val inTrips = tripDao.allMedia().map { it.video to it.mediaId }.toSet()
+        return mediaRepository.library().filter { (it.media.video to it.media.mediaId) !in inTrips }
+            .sortedWith(compareByDescending<LibraryItem> { it.dated }.thenByDescending { it.time })
+    }
+
+    /**
+     * 고른 사진과 기간이 가까운 여행부터 — [TripChoice.gapDays] 는 여행 기간과 사진 날짜 사이 날 수(겹치면 0).
+     * [times] 가 비면(촬영 시각이 없는 사진만 고름) 가까운지 알 수 없어 최근 여행부터, 날짜 차이 없이.
+     */
+    suspend fun tripChoices(times: List<Long>): List<TripChoice> {
+        if (times.isEmpty()) return trips().sortedByDescending { it.start }.map { TripChoice(it, null) }
+        val zone = ZoneId.systemDefault()
+        fun day(t: Long) = java.time.Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
+        val first = day(times.min())
+        val last = day(times.max())
+        return trips().map { t ->
+            val s = day(t.start)
+            val e = day(t.end)
+            val gap = when {
+                last < s -> java.time.temporal.ChronoUnit.DAYS.between(last, s)
+                first > e -> java.time.temporal.ChronoUnit.DAYS.between(e, first)
+                else -> 0L
+            }
+            TripChoice(t, gap.toInt())
+        }.sortedBy { it.gapDays ?: 0 }
+    }
+
+    /** 새 여행 이름 제안: 사진에 위치가 있으면 가장 많이 찍은 도시, 없으면 null(화면이 날짜로 짓는다) */
+    suspend fun suggestTripName(media: List<MediaThumbnail>): String? {
+        val locale = locale()
+        return mediaRepository.points(media.map { it.video to it.mediaId })
+            .mapNotNull { p -> if (p.latitude == null || p.longitude == null) null else cityFinder.nearestCity(p.latitude, p.longitude, locale)?.name }
+            .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+    }
+
+    /** 빠진 사진을 [number] 여행에 넣는다. 뺐던 사진이면 뺀 기록을 지운다 */
+    suspend fun addToTrip(number: Int, media: List<MediaThumbnail>) {
+        val anchor = tripDao.media(number).firstOrNull()?.let { it.video to it.mediaId } ?: return
+        media.forEach { tripDao.unexclude(it.mediaId, it.video) }
+        rebuildTrips(media.map { ManualPin(it.video to it.mediaId, anchor) })
+    }
+
+    /** 빠진 사진으로 새 여행을 만든다. 만든 여행 번호, 촬영 시각이 있는 사진이 없어 만들 수 없으면 null */
+    suspend fun newTrip(media: List<MediaThumbnail>, name: String?): Int? {
+        val anchor = media.firstOrNull()?.let { it.video to it.mediaId } ?: return null
+        media.forEach { tripDao.unexclude(it.mediaId, it.video) }
+        rebuildTrips(media.map { ManualPin(it.video to it.mediaId, anchor) })
+        val number = tripDao.allMedia().firstOrNull { (it.video to it.mediaId) == anchor }?.tripNumber ?: return null
+        if (!name.isNullOrBlank()) renameTrip(number, name.trim())
+        return number
+    }
+
+    /**
+     * 지금 여행들에 빠진 사진 [pins] 를 얹고 번호를 시작 순서로 다시 매긴다(다시 찾지 않음).
+     * 사진이 그대로인 여행은 도시도 그대로 쓰고, 바뀐 여행만 다시 고른다.
+     */
+    private suspend fun rebuildTrips(pins: List<ManualPin>) {
+        val entities = tripDao.trips()
+        val media = tripDao.allMedia().groupBy { it.tripNumber }
+        val keys = (media.values.flatten().map { it.video to it.mediaId } + pins.map { it.key }).distinct()
+        val points = mediaRepository.points(keys).associateBy { it.video to it.id }
+        // 휴지통에 있는 사진은 보이지 않아도 여행에 남긴다(되살리면 돌아오게) — 시각 없이 제자리에
+        val current = entities.map { e ->
+            val members = media[e.number].orEmpty().map { m -> points[m.video to m.mediaId] ?: MediaPoint(m.mediaId, m.video, null, null, null) }
+            DetectedTrip(e.start, e.end, members)
+        }
+        val trips = withContext(Dispatchers.Default) { ManualTrips.apply(current, pins, points) }
+        val before = entities.associateBy { e -> media[e.number].orEmpty().map { it.video to it.mediaId }.toSet() }
+        val rows = trips.mapIndexed { i, t ->
+            val old = before[t.media.map { it.video to it.id }.toSet()]
+            if (old != null) {
+                old.copy(number = i + 1, start = t.start, end = t.end, mediaCount = t.media.size)
+            } else {
+                val city = cityPicker.pick(t.media)
+                TripEntity(i + 1, t.start, t.end, t.media.size, city.cityId, city.share, city.countryCode)
+            }
+        }
+        tripDao.replaceAll(rows, trips.flatMapIndexed { i, t -> t.media.map { TripMediaEntity(i + 1, it.id, it.video) } })
+        userRepository.analysisSummary.first()?.let { s ->
+            userRepository.saveAnalysisSummary(s.copy(included = trips.sumOf { it.media.size }, tripCount = trips.size))
+        }
+    }
 
     /** 여행 이름을 바꾼다. null 이면 자동 이름으로 돌아간다 */
     suspend fun renameTrip(number: Int, name: String?) {

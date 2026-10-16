@@ -39,7 +39,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.AddLocationAlt
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.LibraryAdd
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.StarOutline
@@ -103,6 +105,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
 import app.wend.sea.core.designsystem.theme.Surface
+import app.wend.sea.feature.left.AddToTripSheet
+import app.wend.sea.feature.left.NewTripDialog
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.SingletonImageLoader
@@ -122,8 +126,9 @@ private val TitleStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = Font
 private val DateTimeFormat = DateTimeFormatter.ofPattern("yyyy년 M월 d일 a h:mm", Locale.KOREAN)
 
 /**
- * 시안 ⑱ 사진 크게 보기(여행 상세에서 열림). 옆으로 넘겨 그 장소의 사진을 보고, 두 번 탭·두 손가락으로 확대한다.
- * 위: 날짜·시간 + 장소(그날 색 점), 아래: "n / N" + 베스트샷으로 · 여행에서 빼기 · 공유 · 휴지통.
+ * 시안 ⑱ 사진 크게 보기(공통). 옆으로 넘겨 보고, 두 번 탭·두 손가락으로 확대한다.
+ * 위: 날짜·시간 + 장소(그날 색 점), 아래: "n / N" + 들어온 곳에 따라
+ * 베스트샷으로 · 여행에서 빼기 · 공유 · 휴지통(여행) / 여행에 넣기 · 새 여행 · 공유 · 휴지통(빠진 사진).
  */
 @Composable
 fun ViewerScreen(
@@ -153,6 +158,10 @@ fun ViewerScreen(
                 }
                 ViewerEvent.Removed -> {
                     currentOnTripChanged("여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요")
+                    currentOnBack()
+                }
+                is ViewerEvent.Moved -> {
+                    currentOnTripChanged(event.message)
                     currentOnBack()
                 }
             }
@@ -233,6 +242,16 @@ fun ViewerScreen(
                 modifier = chrome.fillMaxWidth().navigationBarsPadding().padding(top = 6.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
+                if (uiState.left) {
+                    ViewerAction(Icons.Outlined.LibraryAdd, "여행에 넣기") {
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                        viewModel.askAdd(current)
+                    }
+                    ViewerAction(Icons.Outlined.AddLocationAlt, "새 여행") {
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                        viewModel.askNew(current)
+                    }
+                } else {
                 val isBest = !current.media.video && current.media.mediaId in uiState.best
                 ViewerAction(
                     if (isBest) Icons.Rounded.Star else Icons.Outlined.StarOutline,
@@ -252,6 +271,7 @@ fun ViewerScreen(
                         viewModel.onRemoveFromTrip(item)
                     }
                 }
+                }
                 ViewerAction(Icons.Outlined.Share, "공유") {
                     val intent = Intent(Intent.ACTION_SEND)
                         .setType(if (current.media.video) "video/*" else "image/*")
@@ -268,6 +288,14 @@ fun ViewerScreen(
             }
         }
         SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 96.dp))
+
+        val target = current
+        uiState.choices?.let { choices ->
+            AddToTripSheet(count = 1, choices = choices, onPick = { viewModel.addTo(target, it) }, onDismiss = viewModel::dismissPickers)
+        }
+        uiState.newTrip?.let { nt ->
+            NewTripDialog(context = nt.context, suggested = nt.suggested, onMake = { viewModel.makeTrip(target, it) }, onDismiss = viewModel::dismissPickers)
+        }
     }
 }
 
@@ -310,9 +338,12 @@ private fun ViewerTopBar(item: ViewerItem, placeName: String, day: Int, onBack: 
             item.takenAt?.let {
                 Text(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(DateTimeFormat), style = TitleStyle, color = ViewerInk)
             }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
-                Box(Modifier.size(8.dp).background(dayTextColor(day), CircleShape))
-                Text(placeName, style = MaterialTheme.typography.bodySmall, color = ViewerSub, modifier = Modifier.padding(start = 4.dp))
+            // 빠진 사진에는 장소가 없다
+            if (placeName.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+                    Box(Modifier.size(8.dp).background(dayTextColor(day), CircleShape))
+                    Text(placeName, style = MaterialTheme.typography.bodySmall, color = ViewerSub, modifier = Modifier.padding(start = 4.dp))
+                }
             }
         }
     }

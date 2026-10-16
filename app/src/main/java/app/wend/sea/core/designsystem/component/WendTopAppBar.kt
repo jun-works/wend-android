@@ -1,5 +1,7 @@
 package app.wend.sea.core.designsystem.component
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,12 +33,16 @@ fun WendTopAppBar(
     modifier: Modifier = Modifier,
     title: @Composable RowScope.() -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    /** 선택 모드 등에서 ✕ 로 바꿀 때 */
+    backIcon: ImageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+    backLabel: String = "뒤로",
+    containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     val colors = MaterialTheme.colorScheme
     Box(
         modifier
             .fillMaxWidth()
-            .background(colors.surface)
+            .background(containerColor)
             .statusBarsPadding(),
     ) {
         Row(
@@ -47,7 +53,7 @@ fun WendTopAppBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "뒤로", tint = colors.onSurfaceVariant)
+                Icon(backIcon, contentDescription = backLabel, tint = colors.onSurfaceVariant)
             }
             CompositionLocalProvider(LocalContentColor provides colors.onSurface) {
                 ProvideTextStyle(MaterialTheme.typography.titleLarge) {

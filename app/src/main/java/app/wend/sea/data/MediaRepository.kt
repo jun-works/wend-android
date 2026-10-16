@@ -21,6 +21,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.coroutineContext
 
+/** 기기의 사진·영상 한 개. [time] 은 촬영 시각(ms), 모르면 수정 시각. [dated] 는 촬영 시각이 있는지 */
+data class LibraryItem(val media: MediaThumbnail, val time: Long, val dated: Boolean)
+
 data class MediaCounts(val photos: Int, val videos: Int)
 
 /** 위치 읽기 진행: [done] / [total] 개를 봤고 그중 [withLocation] 개에 위치가 있다 */
@@ -145,6 +148,11 @@ class MediaRepository @Inject constructor(
                 buildList { while (cursor.moveToNext()) add(cursor.getLong(0) to cursor.getLong(1)) }
             } ?: emptyList()
         }.toMap()
+    }
+
+    /** 볼 수 있는 사진·영상 전체(캡처 포함) — 빠진 사진 목록용. [LibraryItem.time] 은 촬영 시각, 없으면 수정 시각 */
+    suspend fun library(): List<LibraryItem> = withContext(Dispatchers.IO) {
+        allItems().map { LibraryItem(MediaThumbnail(it.id, it.video), it.takenAt ?: it.modified * 1000, it.takenAt != null) }
     }
 
     /** 볼 수 있는 사진·영상 전체 수(캡처 포함) — "N개 중 M개가 여행에 담겼어요" 의 N */

@@ -27,6 +27,8 @@ import app.wend.sea.core.designsystem.component.AlbumUnfold
 import app.wend.sea.core.designsystem.component.LocalNavAnimatedScope
 import app.wend.sea.core.designsystem.component.LocalSharedTransitionScope
 import app.wend.sea.core.designsystem.component.PhotoEasing
+import app.wend.sea.feature.left.LeftScreen
+import app.wend.sea.feature.left.LeftViewModel
 import app.wend.sea.feature.trip.BestShotScreen
 import app.wend.sea.feature.trip.CleanUpScreen
 import app.wend.sea.feature.trip.PlacePhotosScreen
@@ -81,7 +83,9 @@ import kotlinx.serialization.Serializable
 /** [x]·[y] 는 상세가 퍼져 나올 카드 방울 중심(화면 좌표), 없으면 -1 */
 @Serializable data class TripRoute(val number: Int, val x: Float = -1f, val y: Float = -1f)
 /** [album] 이면 장소 사진 화면에서 열었다 */
-@Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int, val album: Boolean = false)
+@Serializable data class ViewerRoute(val trip: Int, val place: Int, val index: Int, val album: Boolean = false, val left: Boolean = false)
+/** 시안 ⑰ 빠진 사진 */
+@Serializable data object LeftRoute
 /** [x]·[y]·[w]·[h] 는 앨범이 펼쳐질 `+N / 전체 보기` 타일 자리(화면 좌표), 없으면 -1 */
 @Serializable data class PlacePhotosRoute(val trip: Int, val place: Int, val x: Float = -1f, val y: Float = -1f, val w: Float = -1f, val h: Float = -1f)
 @Serializable data object LicensesRoute
@@ -205,6 +209,16 @@ fun WendNavHost() {
                 onTripClick = { number, origin -> navController.navigate(TripRoute(number, origin.x, origin.y)) },
                 // 설정 화면이 생기기 전까지는 라이선스로 바로 간다
                 onSettingsClick = { navController.navigate(LicensesRoute) },
+                onLeftClick = { navController.navigate(LeftRoute) },
+            )
+        }
+        composable<LeftRoute> { entry ->
+            val viewModel: LeftViewModel = hiltViewModel()
+            entry.OnResult<String>(LeftViewModel.VIEWER_RESULT) { viewModel.onResult(it) }
+            LeftScreen(
+                onBack = { navController.popBackStack() },
+                onOpen = { index -> navController.navigate(ViewerRoute(trip = 0, place = 0, index = index, left = true)) },
+                viewModel = viewModel,
             )
         }
         composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
@@ -305,12 +319,17 @@ fun WendNavHost() {
             // 시안 ㉑: 배경은 280ms 에 어두워지고 걷히며, 사진은 썸네일 자리에서 400ms 동안 자라고 돌아간다(sharedPhoto)
             enterTransition = { fadeIn(tween(280, easing = PhotoEasing)) },
             popExitTransition = { fadeOut(tween(280, easing = PhotoEasing)) },
-        ) {
+        ) { entry ->
+            val fromLeft = entry.toRoute<ViewerRoute>().left
             CompositionLocalProvider(LocalNavAnimatedScope provides this) {
                 ViewerScreen(
                     onBack = { navController.popBackStack() },
                     onTripChanged = { message ->
                         val previous = navController.previousBackStackEntry
+                        if (fromLeft) {
+                            previous?.savedStateHandle?.set(LeftViewModel.VIEWER_RESULT, message)
+                            return@ViewerScreen
+                        }
                         previous?.savedStateHandle?.set(TripDetailViewModel.VIEWER_RESULT, message)
                         // 장소 사진에서 열었으면 그 아래 상세도 조용히 다시 읽는다(안내는 장소 사진에서)
                         val trip = runCatching { navController.getBackStackEntry<TripRoute>() }.getOrNull()

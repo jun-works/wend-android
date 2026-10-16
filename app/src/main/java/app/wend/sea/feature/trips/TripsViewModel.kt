@@ -86,12 +86,6 @@ class TripsViewModel @Inject constructor(
         }
     }
 
-    fun onLeftClick() = comingSoon("빠진 사진")
-
-    private fun comingSoon(what: String) {
-        _events.trySend(TripsEvent.ShowMessage("다음 단계($what)는 곧 이어서 만들어요"))
-    }
-
     /** 권한 안내창 결과: 모두 허용이 되면 처음부터 다시 찾는다 */
     fun onRequestResult(access: MediaAccess, showRationale: Boolean) {
         viewModelScope.launch {
@@ -101,12 +95,15 @@ class TripsViewModel @Inject constructor(
     }
 
     /** 설정에서 돌아옴 · 화면 복귀 */
-    /** 상세에서 이름을 바꾸고 돌아왔을 때 등 — 여행 목록만 다시 읽는다 */
+    /** 상세·빠진 사진에서 돌아왔을 때 — 여행 목록을 다시 읽는다 */
     fun refreshTrips() {
         if (!_uiState.value.loaded) return
         viewModelScope.launch {
             val trips = analysisRepository.trips()
-            _uiState.update { it.copy(trips = trips) }
+            // 빠진 사진에서 넣거나 새 여행을 만들고 오면 대표 사진·요약도 바뀐다
+            val covers = analysisRepository.covers()
+            val summary = analysisRepository.summary.firstOrNull()
+            _uiState.update { it.copy(trips = trips, covers = covers, summary = summary) }
         }
     }
 

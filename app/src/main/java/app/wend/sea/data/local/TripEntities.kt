@@ -34,8 +34,8 @@ data class TripMediaEntity(
 )
 
 /**
- * 사용자가 붙인 이름. 여행·장소는 분석할 때마다 새로 묶이므로 이름을 그 안의 사진·영상 하나하나에 붙여 둔다 —
- * 다시 찾아도 같은 사진들이 모인 여행·장소는 그 이름을 되찾는다. [kind] 는 [KIND_TRIP] 또는 [KIND_PLACE].
+ * 사용자가 붙인 이름. 이름을 여행·장소 안의 사진·영상 하나하나에 붙여 두고, 보여 줄 때 가장 많은 이름을 쓴다.
+ * 처음부터 다시 찾으면 지운다. [kind] 는 [KIND_TRIP] 또는 [KIND_PLACE].
  */
 @Entity(tableName = "user_name", primaryKeys = ["mediaId", "video", "kind"])
 data class UserNameEntity(
@@ -51,14 +51,13 @@ data class UserNameEntity(
 }
 
 /**
- * 사용자가 "여행에서 빼기"로 뺀 사진·영상. 다시 분석해도 여행에 넣지 않는다(빠진 사진에 남음).
- * 나중에 빠진 사진에서 여행에 다시 넣으면 이 줄을 지운다.
+ * 사용자가 "여행에서 빼기"로 뺀 사진·영상. 빠진 사진에서 다시 넣으면 이 줄을 지우고, 처음부터 다시 찾으면 모두 지운다.
  */
 @Entity(tableName = "excluded_media", primaryKeys = ["mediaId", "video"])
 data class ExcludedMediaEntity(val mediaId: Long, val video: Boolean)
 
 /**
- * 사용자가 고른 베스트샷(사진만) — design/BEST_SHOT.md. 같은 장면 묶음마다 한 장. 다시 분석해도 그대로 둔다.
+ * 사용자가 고른 베스트샷(사진만) — design/BEST_SHOT.md. 같은 장면 묶음마다 한 장. 처음부터 다시 찾으면 지운다.
  * 장면은 화면을 열 때마다 계산하므로, 사진 id 만 저장하고 장면에는 묶지 않는다.
  */
 @Entity(tableName = "best_shot", primaryKeys = ["mediaId"])
@@ -126,8 +125,25 @@ interface TripDao {
     @Upsert
     suspend fun exclude(media: ExcludedMediaEntity)
 
-    @Query("SELECT * FROM excluded_media")
-    suspend fun excluded(): List<ExcludedMediaEntity>
+    @Query("DELETE FROM excluded_media WHERE mediaId = :mediaId AND video = :video")
+    suspend fun unexclude(mediaId: Long, video: Boolean)
+
+    @Query("DELETE FROM excluded_media")
+    suspend fun clearExcluded()
+
+    @Query("DELETE FROM best_shot")
+    suspend fun clearBestShots()
+
+    @Query("DELETE FROM user_name")
+    suspend fun clearNames()
+
+    /** 처음부터 다시 찾기: 사용자가 고친 것(뺀 사진 · 베스트샷 · 이름)을 모두 지운다. 넣은 사진·만든 여행은 여행과 함께 새로 찾는다 */
+    @Transaction
+    suspend fun resetUserChoices() {
+        clearExcluded()
+        clearBestShots()
+        clearNames()
+    }
 
     @Query("DELETE FROM trip_media WHERE tripNumber = :tripNumber AND mediaId = :mediaId AND video = :video")
     suspend fun deleteTripMedia(tripNumber: Int, mediaId: Long, video: Boolean): Int
@@ -135,7 +151,7 @@ interface TripDao {
     @Query("UPDATE trip SET mediaCount = mediaCount - 1 WHERE number = :number")
     suspend fun decrementCount(number: Int)
 
-    /** 사진 한 장을 여행에서 덜어 낸다(여행에서 빼기). [exclude] 면 다시 분석해도 넣지 않는다. 휴지통은 여기를 쓰지 않는다 — 되살리면 돌아와야 해서 */
+    /** 사진 한 장을 여행에서 덜어 낸다(여행에서 빼기). 휴지통은 여기를 쓰지 않는다 — 되살리면 돌아와야 해서 */
     @Transaction
     suspend fun removeFromTrip(tripNumber: Int, mediaId: Long, video: Boolean, exclude: Boolean) {
         if (exclude) exclude(ExcludedMediaEntity(mediaId, video))

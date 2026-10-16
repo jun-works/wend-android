@@ -201,8 +201,8 @@ fun TripDetailScreen(
                 faded = true
             }
             val contentAlpha = fadeIn.value
-            // 지도는 위에 고정
-            TripMap(
+            // 지도는 위에 고정. 위치가 하나도 없는 여행(빠진 사진으로 만든 여행)은 지도를 숨긴다
+            if (places.any { it.x != null && it.y != null }) TripMap(
                 places = places,
                 lonScale = uiState.lonScale,
                 loadArea = viewModel::mapArea,

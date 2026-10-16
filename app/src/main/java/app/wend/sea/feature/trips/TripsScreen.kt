@@ -123,6 +123,8 @@ fun TripsScreen(
     /** [origin] 은 카드 색 방울의 화면 좌표 — 상세가 그 방울에서 퍼져 나온다 */
     onTripClick: (number: Int, origin: Offset) -> Unit,
     onSettingsClick: () -> Unit,
+    /** 여행에 담기지 않은 사진 */
+    onLeftClick: () -> Unit,
     viewModel: TripsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -265,7 +267,7 @@ fun TripsScreen(
                     item(key = "left") {
                         LeftOutRow(uiState.leftCount, onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                            viewModel.onLeftClick()
+                            onLeftClick()
                         })
                     }
                 }

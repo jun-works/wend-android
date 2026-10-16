@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [MediaLocationEntity::class, TripEntity::class, TripMediaEntity::class, UserNameEntity::class, ExcludedMediaEntity::class, MediaFeatureEntity::class, BestShotEntity::class],
-    version = 10,
+    version = 12,
     exportSchema = false,
 )
 abstract class WendDatabase : RoomDatabase() {
@@ -84,6 +84,20 @@ abstract class WendDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP TABLE IF EXISTS `media_feature`")
                 db.execSQL(CREATE_MEDIA_FEATURE)
+            }
+        }
+
+        /** 10 → 11: 빠진 사진에서 직접 넣은 사진 */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `manual_media` (`mediaId` INTEGER NOT NULL, `video` INTEGER NOT NULL, `anchorId` INTEGER NOT NULL, `anchorVideo` INTEGER NOT NULL, PRIMARY KEY(`mediaId`, `video`))")
+            }
+        }
+
+        /** 11 → 12: 처음부터 다시 찾기는 초기화 — 넣은 사진을 따로 기억하지 않는다(개발 빌드에만 있던 표) */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `manual_media`")
             }
         }
     }

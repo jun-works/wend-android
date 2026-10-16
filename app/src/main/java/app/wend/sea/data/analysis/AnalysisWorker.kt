@@ -53,14 +53,9 @@ class AnalysisWorker @AssistedInject constructor(
         }
 
         report(AnalysisPhase.Grouping, points.size, points.size)
-        // 사용자가 여행에서 뺀 사진은 다시 넣지 않는다
-        val excluded = tripDao.excluded().map { it.video to it.mediaId }.toSet()
-        val trips = withContext(Dispatchers.Default) {
-            TripDetector().detect(points)
-                .map { t -> t.copy(media = t.media.filter { (it.video to it.id) !in excluded }) }
-                .filter { t -> t.media.any { it.takenAt != null } }
-                .map { t -> t.copy(start = t.media.mapNotNull { it.takenAt }.min(), end = t.media.mapNotNull { it.takenAt }.max()) }
-        }
+        // 여행 찾기는 언제나 처음부터 — 사용자가 고친 것(뺀 사진 · 넣은 사진 · 만든 여행 · 베스트샷 · 이름)은 지우고 정책대로 찾는다
+        tripDao.resetUserChoices()
+        val trips = withContext(Dispatchers.Default) { TripDetector().detect(points) }
         val cities = trips.map { cityPicker.pick(it.media) }
 
         tripDao.replaceAll(
