@@ -1,5 +1,6 @@
 package app.wend.sea.core.designsystem.component
 
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,7 +31,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 const val ALBUM_DOT_COUNT = 280
-private const val FRAME_INTERVAL_NS = 1_000_000_000L / 60 - 2_000_000L // vsync 오차 여유
 private val Paper = floatArrayOf(246f, 241f, 233f)
 private val Ghost = floatArrayOf(214f, 202f, 185f)
 private val Ink = floatArrayOf(58f, 50f, 43f)
@@ -100,6 +100,9 @@ private class AlbumSim(seed: Long) {
         wave = if (animate) -.12f else 2f
     }
 
+    /** 채워지는 중이거나 흩어진 방울이 모이는 중 */
+    val busy: Boolean get() = wave < 2f || scatter > .01f
+
     fun tick(dt: Float) {
         t += dt
         rot += dt * .3f
@@ -160,6 +163,8 @@ fun AlbumGlobe(
     size: Dp,
     description: String,
     modifier: Modifier = Modifier,
+    /** 채워지거나 흩어지지 않고 혼자 돌 때 초당 그리는 횟수 — 발열을 줄일 화면에서 낮춘다 */
+    idleFps: Int = 60,
 ) {
     val sim = remember { AlbumSim(seed = 11) }
     val reducedMotion = rememberReducedMotion()
@@ -173,12 +178,14 @@ fun AlbumGlobe(
         var last = 0L
         while (true) {
             withFrameNanos { now ->
-                if (last != 0L && now - last < FRAME_INTERVAL_NS) return@withFrameNanos
                 val dt = if (last == 0L) .016f else min(.05f, (now - last) / 1e9f)
                 last = now
                 sim.tick(dt)
                 frame = now
             }
+            // 다음 그릴 때까지 화면 갱신(120Hz)마다 깨어나지 않고 쉰다 — 깨어나는 것만으로도 CPU 를 쓴다.
+            // 채워지는 동안·흩어진 뒤 모이는 동안은 60fps, 혼자 돌 때는 idleFps
+            delay((1000L / if (sim.busy) 60 else idleFps - 4).coerceAtLeast(1))
         }
     }
 

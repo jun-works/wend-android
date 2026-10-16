@@ -142,6 +142,8 @@ fun SettingsScreen(
                     },
                     size = 64.dp,
                     description = "앨범 지구본. 볼 수 있는 사진만큼 진하게 채워져 있어요",
+                    // 64dp 라 혼자 천천히 돌 때는 한 프레임에 1px 도 안 움직인다 — 초당 15번이면 충분하다(발열)
+                    idleFps = 15,
                 )
                 Column(Modifier.weight(1f)) {
                     Text("${uiState.nickname}님", style = NameStyle, color = colors.onSurface)
