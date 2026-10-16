@@ -18,7 +18,7 @@ Wend suggests blurry, too-dark and near-duplicate photos you may not need. Nothi
 Missed a few photos? Add them to any trip, or make a new trip yourself.
 
 ◆ PRIVATE BY DESIGN
-• Everything runs on your phone. Your photos are never uploaded.
+• Your photos are never uploaded.
 • Wend never deletes a photo without your say.
 • Clearing Wend's data never touches the photos on your device.
 
