@@ -2,9 +2,11 @@ package app.wend.sea.feature.guide
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.Bot
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.UserRepository
-import app.wend.sea.feature.globe.DEFAULT_NICKNAME
+import app.wend.sea.feature.globe.defaultNickname
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -70,20 +72,20 @@ class GuideViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     private val allReplies = listOf(
-        QuickReply("빠진 사진은 지워지나요?", Bot.Tick, "아니요! 직접 고르기 전에는 사진을 지우거나 옮기지 않아요. 여행 정리에서만 빠지는 거예요."),
-        QuickReply("위치는 어떻게 남겨요?", Bot.Pin, "카메라 앱 설정에서 **위치 태그**를 켜 두면 여행을 더 정확하게 찾아요."),
-        QuickReply("영상도 똑같아요?", Bot.Tick, "네, 영상도 사진과 똑같아요."),
+        QuickReply(AppText.string(R.string.guide_q_deleted), Bot.Tick, AppText.string(R.string.guide_a_deleted)),
+        QuickReply(AppText.string(R.string.guide_q_location), Bot.Pin, AppText.string(R.string.guide_a_location)),
+        QuickReply(AppText.string(R.string.guide_q_video), Bot.Tick, AppText.string(R.string.guide_a_video)),
     )
     private val usedReplies = mutableSetOf<QuickReply>()
 
-    private var nickname = DEFAULT_NICKNAME
+    private var nickname = defaultNickname
     private var playJob: Job? = null
     private var nextId = 0
     private var lastBot: Bot? = null
 
     init {
         viewModelScope.launch {
-            nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME
+            nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: defaultNickname
             play()
         }
     }
@@ -123,12 +125,12 @@ class GuideViewModel @Inject constructor(
     }
 
     private fun script() = listOf(
-        Line(Bot.Tick, "${nickname}님, 반가워요! 저는 사진이 **언제** 찍혔는지 읽는 틱이에요."),
-        Line(Bot.Pin, "저는 **어디서** 찍혔는지 읽는 핀이고요. 둘이 힘을 합쳐서 사진을 여행별로 묶어 드려요."),
-        Line(Bot.Tick, "시작하기 전에 꼭 알려 드릴 게 하나 있어요."),
-        Line(Bot.Pin, "사진과 영상 안에는 보통 **촬영 시간**과 **위치**가 같이 저장돼요. 저희는 그걸 보고 여행을 찾아요."),
-        Line(Bot.Tick, "그래서 시간이나 위치 정보가 없는 사진·영상은 **여행에 담기지 않을 수 있어요.**", isKey = true),
-        Line(Bot.Pin, "예를 들면 이렇게요.", withExampleCard = true),
+        Line(Bot.Tick, AppText.string(R.string.guide_line_1, nickname)),
+        Line(Bot.Pin, AppText.string(R.string.guide_line_2)),
+        Line(Bot.Tick, AppText.string(R.string.guide_line_3)),
+        Line(Bot.Pin, AppText.string(R.string.guide_line_4)),
+        Line(Bot.Tick, AppText.string(R.string.guide_line_5), isKey = true),
+        Line(Bot.Pin, AppText.string(R.string.guide_line_6), withExampleCard = true),
     )
 
     // 입력 중 표시 → 글자 수에 비례해 기다렸다가 → 말풍선

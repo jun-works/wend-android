@@ -3,12 +3,15 @@ package app.wend.sea.feature.left
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.tripColor
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.LibraryItem
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.TripChoice
 import app.wend.sea.feature.analysis.name
+import app.wend.sea.feature.analysis.photoCount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +23,6 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.TextStyle
-import java.util.Locale
 import javax.inject.Inject
 
 /** 찍은 날짜 하나: "6월 20일 토요일" · 2026 · 장수. [date] 가 null 이면 촬영 시각이 없는 사진·영상 묶음(맨 끝) */
@@ -79,7 +80,7 @@ class LeftViewModel @Inject constructor(
             val (dated, undated) = items.partition { it.dated }
             val days = dated.groupBy { Instant.ofEpochMilli(it.time).atZone(zone).toLocalDate() }
                 .map { (date, list) -> LeftDayUi(date, dayLabel(date), list) } +
-                listOfNotNull(undated.takeIf { it.isNotEmpty() }?.let { LeftDayUi(null, "날짜 정보 없음", it) })
+                listOfNotNull(undated.takeIf { it.isNotEmpty() }?.let { LeftDayUi(null, AppText.string(R.string.left_no_date), it) })
             _uiState.update { it.copy(loaded = true, days = days, total = items.size) }
         }
     }
@@ -114,11 +115,11 @@ class LeftViewModel @Inject constructor(
             val picked = _uiState.value.selected.toList()
             val times = selectedTimes()
             if (times.isEmpty()) {
-                _messages.send("찍은 날짜가 있는 사진이 있어야 여행을 만들 수 있어요")
+                _messages.send(AppText.string(R.string.needs_dated_photo))
                 return@launch
             }
             val suggested = analysisRepository.suggestTripName(picked) ?: dateTripName(times)
-            _uiState.update { it.copy(newTrip = NewTripUi("${rangeText(times)} · ${picked.size}장", suggested)) }
+            _uiState.update { it.copy(newTrip = NewTripUi("${rangeText(times)} · ${photoCount(picked.size)}", suggested)) }
         }
     }
 
@@ -128,7 +129,7 @@ class LeftViewModel @Inject constructor(
         val picked = _uiState.value.selected.toList()
         pending = {
             analysisRepository.addToTrip(choice.trip.number, picked)
-            "${picked.size}장을 ${tripPhrase(choice.trip.name)}에 넣었어요"
+            AppText.plural(R.plurals.added_to_trip, picked.size, picked.size, tripPhrase(choice.trip.name))
         }
         _uiState.update { it.copy(choices = null, flight = FlightUi(picked, tripColor(choice.trip.number))) }
     }
@@ -141,9 +142,9 @@ class LeftViewModel @Inject constructor(
             val number = analysisRepository.trips().count { it.start < start } + 1
             pending = {
                 if (analysisRepository.newTrip(picked, name) != null) {
-                    "‘$name’ 여행을 만들었어요. 여행 목록에서 볼 수 있어요"
+                    AppText.string(R.string.trip_created, name)
                 } else {
-                    "찍은 날짜가 있는 사진이 있어야 여행을 만들 수 있어요"
+                    AppText.string(R.string.needs_dated_photo)
                 }
             }
             _uiState.update { it.copy(newTrip = null, flight = FlightUi(picked, tripColor(number))) }
@@ -169,5 +170,5 @@ class LeftViewModel @Inject constructor(
     }
 
     private fun dayLabel(date: LocalDate): String =
-        "${date.monthValue}월 ${date.dayOfMonth}일 ${date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)}"
+        date.format(AppText.dateFormat(R.string.pattern_month_day_weekday))
 }

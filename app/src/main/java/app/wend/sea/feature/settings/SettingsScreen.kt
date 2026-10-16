@@ -58,6 +58,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -70,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.ALBUM_DOT_COUNT
 import app.wend.sea.core.designsystem.component.AlbumGlobe
 import app.wend.sea.core.designsystem.component.Bot
@@ -81,6 +84,7 @@ import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
 import app.wend.sea.core.designsystem.theme.IncludedGreen
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.feature.analysis.ReanalyzeDialog
 import app.wend.sea.feature.analysis.formatCount
@@ -122,7 +126,7 @@ fun SettingsScreen(
     var dialog by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize().background(colors.surface)) {
-        WendTopAppBar(onBack = onBack, title = { Text("설정") })
+        WendTopAppBar(onBack = onBack, title = { Text(stringResource(R.string.settings)) })
         if (!uiState.loaded) return@Column
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).navigationBarsPadding().padding(top = 4.dp, bottom = 32.dp)) {
             // 시안 .pf-me
@@ -142,29 +146,30 @@ fun SettingsScreen(
                         MediaAccess.None -> 0
                     },
                     size = 64.dp,
-                    description = "앨범 지구본. 볼 수 있는 사진만큼 진하게 채워져 있어요",
+                    description = stringResource(R.string.settings_globe_description),
                     // 64dp 라 혼자 천천히 돌 때는 한 프레임에 1px 도 안 움직인다 — 초당 15번이면 충분하다(발열)
                     idleFps = 15,
                 )
                 Column(Modifier.weight(1f)) {
-                    Text("${uiState.nickname}님", style = NameStyle, color = colors.onSurface)
+                    Text(stringResource(R.string.settings_name, uiState.nickname), style = NameStyle, color = colors.onSurface)
                     Text(
-                        "사진·영상 ${formatCount(uiState.mediaCount)}개 · 여행 ${uiState.tripCount}개",
+                        pluralStringResource(R.plurals.count_media, uiState.mediaCount, formatCount(uiState.mediaCount)) + " · " +
+                            pluralStringResource(R.plurals.count_trips, uiState.tripCount, formatCount(uiState.tripCount)),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp),
                     )
                 }
                 IconButton(onClick = { dialog = NAME }) {
-                    Icon(Icons.Outlined.Edit, contentDescription = "닉네임 바꾸기", tint = colors.onSurfaceVariant)
+                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.change_nickname), tint = colors.onSurfaceVariant)
                 }
             }
 
-            Section("사진 접근")
+            Section(stringResource(R.string.settings_section_access))
             SettingRow(
                 icon = Icons.Outlined.PhotoLibrary,
-                title = "사진 및 동영상",
-                sub = "Android 설정에서 바꿀 수 있어요",
+                title = stringResource(R.string.settings_photos_videos),
+                sub = stringResource(R.string.settings_photos_videos_sub),
                 onClick = {
                     context.startActivity(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
@@ -173,46 +178,46 @@ fun SettingsScreen(
                 },
             ) {
                 when (uiState.access) {
-                    MediaAccess.All -> State(Icons.Rounded.CheckCircle, "모두 허용", IncludedGreen)
-                    MediaAccess.Partial -> State(Icons.Rounded.CheckCircle, "일부 허용", PartialInk)
-                    MediaAccess.None -> State(Icons.Rounded.Error, "허용 안 함", colors.error)
+                    MediaAccess.All -> State(Icons.Rounded.CheckCircle, stringResource(R.string.settings_all), IncludedGreen)
+                    MediaAccess.Partial -> State(Icons.Rounded.CheckCircle, stringResource(R.string.settings_partial), PartialInk)
+                    MediaAccess.None -> State(Icons.Rounded.Error, stringResource(R.string.not_allowed), colors.error)
                 }
             }
             Divider()
-            SettingRow(icon = Icons.Outlined.LocationOn, title = "사진 속 위치 읽기", sub = "사진 권한과 함께 허용돼요") {
+            SettingRow(icon = Icons.Outlined.LocationOn, title = stringResource(R.string.read_photo_location), sub = stringResource(R.string.settings_location_sub)) {
                 if (uiState.location) {
-                    State(Icons.Rounded.CheckCircle, "허용", IncludedGreen)
+                    State(Icons.Rounded.CheckCircle, stringResource(R.string.allowed), IncludedGreen)
                 } else {
-                    State(Icons.Rounded.Error, "허용 안 함", colors.error)
+                    State(Icons.Rounded.Error, stringResource(R.string.not_allowed), colors.error)
                 }
             }
             Divider()
             SettingRow(
                 icon = Icons.Outlined.PhotoCamera,
-                title = "카메라 위치 태그 켜는 법",
-                sub = "켜 두면 여행을 더 정확하게 찾아요",
+                title = stringResource(R.string.settings_location_tag_howto),
+                sub = stringResource(R.string.settings_location_tag_sub),
                 onClick = { dialog = TAG },
             ) { Chevron() }
 
-            Section("여행 찾기")
+            Section(stringResource(R.string.settings_section_find))
             SettingRow(
                 icon = Icons.Outlined.TravelExplore,
-                title = "처음부터 다시 찾기",
-                sub = "직접 고친 내용은 모두 처음으로 돌아가요",
+                title = stringResource(R.string.settings_rescan),
+                sub = stringResource(R.string.settings_rescan_sub),
                 onClick = { dialog = RESCAN },
             ) { Chevron() }
 
-            Section("데이터")
+            Section(stringResource(R.string.settings_section_data))
             SettingRow(
                 icon = Icons.Outlined.DeleteForever,
-                title = "Wend 데이터 지우기",
-                sub = "찾은 여행과 정리한 기록을 지워요. 사진은 그대로 있어요",
+                title = stringResource(R.string.settings_wipe),
+                sub = stringResource(R.string.settings_wipe_sub),
                 danger = true,
                 onClick = { dialog = WIPE },
             )
 
-            Section("정보")
-            SettingRow(icon = Icons.Outlined.Description, title = "오픈소스 라이선스", onClick = onLicenses) { Chevron() }
+            Section(stringResource(R.string.settings_section_about))
+            SettingRow(icon = Icons.Outlined.Description, title = stringResource(R.string.open_source_licenses), onClick = onLicenses) { Chevron() }
             val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty() }
             Text(
                 "Wend $version",
@@ -239,9 +244,9 @@ fun SettingsScreen(
         )
         WIPE -> ConfirmDialog(
             icon = Icons.Outlined.DeleteForever,
-            title = "Wend 데이터를 지울까요?",
-            text = "찾은 여행, 베스트샷, 직접 넣고 뺀 기록, 닉네임이 지워지고 처음 화면으로 돌아가요. **기기의 사진은 하나도 지워지지 않아요.**",
-            confirm = "지우기",
+            title = stringResource(R.string.settings_wipe_title),
+            text = stringResource(R.string.settings_wipe_body),
+            confirm = stringResource(R.string.settings_wipe_confirm),
             confirmColor = colors.error,
             onDismiss = { dialog = null },
         ) {
@@ -317,18 +322,18 @@ private fun NicknameDialog(current: String, onDismiss: () -> Unit, onSave: (Stri
     LaunchedEffect(Unit) { focus.requestFocus() }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("닉네임 바꾸기") },
+        title = { Text(stringResource(R.string.change_nickname)) },
         text = {
             TextField(
                 value = value,
                 onValueChange = { if (it.text.length <= NicknameUiState.MAX_LENGTH) value = it },
-                label = { Text("닉네임") },
+                label = { Text(stringResource(R.string.nickname)) },
                 supportingText = {
                     Text(
                         when (state.help) {
-                            NicknameHelp.Default -> "2~10자, 한글·영문·숫자"
-                            NicknameHelp.InvalidChars -> "한글·영문·숫자만 쓸 수 있어요"
-                            NicknameHelp.TooShort -> "두 글자 이상 입력해 주세요"
+                            NicknameHelp.Default -> stringResource(R.string.nickname_help)
+                            NicknameHelp.InvalidChars -> stringResource(R.string.nickname_invalid)
+                            NicknameHelp.TooShort -> stringResource(R.string.nickname_too_short)
                         },
                     )
                 },
@@ -341,10 +346,10 @@ private fun NicknameDialog(current: String, onDismiss: () -> Unit, onSave: (Stri
             TextButton(
                 onClick = { if (state.isValid) onSave(value.text.trim()) else submitted = true },
                 colors = ButtonDefaults.textButtonColors(contentColor = Accent),
-            ) { Text("저장") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Accent)) { Text("취소") }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Accent)) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -377,7 +382,7 @@ private fun ConfirmDialog(
             TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = confirmColor)) { Text(confirm) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Accent)) { Text("취소") }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = Accent)) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -394,24 +399,25 @@ private fun LocationTagSheet(onDismiss: () -> Unit) {
         containerColor = colors.surface,
     ) {
         Column(Modifier.navigationBarsPadding().padding(horizontal = 24.dp)) {
-            Text("카메라 위치 태그 켜는 법", style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(R.string.settings_location_tag_howto), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Step(1, "카메라 앱을 열어요")
-                Step(2, "왼쪽 위 설정(⚙)을 눌러요")
+                Step(1, stringResource(R.string.howto_step_1))
+                Step(2, stringResource(R.string.howto_step_2))
+                val step3 = stringResource(R.string.howto_step_3)
+                val locationTag = stringResource(R.string.location_tag)
                 Step(3, buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("위치 태그") }
-                    append("를 켜요")
+                    appendTemplate(step3, { withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(locationTag) } })
                 })
             }
             Row(Modifier.padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BotAvatar(Bot.Pin, clock, Modifier.size(40.dp))
-                BotBubble("켜 둔 뒤에 찍은 사진부터 장소가 남아요. 기기마다 메뉴 이름이 조금 다를 수 있어요.")
+                BotBubble(stringResource(R.string.howto_bot))
             }
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(contentColor = Accent),
                 modifier = Modifier.align(Alignment.End).padding(top = 8.dp, bottom = 8.dp),
-            ) { Text("알겠어요") }
+            ) { Text(stringResource(R.string.action_got_it)) }
         }
     }
 }

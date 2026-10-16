@@ -8,7 +8,7 @@ import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.UserRepository
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.Trip
-import app.wend.sea.feature.globe.DEFAULT_NICKNAME
+import app.wend.sea.feature.globe.defaultNickname
 import app.wend.sea.feature.permission.PermissionResultHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ResultUiState(
-    val nickname: String = DEFAULT_NICKNAME,
+    val nickname: String = defaultNickname,
     val summary: AnalysisSummary? = null,
     /** 찍은 순서(오래된 것부터) */
     val trips: List<Trip> = emptyList(),
@@ -62,7 +62,7 @@ class ResultViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME
+            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: defaultNickname
             val summary = analysisRepository.summary.firstOrNull()
             _uiState.update { it.copy(nickname = nickname, summary = summary, trips = analysisRepository.trips()) }
         }

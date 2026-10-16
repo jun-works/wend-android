@@ -1,5 +1,8 @@
 package app.wend.sea.feature.viewer
 
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import kotlin.math.abs
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.pointer.util.VelocityTracker
@@ -117,8 +120,6 @@ import coil3.memory.MemoryCache
 import coil3.size.Size as CoilSize
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 // 시안 #viewer: 어두운 바탕(#0f0d0b) 위 종이색 글자
 private val ViewerBg = Color(0xFF0F0D0B)
@@ -130,7 +131,6 @@ internal val ViewerInk = Color(0xFFF6F1E9)
 private val ViewerSub = Color(0xFFC9BFB2)
 internal val ViewerWarn = Color(0xFFFFB4A8)
 private val TitleStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 19.5.sp, lineHeightStyle = CssLineHeight)
-private val DateTimeFormat = DateTimeFormatter.ofPattern("yyyy년 M월 d일 a h:mm", Locale.KOREAN)
 
 /**
  * 시안 ⑱ 사진 크게 보기(공통). 옆으로 넘겨 보고, 두 번 탭·두 손가락으로 확대한다.
@@ -178,7 +178,7 @@ private fun OpenViewer(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 ViewerEvent.Removed -> {
-                    currentOnTripChanged("여행에서 뺐어요. 빠진 사진에서 다시 넣을 수 있어요")
+                    currentOnTripChanged(AppText.string(R.string.viewer_removed))
                     currentOnBack()
                 }
                 is ViewerEvent.Moved -> {
@@ -267,11 +267,11 @@ private fun OpenViewer(
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 if (uiState.left) {
-                    ViewerAction(Icons.Outlined.LibraryAdd, "여행에 넣기") {
+                    ViewerAction(Icons.Outlined.LibraryAdd, stringResource(R.string.add_to_trip)) {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         viewModel.askAdd(current)
                     }
-                    ViewerAction(Icons.Outlined.AddLocationAlt, "새 여행") {
+                    ViewerAction(Icons.Outlined.AddLocationAlt, stringResource(R.string.new_trip)) {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         viewModel.askNew(current)
                     }
@@ -279,13 +279,13 @@ private fun OpenViewer(
                 val isBest = !current.media.video && current.media.mediaId in uiState.best
                 ViewerAction(
                     if (isBest) Icons.Rounded.Star else Icons.Outlined.StarOutline,
-                    if (isBest) "베스트샷" else "베스트샷으로",
+                    stringResource(if (isBest) R.string.best_shot else R.string.viewer_make_best),
                     iconTint = if (isBest) StarGold else ViewerInk,
                 ) {
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                     viewModel.onBestShot(current)
                 }
-                ViewerAction(Icons.Outlined.RemoveCircleOutline, "여행에서 빼기") {
+                ViewerAction(Icons.Outlined.RemoveCircleOutline, stringResource(R.string.viewer_remove_from_trip)) {
                     if (removingItem != null) return@ViewerAction
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                     val item = current
@@ -296,7 +296,7 @@ private fun OpenViewer(
                     }
                 }
                 }
-                ViewerAction(Icons.Outlined.Share, "공유") {
+                ViewerAction(Icons.Outlined.Share, stringResource(R.string.action_share)) {
                     val intent = Intent(Intent.ACTION_SEND)
                         .setType(if (current.media.video) "video/*" else "image/*")
                         .putExtra(Intent.EXTRA_STREAM, current.media.uri)
@@ -304,7 +304,7 @@ private fun OpenViewer(
                     context.startActivity(Intent.createChooser(intent, null))
                 }
                 // 휴지통은 시스템 확인창(MediaStore.createTrashRequest)으로만 — Wend 가 직접 지우지 않는다
-                ViewerAction(Icons.Outlined.Delete, "휴지통", tint = ViewerWarn) {
+                ViewerAction(Icons.Outlined.Delete, stringResource(R.string.viewer_trash), tint = ViewerWarn) {
                     val request = MediaStore.createTrashRequest(context.contentResolver, listOf(current.media.uri), true)
                     trashing = current
                     trashLauncher.launch(IntentSenderRequest.Builder(request.intentSender).build())
@@ -392,7 +392,7 @@ fun PickViewer(
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 action(current.item)
-                ViewerAction(Icons.Outlined.Share, "공유") {
+                ViewerAction(Icons.Outlined.Share, stringResource(R.string.action_share)) {
                     val intent = Intent(Intent.ACTION_SEND)
                         .setType(if (current.item.media.video) "video/*" else "image/*")
                         .putExtra(Intent.EXTRA_STREAM, current.item.media.uri)
@@ -437,11 +437,11 @@ private fun ViewerTopBar(item: ViewerItem, placeName: String, day: Int, onBack: 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "뒤로", tint = ViewerInk)
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = ViewerInk)
         }
         Column(Modifier.padding(start = 4.dp, end = 12.dp)) {
             item.takenAt?.let {
-                Text(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(DateTimeFormat), style = TitleStyle, color = ViewerInk)
+                Text(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(AppText.dateFormat(R.string.pattern_viewer_datetime)), style = TitleStyle, color = ViewerInk)
             }
             // 빠진 사진에는 장소가 없다
             if (placeName.isNotEmpty()) {
@@ -635,7 +635,7 @@ private fun ZoomableMedia(
                     }
                     AsyncImage(
                         model = request,
-                        contentDescription = if (item.media.video) "영상" else "사진",
+                        contentDescription = stringResource(if (item.media.video) R.string.video else R.string.photo),
                         contentScale = scaleMode,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -652,12 +652,13 @@ private fun ZoomableMedia(
             if (morph > 0f) Box(Modifier.fillMaxSize().background(dayColor.copy(alpha = morph)))
         }
         if (item.media.video && scale == 1f) {
+            val playLabel = stringResource(R.string.viewer_play_video)
             Box(
                 Modifier
                     .size(64.dp)
                     .background(Color(0x991F1A16), CircleShape)
                     .pointerInput(onPlay) { detectTapGestures(onTap = { onPlay() }) }
-                    .semantics { contentDescription = "영상 재생" },
+                    .semantics { contentDescription = playLabel },
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = ViewerInk, modifier = Modifier.size(36.dp)) }
         }
@@ -667,16 +668,17 @@ private fun ZoomableMedia(
 /** 시안 `.vw-slide .star`: 사진 왼쪽 위 "★ 베스트샷" 알약 */
 @Composable
 private fun BestChip(modifier: Modifier = Modifier) {
+    val bestLabel = stringResource(R.string.best_shot)
     Row(
         modifier
             .background(Color(0xFFFFFDF9), CircleShape)
             .padding(start = 8.dp, end = 10.dp, top = 6.dp, bottom = 6.dp)
-            .semantics { contentDescription = "베스트샷" },
+            .semantics { contentDescription = bestLabel },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(Icons.Rounded.Star, contentDescription = null, tint = Color(0xFFD18A0C), modifier = Modifier.size(16.dp))
-        Text("베스트샷", style = BestChipStyle, color = Color(0xFF7A4F05))
+        Text(bestLabel, style = BestChipStyle, color = Color(0xFF7A4F05))
     }
 }
 

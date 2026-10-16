@@ -32,6 +32,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.feature.permission.PermBottomBar
 import app.wend.sea.feature.permission.PermHeading
 import app.wend.sea.feature.permission.rememberMediaPermissionRequest
@@ -87,7 +91,7 @@ fun FoundScreen(
         bottomBar = {
             PermBottomBar {
                 WendPrimaryButton(
-                    text = "여행 보러 가기",
+                    text = stringResource(R.string.found_browse),
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         viewModel.onBrowse()
@@ -100,7 +104,7 @@ fun FoundScreen(
                             if (permission.canShowDialog()) permission.request() else permission.openSettings()
                         },
                         modifier = Modifier.fillMaxWidth().height(40.dp),
-                    ) { Text("모든 사진 허용하기", style = MaterialTheme.typography.labelLarge) }
+                    ) { Text(stringResource(R.string.allow_all_photos), style = MaterialTheme.typography.labelLarge) }
                 }
             }
         },
@@ -114,28 +118,29 @@ fun FoundScreen(
                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
         ) {
             val trips = uiState.trips
+            val primary = MaterialTheme.colorScheme.primary
+            val title = stringResource(if (partial) R.string.found_title_partial else R.string.found_title)
+            val tripCount = pluralStringResource(R.plurals.found_trip_count, trips.size, trips.size)
             PermHeading(
                 buildAnnotatedString {
-                    append(if (partial) "고르신 사진에서\n" else "${uiState.nickname}님의 ")
-                    append("여행 ")
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("${trips.size}개") }
-                    append(if (partial) "를 찾았어요" else "를\n찾았어요")
+                    appendTemplate(
+                        title,
+                        { append(uiState.nickname) },
+                        { withStyle(SpanStyle(color = primary)) { append(tripCount) } },
+                    )
                 },
                 modifier = Modifier.padding(top = 24.dp),
             )
             if (summary != null) {
                 val strong = SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                val text = pluralStringResource(if (partial) R.plurals.found_summary_partial else R.plurals.found_summary, summary.total)
+                val included = stringResource(
+                    if (partial) R.string.count_photos_short else R.string.count_items_short,
+                    formatCount(summary.included),
+                )
                 Text(
                     text = buildAnnotatedString {
-                        if (partial) {
-                            append("고르신 ${formatCount(summary.total)}장 중 ")
-                            withStyle(strong) { append("${formatCount(summary.included)}장") }
-                            append("이 여행에 담겼어요.")
-                        } else {
-                            append("사진·영상 ${formatCount(summary.total)}개 중 ")
-                            withStyle(strong) { append("${formatCount(summary.included)}개") }
-                            append("가 여행에 담겼어요. 나머지는 앨범에 그대로 있어요.")
-                        }
+                        appendTemplate(text, { append(formatCount(summary.total)) }, { withStyle(strong) { append(included) } })
                     },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -149,7 +154,7 @@ fun FoundScreen(
                 height = 224.dp,
                 globeSize = 212.dp,
                 circle = 194.dp,
-                description = "여행마다 다른 색 덩어리로 뭉친 지구본",
+                description = stringResource(R.string.found_globe_description),
             )
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 trips.reversed().take(3).forEach { trip ->
@@ -164,7 +169,7 @@ fun FoundScreen(
             }
             if (trips.size > 3) {
                 Text(
-                    "그 밖에 여행 ${trips.size - 3}개가 더 있어요",
+                    pluralStringResource(R.plurals.found_more, trips.size - 3, trips.size - 3),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 12.dp),
@@ -182,7 +187,7 @@ fun FoundScreen(
                 ) {
                     Icon(Icons.Rounded.ContentCut, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Text(
-                        "고른 사진만 보면 한 여행이 여러 개로 나뉘어 보일 수 있어요. 모든 사진을 허용하면 이어서 찾아 드려요.",
+                        stringResource(R.string.found_partial_note),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

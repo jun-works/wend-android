@@ -9,6 +9,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
 
 /**
  * 시안 ⑲ `#prefs-rescan`: 처음부터 다시 찾기 확인. 여행 찾기는 초기화라(넣기·빼기·새 여행·베스트샷·이름이 지워짐)
@@ -19,13 +21,13 @@ fun ReanalyzeDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.TravelExplore, contentDescription = null) },
-        title = { Text("처음부터 다시 찾을까요?") },
-        text = { Text("모든 사진을 다시 읽어서 여행을 찾아요. 직접 넣고 뺀 사진, 만든 여행, 베스트샷, 바꾼 이름이 모두 처음으로 돌아가요.") },
+        title = { Text(stringResource(R.string.reanalyze_title)) },
+        text = { Text(stringResource(R.string.reanalyze_body)) },
         confirmButton = {
-            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text("다시 찾기") }
+            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text(stringResource(R.string.reanalyze_confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text("취소") }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }

@@ -20,6 +20,10 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
+import app.wend.sea.feature.analysis.placeCount
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.getValue
@@ -152,7 +156,7 @@ fun TripMap(
         modifier
             .clipToBounds() // 기본 지도는 화면 범위보다 넓게 그리므로 지도 영역 밖은 잘라 낸다
             .background(Sea)
-            .semantics { contentDescription = "그날 이동 경로 지도. 스크롤하면 핀이 경로를 따라 이동해요" },
+            .semantics { contentDescription = AppText.string(R.string.map_description) },
     ) {
         val density = LocalDensity.current
         val w = with(density) { maxWidth.toPx() }
@@ -328,7 +332,7 @@ fun TripMap(
         ) {
             Box(Modifier.size(8.dp).background(color, CircleShape))
             Text(
-                "${ordinal}일째 · ${located.size}곳",
+                "${stringResource(R.string.day_ordinal, ordinal)} · ${placeCount(located.size)}",
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, lineHeight = 11.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

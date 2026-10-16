@@ -3,6 +3,7 @@ package app.wend.sea
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaThumbnailFetcher
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -14,6 +15,11 @@ import javax.inject.Inject
 class WendApplication : Application(), Configuration.Provider, SingletonImageLoader.Factory {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
+
+    override fun onCreate() {
+        super.onCreate()
+        AppText.init(this)
+    }
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()

@@ -6,7 +6,7 @@ import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.UserRepository
 import app.wend.sea.data.analysis.AnalysisRepository
-import app.wend.sea.feature.globe.DEFAULT_NICKNAME
+import app.wend.sea.feature.globe.defaultNickname
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class GrantedUiState(
-    val nickname: String = DEFAULT_NICKNAME,
+    val nickname: String = defaultNickname,
     val photos: Int = 0,
     val videos: Int = 0,
     /** 위치가 남아 있는 사진·영상 수 — 파일을 읽는 동안 계속 늘어난다 */
@@ -51,7 +51,7 @@ class GrantedViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME
+            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: defaultNickname
             val counts = mediaRepository.counts()
             _uiState.update { it.copy(nickname = nickname, photos = counts.photos, videos = counts.videos) }
         }

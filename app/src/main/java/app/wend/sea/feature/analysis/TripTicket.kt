@@ -27,14 +27,17 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.paperCard
 import app.wend.sea.core.designsystem.component.tripColor
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.analysis.Trip
 import java.text.NumberFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -46,7 +49,7 @@ private val CountStyle = TextStyle(fontFamily = IbmPlexSansKr, fontWeight = Font
 val Trip.name: String get() = userName ?: autoName
 
 /** 자동으로 붙인 이름(도시나 나라), 근처에 도시가 없으면 "여행 N" */
-val Trip.autoName: String get() = city ?: "여행 $number"
+val Trip.autoName: String get() = city ?: AppText.string(R.string.trip_auto_name, number)
 
 /** "2025. 6. 7 – 6. 10 · 4일", 하루면 "2025. 9. 13 · 당일" */
 val Trip.period: String
@@ -55,15 +58,32 @@ val Trip.period: String
         val s = Instant.ofEpochMilli(start).atZone(zone).toLocalDate()
         val e = Instant.ofEpochMilli(end).atZone(zone).toLocalDate()
         val days = ChronoUnit.DAYS.between(s, e).toInt() + 1
-        val from = "${s.year}. ${s.monthValue}. ${s.dayOfMonth}"
-        return when {
-            days == 1 -> "$from · 당일"
-            s.year == e.year -> "$from – ${e.monthValue}. ${e.dayOfMonth} · ${days}일"
-            else -> "$from – ${e.year}. ${e.monthValue}. ${e.dayOfMonth} · ${days}일"
-        }
+        return if (days == 1) AppText.string(R.string.period_day_trip, dateRangeText(s, e))
+        else AppText.plural(R.plurals.period_days, days, dateRangeText(s, e), days)
     }
 
+/** "2026. 6. 20", "2026. 6. 20 – 6. 22", 해가 다르면 둘 다 연도 */
+fun dateRangeText(a: LocalDate, b: LocalDate): String = when {
+    a == b -> a.format(AppText.dateFormat(R.string.pattern_date))
+    a.year == b.year -> AppText.string(
+        R.string.date_range,
+        a.format(AppText.dateFormat(R.string.pattern_range_from)),
+        b.format(AppText.dateFormat(R.string.pattern_range_to)),
+    )
+    else -> AppText.string(
+        R.string.date_range,
+        a.format(AppText.dateFormat(R.string.pattern_date)),
+        b.format(AppText.dateFormat(R.string.pattern_date)),
+    )
+}
+
 fun formatCount(n: Int): String = NumberFormat.getIntegerInstance().format(n)
+
+/** "1,234장" */
+fun photoCount(n: Int): String = AppText.plural(R.plurals.count_photos, n, formatCount(n))
+
+/** "3곳" */
+fun placeCount(n: Int): String = AppText.plural(R.plurals.count_places, n, formatCount(n))
 
 /** 시안 `.tk`: 색 방울 + 이름(세리프) + 기간 + 점선 절취선 뒤 장수 */
 @Composable
@@ -94,7 +114,7 @@ fun TripTicket(trip: Trip, modifier: Modifier = Modifier) {
             )
         }
         TicketStub(Modifier.fillMaxHeight()) {
-            Text("${formatCount(trip.mediaCount)}장", style = CountStyle, modifier = Modifier.padding(start = 14.dp, end = 16.dp))
+            Text(photoCount(trip.mediaCount), style = CountStyle, modifier = Modifier.padding(start = 14.dp, end = 16.dp))
         }
     }
 }

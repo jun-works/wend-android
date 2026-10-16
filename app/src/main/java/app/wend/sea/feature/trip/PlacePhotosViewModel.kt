@@ -3,7 +3,9 @@ package app.wend.sea.feature.trip
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.key
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.feature.analysis.name
@@ -114,7 +116,7 @@ class PlacePhotosViewModel @Inject constructor(
                 day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0),
                 dayOrdinal = ChronoUnit.DAYS.between(dateOf(detail.trip.start), dateOf(p.start)).toInt() + 1,
                 date = dateOf(p.start),
-                name = detail.placeUserNames[place] ?: detail.placeCities[place] ?: "장소 ${place + 1}",
+                name = detail.placeUserNames[place] ?: detail.placeCities[place] ?: AppText.string(R.string.place_auto_name, place + 1),
                 start = p.start,
                 end = p.end,
                 photos = p.media.map { PlacePhoto(MediaThumbnail(it.id, it.video), it.takenAt) },

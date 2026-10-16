@@ -1,5 +1,6 @@
 package app.wend.sea.feature.analysis
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -56,12 +58,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.Bot
 import app.wend.sea.core.designsystem.component.BotAvatar
 import app.wend.sea.core.designsystem.component.rememberAmbientClock
 import app.wend.sea.core.designsystem.component.rememberReducedMotion
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.feature.permission.PermHeading
 import kotlinx.coroutines.delay
@@ -73,12 +77,12 @@ private const val STORY_SECONDS = 9.5f
 private const val MAX_TICKETS = 4
 private val DropEasing = CubicBezierEasing(.3f, 1.35f, .5f, 1f)
 
-private class Status(val until: Float, val bots: List<Bot>, val text: String)
+private class Status(val until: Float, val bots: List<Bot>, @StringRes val text: Int)
 
 private val Statuses = listOf(
-    Status(.3f, listOf(Bot.Tick), "틱이 사진을 찍은 순서대로 읽고 있어요"),
-    Status(.55f, listOf(Bot.Pin), "핀이 사진 속 장소를 살펴보고 있어요"),
-    Status(1.01f, listOf(Bot.Tick, Bot.Pin), "같은 여행의 사진끼리 모으고 있어요"),
+    Status(.3f, listOf(Bot.Tick), R.string.analyze_status_time),
+    Status(.55f, listOf(Bot.Pin), R.string.analyze_status_place),
+    Status(1.01f, listOf(Bot.Tick, Bot.Pin), R.string.analyze_status_group),
 )
 
 @Composable
@@ -132,10 +136,16 @@ fun AnalyzeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp),
         ) {
+            val primary = MaterialTheme.colorScheme.primary
+            val title = stringResource(R.string.analyze_title)
+            val titleEm = stringResource(R.string.analyze_title_em)
             PermHeading(
                 buildAnnotatedString {
-                    append("${uiState.nickname}님의 여행을\n")
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("찾고 있어요") }
+                    appendTemplate(
+                        title,
+                        { append(uiState.nickname) },
+                        { withStyle(SpanStyle(color = primary)) { append(titleEm) } },
+                    )
                 },
                 modifier = Modifier.padding(top = 24.dp),
             )
@@ -147,7 +157,7 @@ fun AnalyzeScreen(
                 height = 252.dp,
                 globeSize = 244.dp,
                 circle = 236.dp,
-                description = "사진 방울들이 색을 띠며 여행별 덩어리로 뭉치는 애니메이션",
+                description = stringResource(R.string.analyze_globe_description),
             )
             ReadRow(read = read, total = uiState.total, progress = { min(1f, progress / .92f) })
             Row(
@@ -155,7 +165,7 @@ fun AnalyzeScreen(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("찾은 여행", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = 14.sp))
+                Text(stringResource(R.string.analyze_found_trips), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = 14.sp))
                 Text(
                     "$shown",
                     style = TextStyle(fontFamily = GowunBatang, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 20.sp, lineHeightStyle = CssLineHeight),
@@ -164,7 +174,7 @@ fun AnalyzeScreen(
             }
             if (shown == 0) {
                 Text(
-                    "아직 찾는 중이에요",
+                    stringResource(R.string.analyze_still_finding),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 14.dp),
@@ -203,7 +213,7 @@ private fun StatusRow(status: Status, clock: androidx.compose.runtime.State<Floa
         }
         key(status.text) {
             Text(
-                status.text,
+                stringResource(status.text),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fadeUpIn(),
@@ -221,7 +231,7 @@ private fun ReadRow(read: Int, total: Int, progress: () -> Float) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text("읽은 사진", style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(R.string.analyze_read_photos), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
         Canvas(Modifier.weight(1f).height(4.dp)) {
             val r = CornerRadius(2.dp.toPx())
             drawRoundRect(colors.surfaceContainerHigh, cornerRadius = r)
@@ -248,8 +258,8 @@ private fun AnalyzeNotes() {
             .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        NoteLine(Icons.Outlined.Sync, "앱을 닫아도 여행 찾기는 계속돼요. 다 찾으면 알려 드릴게요.")
-        NoteLine(Icons.Outlined.PhonelinkLock, "이 휴대폰 안에서만 읽어요. 사진은 어디에도 올리지 않아요.")
+        NoteLine(Icons.Outlined.Sync, stringResource(R.string.analyze_note_background))
+        NoteLine(Icons.Outlined.PhonelinkLock, stringResource(R.string.analyze_note_private))
     }
 }
 

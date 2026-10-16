@@ -18,9 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.gooey
 import app.wend.sea.core.designsystem.component.rememberReducedMotion
 import app.wend.sea.core.designsystem.theme.OrbColors
@@ -218,15 +220,16 @@ fun OrbGlobe(step: GlobeStep, modifier: Modifier = Modifier) {
         }
     }
 
+    val description = stringResource(R.string.orb_globe_description)
     Canvas(
         modifier = modifier
             .size(GlobeSize)
             .gooey(blurSigma = 6.dp, keepColors = true)
-            .semantics { contentDescription = "사진을 뜻하는 색 방울들이 지구본 모양으로 떠다니는 애니메이션" }
+            .semantics { contentDescription = description }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClickLabel = "방울 흩뜨리기",
+                onClickLabel = stringResource(R.string.globe_scatter),
             ) {
                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 sim.scatter = 1.2f

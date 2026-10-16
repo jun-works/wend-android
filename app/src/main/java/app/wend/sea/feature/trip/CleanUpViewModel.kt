@@ -3,6 +3,8 @@ package app.wend.sea.feature.trip
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -66,14 +68,14 @@ class CleanUpViewModel @Inject constructor(
             fun dateOf(t: Long) = java.time.Instant.ofEpochMilli(t).atZone(zone).toLocalDate()
             val dates = detail.places.map { dateOf(it.start) }.distinct()
             val info = detail.places.flatMapIndexed { i, p ->
-                val name = detail.placeUserNames[i] ?: detail.placeCities[i] ?: "장소 ${i + 1}"
+                val name = detail.placeUserNames[i] ?: detail.placeCities[i] ?: AppText.string(R.string.place_auto_name, i + 1)
                 val day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0)
                 p.media.filter { !it.video }.map { it.id to CleanPhotoUi(MediaThumbnail(it.id, video = false), name, day, it.takenAt) }
             }.toMap()
             fun photos(list: List<MediaThumbnail>) = list.map { info[it.mediaId] ?: CleanPhotoUi(it, "") }
             val groups = listOfNotNull(
-                CleanGroupUi("similar", "비슷한 사진", "베스트샷과 거의 같은 사진", photos(candidates.similar)).takeIf { it.photos.isNotEmpty() },
-                CleanGroupUi("dark", "너무 어두운 사진", null, photos(candidates.dark)).takeIf { it.photos.isNotEmpty() },
+                CleanGroupUi("similar", AppText.string(R.string.clean_similar), AppText.string(R.string.clean_similar_sub), photos(candidates.similar)).takeIf { it.photos.isNotEmpty() },
+                CleanGroupUi("dark", AppText.string(R.string.clean_dark), null, photos(candidates.dark)).takeIf { it.photos.isNotEmpty() },
             )
             _uiState.value = CleanUpUiState(
                 loaded = true,

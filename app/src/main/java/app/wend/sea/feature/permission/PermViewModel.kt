@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.UserRepository
-import app.wend.sea.feature.globe.DEFAULT_NICKNAME
+import app.wend.sea.feature.globe.defaultNickname
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PermUiState(
-    val nickname: String = DEFAULT_NICKNAME,
+    val nickname: String = defaultNickname,
     /** 안내창이 더 뜨지 않아 버튼이 설정으로 보낸다 */
     val settingsOnly: Boolean = false,
 )
@@ -34,7 +34,7 @@ class PermViewModel @Inject constructor(
 
     val uiState: StateFlow<PermUiState> =
         combine(userRepository.nickname, userRepository.mediaSettingsOnly) { nickname, settingsOnly ->
-            PermUiState(nickname?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME, settingsOnly)
+            PermUiState(nickname?.takeIf { it.isNotBlank() } ?: defaultNickname, settingsOnly)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PermUiState())
 
     private val _events = Channel<PermissionEvent>(Channel.BUFFERED)

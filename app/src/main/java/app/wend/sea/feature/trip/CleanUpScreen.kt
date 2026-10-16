@@ -50,6 +50,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -60,12 +62,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.component.rememberThumbnail
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.data.MediaThumbnail
+import app.wend.sea.feature.analysis.photoCount
 import app.wend.sea.feature.viewer.PickPhoto
 import app.wend.sea.feature.viewer.PickViewer
 import app.wend.sea.feature.viewer.ViewerAction
@@ -104,7 +108,7 @@ fun CleanUpScreen(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(colors.surface)) {
-            WendTopAppBar(onBack = onBack, title = { Text("사진 정리하기") })
+            WendTopAppBar(onBack = onBack, title = { Text(stringResource(R.string.clean_up_photos)) })
             if (!uiState.loaded) return@Column
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
@@ -115,12 +119,14 @@ fun CleanUpScreen(
             ) {
                 item(key = "intro", span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        when {
-                            uiState.groups.isNotEmpty() -> "필요 없어 보이는 사진을 골라 뒀어요. 남기고 싶은 사진은 눌러서 빼 주세요."
-                            uiState.pending -> "아직 사진을 살펴보는 중이에요. 잠시 뒤에 다시 열어 주세요."
-                            uiState.hasBestShots -> "이 여행에는 정리할 만한 사진이 없어요."
-                            else -> "이 여행에는 정리할 만한 사진이 없어요. 베스트샷을 고르면 같은 장면의 나머지 사진을 여기서 정리할 수 있어요."
-                        },
+                        stringResource(
+                            when {
+                                uiState.groups.isNotEmpty() -> R.string.clean_intro
+                                uiState.pending -> R.string.still_reviewing
+                                uiState.hasBestShots -> R.string.clean_none
+                                else -> R.string.clean_none_no_best
+                            },
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
@@ -136,7 +142,7 @@ fun CleanUpScreen(
                         ) {
                             Text(group.title, style = GroupHeadStyle, color = colors.onSurface, modifier = Modifier.alignByBaseline())
                             Text(
-                                (group.sub?.let { "$it · " } ?: "") + "${group.photos.size}장",
+                                (group.sub?.let { "$it · " } ?: "") + photoCount(group.photos.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 modifier = Modifier.alignByBaseline(),
@@ -169,13 +175,13 @@ fun CleanUpScreen(
                     ) {
                         Icon(Icons.Outlined.RestoreFromTrash, contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(18.dp))
                         Text(
-                            "휴지통으로 옮긴 사진은 30일 동안 갤러리에서 되살릴 수 있어요.",
+                            stringResource(R.string.clean_trash_note),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.onSurfaceVariant,
                         )
                     }
                     WendPrimaryButton(
-                        text = if (selected.isNotEmpty()) "${selected.size}장 휴지통으로 옮기기" else "옮길 사진을 골라 주세요",
+                        text = if (selected.isNotEmpty()) pluralStringResource(R.plurals.clean_confirm, selected.size, selected.size) else stringResource(R.string.clean_pick),
                         onClick = {
                             // Wend 는 직접 지우지 않는다 — Android 시스템 확인창을 거쳐 휴지통으로만
                             val request = MediaStore.createTrashRequest(context.contentResolver, selected.map { it.uri }, true)
@@ -200,7 +206,7 @@ fun CleanUpScreen(
                 val checked = item.media !in uiState.kept
                 ViewerAction(
                     if (checked) Icons.Rounded.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                    if (checked) "정리하기" else "남기기",
+                    stringResource(if (checked) R.string.clean_checked else R.string.clean_keep),
                     iconTint = if (checked) ViewerWarn else ViewerInk,
                 ) {
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -250,7 +256,7 @@ private fun CleanPhoto(photo: MediaThumbnail, checked: Boolean, label: String, o
                 Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp).alpha(mark))
             }
         }
-        ZoomButton("$label 크게 보기", onZoom, Modifier.align(Alignment.BottomStart))
+        ZoomButton(stringResource(R.string.zoom_label, label), onZoom, Modifier.align(Alignment.BottomStart))
     }
 }
 

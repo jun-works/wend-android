@@ -9,7 +9,7 @@ import app.wend.sea.data.analysis.AnalysisPhase
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.AnalysisState
 import app.wend.sea.data.analysis.Trip
-import app.wend.sea.feature.globe.DEFAULT_NICKNAME
+import app.wend.sea.feature.globe.defaultNickname
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AnalyzeUiState(
-    val nickname: String = DEFAULT_NICKNAME,
+    val nickname: String = defaultNickname,
     /** 분석할 사진·영상 수(캡처 제외) */
     val total: Int = 0,
     /**
@@ -47,7 +47,7 @@ class AnalyzeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: DEFAULT_NICKNAME
+            val nickname = userRepository.nickname.firstOrNull()?.takeIf { it.isNotBlank() } ?: defaultNickname
             val total = mediaRepository.analysisItemCount()
             _uiState.update {
                 it.copy(nickname = nickname, total = total, partial = mediaRepository.currentAccess() == MediaAccess.Partial)

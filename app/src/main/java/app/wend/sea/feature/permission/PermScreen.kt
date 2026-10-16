@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,8 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.WendTopAppBar
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
 
 // 시안 .why-row .ic.pin
@@ -85,18 +88,21 @@ fun PermScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(Icons.Rounded.TouchApp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    val hint = stringResource(R.string.perm_hint)
+                    val ink = MaterialTheme.colorScheme.onSurface
+                    val allowAll = stringResource(R.string.perm_hint_allow_all)
                     Text(
                         text = buildAnnotatedString {
-                            append("다음 안내창에서 ")
-                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append("모두 허용") }
-                            append("을 골라 주세요")
+                            appendTemplate(hint, {
+                                withStyle(SpanStyle(color = ink, fontWeight = FontWeight.Bold)) { append(allowAll) }
+                            })
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 WendPrimaryButton(
-                    text = "사진 접근 허용하기",
+                    text = stringResource(R.string.perm_allow),
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         // 두 번 거절하면 Android 가 안내창을 더 띄우지 않으므로 설정으로 보낸다
@@ -114,22 +120,22 @@ fun PermScreen(
                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
         ) {
             PermHeading(
-                AnnotatedString("${uiState.nickname}님의 앨범을\n열어 주세요"),
+                AnnotatedString(stringResource(R.string.perm_title, uiState.nickname)),
                 modifier = Modifier.padding(top = 4.dp),
             )
-            PermSub("지금은 사진이 보이지 않아 지구본이 비어 있어요.")
+            PermSub(stringResource(R.string.perm_sub))
             AlbumStage(
                 lit = 0,
                 height = 268.dp,
                 globeSize = 260.dp,
-                description = "아직 열리지 않은 앨범을 뜻하는 옅은 색 지구본",
+                description = stringResource(R.string.perm_globe_description),
             )
             Column(Modifier.padding(top = 8.dp)) {
-                WhyRow(Icons.Outlined.PhotoLibrary, "사진·영상 전체 보기", "여행은 사진이 며칠씩 이어져야 찾을 수 있어서, 일부만 보면 여행이 잘려요.")
+                WhyRow(Icons.Outlined.PhotoLibrary, stringResource(R.string.perm_why_all_title), stringResource(R.string.perm_why_all_body))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                WhyRow(Icons.Rounded.LocationOn, "사진 속 위치 읽기", "핀이 장소를 알아낼 때 써요. 사진 권한과 함께 요청돼요.", pin = true)
+                WhyRow(Icons.Rounded.LocationOn, stringResource(R.string.read_photo_location), stringResource(R.string.perm_why_location_body), pin = true)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                WhyRow(Icons.Outlined.PhonelinkLock, "기기 밖으로 보내지 않아요", "어디에도 올리지 않고 이 휴대폰 안에서만 읽어요. 직접 고르기 전에는 지우지 않아요.")
+                WhyRow(Icons.Outlined.PhonelinkLock, stringResource(R.string.perm_why_private_title), stringResource(R.string.perm_why_private_body))
             }
         }
     }

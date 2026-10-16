@@ -43,6 +43,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -53,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.component.rememberThumbnail
@@ -87,17 +90,18 @@ fun BestShotScreen(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().background(colors.surface)) {
-            WendTopAppBar(onBack = onBack, title = { Text("베스트샷 고르기") })
+            WendTopAppBar(onBack = onBack, title = { Text(stringResource(R.string.pick_best_shots)) })
             if (!uiState.loaded) return@Column
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)) {
                 item(key = "intro") {
                     Text(
-                        when {
-                            uiState.places.isNotEmpty() ->
-                                "같은 장면을 여러 번 찍은 사진끼리 모았어요. 장면마다 마음에 드는 한 장을 골라 주세요. 안 골라도 돼요. 고른 사진은 여행의 대표 사진이 돼요."
-                            uiState.pending -> "아직 사진을 살펴보는 중이에요. 잠시 뒤에 다시 열어 주세요."
-                            else -> "이 여행에는 같은 장면을 여러 번 찍은 사진이 없어요."
-                        },
+                        stringResource(
+                            when {
+                                uiState.places.isNotEmpty() -> R.string.best_intro
+                                uiState.pending -> R.string.still_reviewing
+                                else -> R.string.best_none
+                            },
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
@@ -115,7 +119,7 @@ fun BestShotScreen(
                     items(place.scenes, key = { it.key }) { scene ->
                         Column {
                             Text(
-                                "${time(scene.start)} · 비슷한 사진 ${scene.photos.size}장",
+                                "${time(scene.start)} · ${pluralStringResource(R.plurals.best_similar_count, scene.photos.size, scene.photos.size)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp),
@@ -129,7 +133,7 @@ fun BestShotScreen(
                                     ScenePhoto(
                                         photo = photo,
                                         picked = uiState.picks[scene.key] == photo,
-                                        label = "${place.name} ${time(scene.start)} 비슷한 사진 ${index + 1}",
+                                        label = stringResource(R.string.best_photo_label, place.name, time(scene.start), index + 1),
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                             viewModel.pick(scene.key, photo)
@@ -147,7 +151,7 @@ fun BestShotScreen(
                 val count = uiState.picks.size
                 Box(Modifier.background(colors.surface).navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                     WendPrimaryButton(
-                        text = if (count > 0) "${count}장으로 정하기" else "사진을 골라 주세요",
+                        text = if (count > 0) pluralStringResource(R.plurals.best_confirm, count, count) else stringResource(R.string.pick_photos),
                         onClick = viewModel::save,
                         enabled = count > 0,
                     )
@@ -168,7 +172,7 @@ fun BestShotScreen(
                     val picked = uiState.picks[key] == item.media
                     ViewerAction(
                         if (picked) Icons.Rounded.Star else Icons.Outlined.StarOutline,
-                        if (picked) "골랐어요" else "이 사진 고르기",
+                        stringResource(if (picked) R.string.best_picked else R.string.best_pick_this),
                         iconTint = if (picked) StarGold else ViewerInk,
                     ) {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -222,7 +226,7 @@ private fun ScenePhoto(photo: MediaThumbnail, picked: Boolean, label: String, on
         ) {
             Icon(Icons.Rounded.Star, contentDescription = null, tint = StarInk, modifier = Modifier.size(17.dp))
         }
-        ZoomButton("$label 크게 보기", onZoom, Modifier.align(Alignment.BottomStart))
+        ZoomButton(stringResource(R.string.zoom_label, label), onZoom, Modifier.align(Alignment.BottomStart))
     }
 }
 

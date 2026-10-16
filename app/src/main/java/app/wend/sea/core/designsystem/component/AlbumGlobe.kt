@@ -1,5 +1,7 @@
 package app.wend.sea.core.designsystem.component
 
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -197,7 +199,7 @@ fun AlbumGlobe(
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClickLabel = "방울 흩뜨리기",
+                onClickLabel = stringResource(R.string.globe_scatter),
             ) {
                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 sim.scatter = 1.1f

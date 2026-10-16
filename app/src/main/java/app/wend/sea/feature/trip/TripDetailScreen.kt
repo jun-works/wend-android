@@ -31,9 +31,12 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.RenameDialog
 import app.wend.sea.core.designsystem.component.SameNameDialog
 import app.wend.sea.core.designsystem.component.renameGlow
+import app.wend.sea.core.text.AppText
 import app.wend.sea.feature.analysis.autoName
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoDelete
@@ -89,12 +92,11 @@ import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.analysis.name
 import app.wend.sea.feature.analysis.period
+import app.wend.sea.feature.analysis.photoCount
+import app.wend.sea.feature.analysis.placeCount
 import coil3.compose.AsyncImage
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle as DayTextStyle
-import java.util.Locale
 
 private val MapHeight = 220.dp
 private fun serif(size: Int, line: Double) = TextStyle(
@@ -103,9 +105,7 @@ private fun serif(size: Int, line: Double) = TextStyle(
 private val TitleStyle = serif(26, 1.25)
 private val DayStyle = serif(19, 1.2)
 private val PlaceStyle = serif(17, 1.3)
-private val TimeFormat = DateTimeFormatter.ofPattern("a h:mm", Locale.KOREAN)
-
-internal fun time(t: Long): String = Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).format(TimeFormat)
+internal fun time(t: Long): String = Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).format(AppText.dateFormat(R.string.pattern_time))
 /** 장소에 머문 시간대 "오후 1:40 – 3:30"(1분 안이면 한 시각) */
 internal fun whenText(start: Long, end: Long): String = if (end - start < 60_000) time(start) else "${time(start)} – ${time(end)}"
 private fun PlaceUi.whenText(): String = whenText(start, end)
@@ -135,7 +135,7 @@ fun TripDetailScreen(
             when (event) {
                 is TripDetailEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
                 is TripDetailEvent.Renamed -> {
-                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = "되돌리기", duration = SnackbarDuration.Short)
+                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = AppText.string(R.string.action_undo), duration = SnackbarDuration.Short)
                     if (result == SnackbarResult.ActionPerformed) event.undo()
                 }
             }
@@ -220,14 +220,14 @@ fun TripDetailScreen(
                         EditableName(
                             name = trip?.name.orEmpty(),
                             style = TitleStyle,
-                            editLabel = "여행 이름 바꾸기",
+                            editLabel = stringResource(R.string.rename_trip),
                             glow = uiState.glow.title,
                             glowToken = uiState.glow.token,
                             onEdit = { renaming = TRIP },
                         )
                         if (trip != null) {
                             Text(
-                                "${trip.period} · ${formatCount(trip.mediaCount)}장 · ${places.count { it.sameAs == null }}곳",
+                                "${trip.period} · ${photoCount(trip.mediaCount)} · ${placeCount(places.count { it.sameAs == null })}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 6.dp),
@@ -247,7 +247,7 @@ fun TripDetailScreen(
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp),
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                        ) { ActionLabel(Icons.Rounded.Star, "베스트샷 고르기") }
+                        ) { ActionLabel(Icons.Rounded.Star, stringResource(R.string.pick_best_shots)) }
                         OutlinedButton(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
@@ -256,7 +256,7 @@ fun TripDetailScreen(
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                             contentPadding = PaddingValues(horizontal = 12.dp),
                             modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                        ) { ActionLabel(Icons.Outlined.AutoDelete, "사진 정리하기") }
+                        ) { ActionLabel(Icons.Outlined.AutoDelete, stringResource(R.string.clean_up_photos)) }
                     }
                 }
                 uiState.days.forEach { day ->
@@ -283,7 +283,7 @@ fun TripDetailScreen(
                 places.lastOrNull()?.let { last ->
                     item(key = "end") {
                         Text(
-                            "여행 끝 · ${last.name} ${time(last.end)}",
+                            stringResource(R.string.trip_end, last.name, time(last.end)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 56.dp, end = 20.dp, top = 18.dp).navigationBarsPadding(),
@@ -299,10 +299,10 @@ fun TripDetailScreen(
         null -> Unit
         TRIP -> trip?.let { t ->
             RenameDialog(
-                title = "여행 이름 바꾸기",
+                title = stringResource(R.string.rename_trip),
                 contextIcon = Icons.Outlined.Event,
-                context = "${t.period} · ${formatCount(t.mediaCount)}장",
-                label = "여행 이름",
+                context = "${t.period} · ${photoCount(t.mediaCount)}",
+                label = stringResource(R.string.trip_name),
                 current = t.name,
                 autoName = t.autoName,
                 maxLength = 20,
@@ -312,10 +312,10 @@ fun TripDetailScreen(
         }
         else -> places.getOrNull(target)?.let { p ->
             RenameDialog(
-                title = "장소 이름 바꾸기",
+                title = stringResource(R.string.rename_place),
                 contextIcon = Icons.Outlined.Schedule,
-                context = "${p.dayOrdinal}일째 · ${time(p.start)} · ${formatCount(p.count)}장",
-                label = "장소 이름",
+                context = "${stringResource(R.string.day_ordinal, p.dayOrdinal)} · ${time(p.start)} · ${photoCount(p.count)}",
+                label = stringResource(R.string.place_name),
                 current = p.name,
                 autoName = p.autoName,
                 maxLength = 20,
@@ -327,7 +327,7 @@ fun TripDetailScreen(
     uiState.pending?.let { pending ->
         SameNameDialog(
             oldName = pending.oldName,
-            where = pending.others.mapNotNull { i -> places.getOrNull(i)?.let { "${it.dayOrdinal}일째 · ${time(it.start)}" } },
+            where = pending.others.mapNotNull { i -> places.getOrNull(i)?.let { "${AppText.string(R.string.day_ordinal, it.dayOrdinal)} · ${time(it.start)}" } },
             onDismiss = viewModel::cancelRename,
             onOnlyThis = { viewModel.confirmRename(all = false) },
             onAll = { viewModel.confirmRename(all = true) },
@@ -350,7 +350,7 @@ private fun EditableName(name: String, style: TextStyle, editLabel: String, glow
             modifier = Modifier.weight(1f, fill = false).renameGlow(glow, glowToken, glowColor),
         )
         IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Outlined.Edit, contentDescription = "$editLabel, 지금 이름 $name", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit_label_description, editLabel, name), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -371,10 +371,9 @@ private fun DayHeader(day: DayUi) {
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("${day.ordinal}일째", style = DayStyle, color = dayTextColor(day.day))
-            val weekday = day.date.dayOfWeek.getDisplayName(DayTextStyle.FULL, Locale.KOREAN)
+            Text(stringResource(R.string.day_ordinal, day.ordinal), style = DayStyle, color = dayTextColor(day.day))
             Text(
-                "${day.date.monthValue}월 ${day.date.dayOfMonth}일 $weekday · " + day.places.joinToString(" → ") { it.name },
+                day.date.format(AppText.dateFormat(R.string.pattern_month_day_weekday)) + " · " + day.places.joinToString(" → ") { it.name },
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
                 maxLines = 1,
@@ -416,14 +415,14 @@ private fun PlaceSection(place: PlaceUi, best: Set<Long>, glowToken: Long?, onRe
             EditableName(
                 name = place.name,
                 style = PlaceStyle,
-                editLabel = "장소 이름 바꾸기",
+                editLabel = stringResource(R.string.rename_place),
                 glow = glowToken != null,
                 glowToken = glowToken ?: 0,
                 onEdit = onRename,
                 color = dayTextColor(place.day),
             )
             Text(
-                "${place.whenText()} · ${formatCount(place.count)}장",
+                "${place.whenText()} · ${photoCount(place.count)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.offset(y = (-7).dp),
@@ -467,12 +466,16 @@ private fun PhotoGrid(
                                     isMore -> Modifier
                                         .onGloballyPositioned { bounds = it.boundsInRoot() }
                                         .background(MaterialTheme.colorScheme.surfaceContainer)
-                                        .semantics { contentDescription = "$placeName 사진 ${formatCount(count)}장 전체 보기" }
+                                        .semantics { contentDescription = AppText.string(R.string.place_view_all_description, placeName, photoCount(count)) }
                                         .clickable(role = Role.Button) { onOpenAll(bounds) }
                                     else -> Modifier
                                         .background(MaterialTheme.colorScheme.surfaceContainer)
                                         .semantics {
-                                            contentDescription = "$placeName 사진 ${index + 1}" + (if (photo.isBest(best)) ", 베스트샷" else "") + " 크게 보기"
+                                            contentDescription = AppText.string(
+                                                if (photo.isBest(best)) R.string.place_photo_best_description else R.string.place_photo_description,
+                                                placeName,
+                                                index + 1,
+                                            )
                                         }
                                         .clickable(role = Role.Button) { onClick(index) }
                                 },
@@ -493,7 +496,7 @@ private fun PhotoGrid(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
                                     Text("+${formatCount(count - 5)}", style = MoreCountStyle, color = Color.White)
-                                    Text("전체 보기", style = MoreLabelStyle, color = Color.White)
+                                    Text(stringResource(R.string.view_all), style = MoreLabelStyle, color = Color.White)
                                 }
                             }
                         }

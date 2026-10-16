@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.runtime.remember
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendChip
 import app.wend.sea.core.designsystem.component.gooey
 import app.wend.sea.core.designsystem.component.spread
@@ -155,10 +157,10 @@ private fun NicknameContent(
             .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
     ) {
         WendMark(modifier = Modifier.padding(top = 24.dp, bottom = 40.dp))
-        Text(text = "처음 뵙네요.\n어떻게 불러드릴까요?", style = MaterialTheme.typography.headlineLarge)
+        Text(text = stringResource(R.string.nickname_title), style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "여행을 정리해 드릴 때 이 이름으로 불러드려요.",
+            text = stringResource(R.string.nickname_sub),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurfaceVariant,
         )
@@ -179,9 +181,9 @@ private fun NicknameContent(
             val helpColor = if (uiState.isError) colors.error else colors.onSurfaceVariant
             Text(
                 text = when (uiState.help) {
-                    NicknameHelp.Default -> "2~10자, 한글·영문·숫자"
-                    NicknameHelp.InvalidChars -> "한글·영문·숫자만 쓸 수 있어요"
-                    NicknameHelp.TooShort -> "두 글자 이상 입력해 주세요"
+                    NicknameHelp.Default -> stringResource(R.string.nickname_help)
+                    NicknameHelp.InvalidChars -> stringResource(R.string.nickname_invalid)
+                    NicknameHelp.TooShort -> stringResource(R.string.nickname_too_short)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = helpColor,
@@ -194,7 +196,7 @@ private fun NicknameContent(
         }
         Spacer(Modifier.height(28.dp))
         Text(
-            text = "이런 이름은 어때요?",
+            text = stringResource(R.string.nickname_suggestions),
             style = MaterialTheme.typography.labelLarge,
             color = colors.onSurfaceVariant,
         )
@@ -216,7 +218,7 @@ private fun NicknameContent(
                 modifier = Modifier.size(18.dp),
             )
             Text(
-                text = "닉네임과 사진은 이 기기 안에서만 쓰여요. 어디에도 올리지 않아요.",
+                text = stringResource(R.string.nickname_privacy),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
@@ -296,6 +298,7 @@ private fun GooeyNicknameField(
                 center = Offset(size.width - spread - h / 2, spread + h / 2),
             )
         }
+        val nicknameLabel = stringResource(R.string.nickname)
         BasicTextField(
             value = field,
             onValueChange = {
@@ -312,11 +315,11 @@ private fun GooeyNicknameField(
                 .fillMaxWidth()
                 .padding(end = pillEnd)
                 .focusRequester(focusRequester)
-                .semantics { contentDescription = "닉네임" },
+                .semantics { contentDescription = nicknameLabel },
             decorationBox = { inner ->
                 Box(Modifier.padding(horizontal = 24.dp), contentAlignment = Alignment.CenterStart) {
                     if (value.isEmpty()) {
-                        Text("닉네임 입력", style = InputStyle.copy(color = Placeholder))
+                        Text(stringResource(R.string.nickname_placeholder), style = InputStyle.copy(color = Placeholder))
                     }
                     inner()
                 }
@@ -333,12 +336,12 @@ private fun GooeyNicknameField(
                     scaleY = s
                 }
                 .clip(CircleShape)
-                .clickable(enabled = ready, onClickLabel = "다음", onClick = onSubmit),
+                .clickable(enabled = ready, onClickLabel = stringResource(R.string.action_next), onClick = onSubmit),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                contentDescription = "다음",
+                contentDescription = stringResource(R.string.action_next),
                 tint = Color.White,
             )
         }

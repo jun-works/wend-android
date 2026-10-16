@@ -46,6 +46,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.PhotoEasing
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.component.key
@@ -64,10 +67,9 @@ import app.wend.sea.core.designsystem.component.rememberThumbnail
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
+import app.wend.sea.core.text.AppText
 import app.wend.sea.feature.analysis.formatCount
 import coil3.compose.AsyncImage
-import java.time.format.TextStyle as DayTextStyle
-import java.util.Locale
 
 private fun sans(weight: FontWeight, size: Int, line: Double) = TextStyle(
     fontFamily = IbmPlexSansKr, fontWeight = weight, fontSize = size.sp, lineHeight = (size * line).sp, lineHeightStyle = CssLineHeight,
@@ -135,7 +137,7 @@ fun PlacePhotosScreen(
         Column(Modifier.fillMaxSize()) {
             WendTopAppBar(
                 onBack = onBack,
-                title = { Text("장소 사진", style = BarTitleStyle) },
+                title = { Text(stringResource(R.string.place_photos_title), style = BarTitleStyle) },
                 actions = {
                     Text(
                         uiState.tripName,
@@ -175,8 +177,10 @@ fun PlacePhotosScreen(
                             .clip(RoundedCornerShape(5.dp))
                             .background(colors.surfaceContainer)
                             .semantics {
-                                contentDescription = "${uiState.name}, 사진 ${index + 1}" + (photo.takenAt?.let { ", ${time(it)}" } ?: "") +
-                                    (if (isBest) ", 베스트샷" else "") + ", 크게 보기"
+                                contentDescription = AppText.string(R.string.photo_n, uiState.name, index + 1) +
+                                    (photo.takenAt?.let { ", ${time(it)}" } ?: "") +
+                                    (if (isBest) ", " + AppText.string(R.string.best_shot) else "") +
+                                    ", " + AppText.string(R.string.view_larger)
                             }
                             .clickable(role = Role.Button) { onPhotoClick(uiState.place, index) },
                     ) {
@@ -191,7 +195,7 @@ fun PlacePhotosScreen(
                 }
                 item(key = "end", span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        if (uiState.photos.isEmpty()) "이 장소에 남아 있는 사진이 없어요" else "이곳에서 담은 순간을 모두 펼쳤어요",
+                        stringResource(if (uiState.photos.isEmpty()) R.string.place_photos_none else R.string.place_photos_end),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -224,10 +228,8 @@ private fun Heading(state: PlacePhotosUiState) {
                 Text("${state.place + 1}", style = StopStyle, color = Color.White)
             }
             val date = state.date
-            val label = if (date == null) "${state.dayOrdinal}일째" else {
-                val weekday = date.dayOfWeek.getDisplayName(DayTextStyle.FULL, Locale.KOREAN)
-                "${state.dayOrdinal}일째 · ${date.monthValue}월 ${date.dayOfMonth}일 $weekday"
-            }
+            val ordinal = stringResource(R.string.day_ordinal, state.dayOrdinal)
+            val label = if (date == null) ordinal else "$ordinal · ${date.format(AppText.dateFormat(R.string.pattern_month_day_weekday))}"
             Text(label, style = RouteStyle, color = dayInk)
         }
         Text(state.name, style = NameStyle, color = colors.onSurface, modifier = Modifier.padding(top = 12.dp, bottom = 6.dp))
@@ -237,8 +239,8 @@ private fun Heading(state: PlacePhotosUiState) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom,
         ) {
-            Text("사진 ${formatCount(state.photos.size)}장", style = CountStyle, color = colors.onSurface)
-            Text("촬영 순서대로", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            Text(pluralStringResource(R.plurals.trips_hero_photos, state.photos.size, formatCount(state.photos.size)), style = CountStyle, color = colors.onSurface)
+            Text(stringResource(R.string.place_photos_order), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
         }
         HorizontalDivider(color = colors.outlineVariant)
     }

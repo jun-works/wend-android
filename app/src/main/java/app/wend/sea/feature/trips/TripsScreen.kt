@@ -39,9 +39,14 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.RenameDialog
 import app.wend.sea.core.designsystem.component.renameGlow
+import app.wend.sea.core.text.AppText
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.feature.analysis.autoName
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.PhotoLibrary
@@ -100,6 +105,7 @@ import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.analysis.name
 import app.wend.sea.feature.analysis.ReanalyzeDialog
 import app.wend.sea.feature.analysis.period
+import app.wend.sea.feature.analysis.photoCount
 import app.wend.sea.feature.analysis.tripDots
 import app.wend.sea.feature.permission.rememberMediaPermissionRequest
 import coil3.compose.AsyncImage
@@ -154,7 +160,7 @@ fun TripsScreen(
             when (event) {
                 is TripsEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
                 is TripsEvent.Renamed -> {
-                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = "되돌리기", duration = SnackbarDuration.Short)
+                    val result = snackbarHostState.showSnackbar(event.message, actionLabel = AppText.string(R.string.action_undo), duration = SnackbarDuration.Short)
                     if (result == SnackbarResult.ActionPerformed) event.undo()
                 }
                 TripsEvent.Reanalyze -> currentOnReanalyze()
@@ -221,7 +227,7 @@ fun TripsScreen(
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                     onSettingsClick()
                 }) {
-                    Icon(Icons.Outlined.Settings, contentDescription = "설정", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             LazyColumn(
@@ -284,7 +290,7 @@ fun TripsScreen(
             partial = uiState.partial,
             progress = { 1f },
             size = GlobeSize,
-            description = "여행마다 다른 색 덩어리로 뭉친 지구본. 덩어리를 누르면 그 여행으로 이동해요",
+            description = stringResource(R.string.trips_globe_description),
             focus = { focusIndex },
             onClick = { picked ->
                 if (docking > .7f) {
@@ -313,10 +319,10 @@ fun TripsScreen(
     renaming?.let { number ->
         trips.firstOrNull { it.number == number }?.let { t ->
             RenameDialog(
-                title = "여행 이름 바꾸기",
+                title = stringResource(R.string.rename_trip),
                 contextIcon = Icons.Outlined.Event,
-                context = "${t.period} · ${formatCount(t.mediaCount)}장",
-                label = "여행 이름",
+                context = "${t.period} · ${photoCount(t.mediaCount)}",
+                label = stringResource(R.string.trip_name),
                 current = t.name,
                 autoName = t.autoName,
                 maxLength = 20,
@@ -347,17 +353,18 @@ private fun Hero(tripCount: Int, photoCount: Int, orbitAlpha: () -> Float, onSlo
             drawCircle(colors.outlineVariant, radius = size.minDimension / 2 - 6.dp.toPx(), style = Stroke(1.5.dp.toPx(), pathEffect = dash))
         }
         val number = SpanStyle(fontFamily = GowunBatang, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = colors.onSurface)
+        val trips = pluralStringResource(R.plurals.trips_hero_trips, tripCount)
+        val photos = pluralStringResource(R.plurals.trips_hero_photos, photoCount)
+        val none = stringResource(R.string.trips_hero_none)
         Text(
             text = if (tripCount > 0) {
                 buildAnnotatedString {
-                    append("여행 ")
-                    withStyle(number) { append("$tripCount") }
-                    append("개 · 사진 ")
-                    withStyle(number) { append(formatCount(photoCount)) }
-                    append("장")
+                    appendTemplate(trips, { withStyle(number) { append(formatCount(tripCount)) } })
+                    append(" · ")
+                    appendTemplate(photos, { withStyle(number) { append(formatCount(photoCount)) } })
                 }
             } else {
-                buildAnnotatedString { append("아직 찾은 여행이 없어요") }
+                buildAnnotatedString { append(none) }
             },
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurfaceVariant,
@@ -365,7 +372,7 @@ private fun Hero(tripCount: Int, photoCount: Int, orbitAlpha: () -> Float, onSlo
         )
         if (tripCount > 0) {
             Text(
-                "색 덩어리를 누르면 그 여행으로 가요",
+                stringResource(R.string.trips_hero_hint),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.onSurfaceVariant.copy(alpha = .85f),
                 modifier = Modifier.padding(top = 4.dp),
@@ -383,7 +390,7 @@ private fun YearHeader(year: Int, count: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("$year", style = YearStyle)
-        Text("여행 ${count}개", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(pluralStringResource(R.plurals.count_trips, count, formatCount(count)), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -403,7 +410,7 @@ private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean,
             .paperCard(shape, colors.surfaceContainerLowest)
             .border(BorderStroke(2.dp, border), shape)
             .clip(shape)
-            .clickable(onClickLabel = "${trip.name} 열기", onClick = { onClick(dotCenter) }),
+            .clickable(onClickLabel = stringResource(R.string.trips_open, trip.name), onClick = { onClick(dotCenter) }),
     ) {
         Row(Modifier.fillMaxWidth().height(124.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             Cover(covers.getOrNull(0), Modifier.weight(2f).fillMaxHeight())
@@ -446,12 +453,12 @@ private fun TripCard(trip: Trip, covers: List<MediaThumbnail>, focused: Boolean,
                         modifier = Modifier.weight(1f, fill = false).renameGlow(glowToken != null, glowToken ?: 0, color),
                     )
                     IconButton(onClick = onRename, modifier = Modifier.requiredSize(40.dp)) {
-                        Icon(Icons.Outlined.Edit, contentDescription = "${trip.name} 여행 이름 바꾸기", tint = colors.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.trips_rename_label, trip.name), tint = colors.onSurfaceVariant.copy(alpha = .75f), modifier = Modifier.size(18.dp))
                     }
                 }
                 Text(trip.period, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
             }
-            Text("${formatCount(trip.mediaCount)}장", style = CardCountStyle)
+            Text(photoCount(trip.mediaCount), style = CardCountStyle)
         }
     }
 }
@@ -478,12 +485,12 @@ private fun PartialBanner(onAllowAll: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Icon(Icons.Rounded.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Text("고르신 사진에서 찾은 여행만 보여요.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.trips_partial_banner), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         FilledTonalButton(
             onClick = onAllowAll,
             contentPadding = PaddingValues(horizontal = 14.dp),
             modifier = Modifier.heightIn(min = 40.dp),
-        ) { Text("모두 허용", style = MaterialTheme.typography.labelLarge) }
+        ) { Text(stringResource(R.string.allow_all), style = MaterialTheme.typography.labelLarge) }
     }
 }
 
@@ -494,9 +501,9 @@ private fun EmptyTrips() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("여행이 생기면 여기에 모여요", style = serif(19, 1.3), modifier = Modifier.padding(bottom = 6.dp))
+        Text(stringResource(R.string.trips_empty_title), style = serif(19, 1.3), modifier = Modifier.padding(bottom = 6.dp))
         Text(
-            "위치 태그를 켜고 찍은 사진이 쌓이면 틱과 핀이 여행을 찾아 드릴게요.",
+            stringResource(R.string.trips_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -531,11 +538,10 @@ private fun LeftOutRow(count: Int, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Icon(Icons.Outlined.PhotoLibrary, contentDescription = null, tint = colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        val text = pluralStringResource(R.plurals.trips_left_row, count)
         Text(
             buildAnnotatedString {
-                append("여행에 담기지 않은 사진·영상 ")
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(formatCount(count)) }
-                append("개")
+                appendTemplate(text, { withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(formatCount(count)) } })
             },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,

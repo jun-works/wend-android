@@ -2,6 +2,8 @@ package app.wend.sea.feature.nickname
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -36,8 +38,9 @@ data class NicknameUiState(
 
     companion object {
         const val MAX_LENGTH = 10
-        private val VALID = Regex("^[가-힣a-zA-Z0-9 ]{2,10}$")
-        private val ALLOWED = Regex("^[가-힣a-zA-Z0-9 ]*$")
+        // 어느 언어든 글자·숫자·공백(악센트 같은 결합 문자 포함)
+        private val VALID = Regex("""^[\p{L}\p{M}\p{N} ]{2,10}$""")
+        private val ALLOWED = Regex("""^[\p{L}\p{M}\p{N} ]*$""")
     }
 }
 
@@ -60,7 +63,12 @@ class NicknameViewModel @Inject constructor(
     private val _events = Channel<NicknameEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    val suggestions = listOf("주말 산책러", "길치 탐험가", "바다파 지은", "캐리어 요정")
+    val suggestions = listOf(
+        R.string.nickname_suggestion_1,
+        R.string.nickname_suggestion_2,
+        R.string.nickname_suggestion_3,
+        R.string.nickname_suggestion_4,
+    ).map { AppText.string(it) }
 
     init {
         viewModelScope.launch {

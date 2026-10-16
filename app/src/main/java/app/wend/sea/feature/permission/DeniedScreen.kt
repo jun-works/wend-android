@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -42,12 +43,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.Bot
 import app.wend.sea.core.designsystem.component.BotAvatar
 import app.wend.sea.core.designsystem.component.BotBubble
 import app.wend.sea.core.designsystem.component.BubbleMaxWidth
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.rememberAmbientClock
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
 
 @Composable
@@ -84,7 +87,7 @@ fun DeniedScreen(
         bottomBar = {
             PermBottomBar {
                 WendPrimaryButton(
-                    text = if (settingsOnly) "설정에서 허용하기" else "다시 허용하기",
+                    text = stringResource(if (settingsOnly) R.string.denied_allow_in_settings else R.string.denied_allow_again),
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         if (settingsOnly) permission.openSettings() else permission.request()
@@ -101,30 +104,24 @@ fun DeniedScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 16.dp),
         ) {
-            PermHeading(AnnotatedString("앨범이 닫혀 있어서\n여행을 찾을 수 없어요"), modifier = Modifier.padding(top = 24.dp))
+            PermHeading(AnnotatedString(stringResource(R.string.denied_title)), modifier = Modifier.padding(top = 24.dp))
             AlbumStage(
                 lit = 0,
                 height = 236.dp,
                 globeSize = 220.dp,
-                description = "방울이 모두 옅은 색으로 남아 있는 빈 지구본",
+                description = stringResource(R.string.denied_globe_description),
             )
             // 시안 .dn-say: 온보딩의 핀이 다시 나와 안심시킨다
             Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 BotAvatar(Bot.Pin, clock, Modifier.size(44.dp))
                 Column(Modifier.widthIn(max = BubbleMaxWidth)) {
                     Text(
-                        text = Bot.Pin.title,
+                        text = stringResource(Bot.Pin.title),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = 12.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 8.dp),
                     )
-                    BotBubble(
-                        if (settingsOnly) {
-                            "두 번 거절하시면 Android가 안내창을 더 띄우지 않아요. 설정에서 한 번만 바꿔 주시면 돼요."
-                        } else {
-                            "읽을 사진이 없으면 틱이랑 저는 할 수 있는 게 없어요. 사진은 어디에도 올리지 않고, 직접 고르기 전에는 지우지 않아요."
-                        },
-                    )
+                    BotBubble(stringResource(if (settingsOnly) R.string.denied_bot_settings else R.string.denied_bot))
                 }
             }
             if (settingsOnly) SettingsSteps(Modifier.padding(top = 16.dp))
@@ -137,17 +134,19 @@ fun DeniedScreen(
 private fun SettingsSteps(modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val strong = SpanStyle(color = colors.onSurface, fontWeight = FontWeight.Bold)
+    val steps = stringResource(R.string.denied_steps)
+    val noPrompt = stringResource(R.string.denied_steps_no_prompt)
+    val settings = stringResource(R.string.settings)
+    val alwaysAllowAll = stringResource(R.string.denied_steps_always_allow_all)
     Text(
         text = buildAnnotatedString {
-            withStyle(strong) { append("안내창이 더는 뜨지 않아요.") }
-            append(" 설정에서 직접 바꿔 주세요.\n")
-            appendInlineContent("settings", "설정")
-            append(" 권한 ")
-            appendInlineContent("chevron", ">")
-            append(" 사진 및 동영상 ")
-            appendInlineContent("chevron", ">")
-            append(" ")
-            withStyle(strong) { append("항상 모두 허용") }
+            appendTemplate(
+                steps,
+                { withStyle(strong) { append(noPrompt) } },
+                { appendInlineContent("settings", settings) },
+                { appendInlineContent("chevron", ">") },
+                { withStyle(strong) { append(alwaysAllowAll) } },
+            )
         },
         inlineContent = mapOf(
             "settings" to inlineIcon(Icons.Outlined.Settings),

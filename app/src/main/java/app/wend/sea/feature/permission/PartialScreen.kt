@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -40,9 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.paperCard
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.feature.analysis.photoCount
 import app.wend.sea.feature.analysis.rememberStartWithNotificationPermission
 
 private val PinTint = Color(0xFFA8301B)
@@ -94,7 +98,7 @@ fun PartialScreen(
         bottomBar = {
             PermBottomBar {
                 WendPrimaryButton(
-                    text = "모든 사진 허용하기",
+                    text = stringResource(R.string.allow_all_photos),
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         // 재요청 안내창에서 모두 허용을 한 번 안 고르면 Android 가 그 뒤로는 사진 고르는 화면만 띄운다.
@@ -111,7 +115,7 @@ fun PartialScreen(
                         .fillMaxWidth()
                         .height(40.dp),
                 ) {
-                    Text("고른 사진으로 시작할게요", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.partial_start_with_picked), style = MaterialTheme.typography.labelLarge)
                 }
             }
         },
@@ -124,11 +128,12 @@ fun PartialScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 16.dp),
         ) {
+            val primary = MaterialTheme.colorScheme.primary
+            val title = stringResource(R.string.partial_title)
+            val pickedText = photoCount(picked)
             PermHeading(
                 buildAnnotatedString {
-                    append("고르신 ")
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("${picked}장") }
-                    append("만\n볼 수 있어요")
+                    appendTemplate(title, { withStyle(SpanStyle(color = primary)) { append(pickedText) } })
                 },
                 modifier = Modifier.padding(top = 24.dp),
             )
@@ -136,8 +141,8 @@ fun PartialScreen(
                 lit = PARTIAL_LIT_DOTS,
                 height = 248.dp,
                 globeSize = 240.dp,
-                description = "지구본 대부분이 옅은 채로, 고른 사진만큼만 진한 방울이 띄엄띄엄 보이는 모습",
-                caption = listOf(InkDot to "고른 사진", GhostDot to "안 보이는 사진"),
+                description = stringResource(R.string.partial_globe_description),
+                caption = listOf(InkDot to stringResource(R.string.partial_caption_picked), GhostDot to stringResource(R.string.partial_caption_hidden)),
             )
             CutTripCard(Modifier.padding(top = 12.dp))
         }
@@ -157,7 +162,7 @@ private fun CutTripCard(modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Icons.Rounded.ContentCut, contentDescription = null, tint = PinTint, modifier = Modifier.size(18.dp))
             Text(
-                "이렇게 여행이 잘릴 수 있어요",
+                stringResource(R.string.partial_cut_title),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = MaterialTheme.typography.bodyMedium.fontSize * 1.3f),
             )
         }
@@ -175,15 +180,15 @@ private fun CutTripCard(modifier: Modifier = Modifier) {
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            listOf("7월 12일", "제주 · 12일 동안 41장", "7월 23일").forEach {
+            listOf(R.string.partial_cut_start, R.string.partial_cut_trip, R.string.partial_cut_end).map { stringResource(it) }.forEach {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
             }
         }
+        val body = stringResource(R.string.partial_cut_body)
+        val bodyEm = stringResource(R.string.partial_cut_body_em)
         Text(
             text = buildAnnotatedString {
-                append("3장만 고르면 틱과 핀은 ")
-                withStyle(SpanStyle(color = colors.onSurface, fontWeight = FontWeight.Bold)) { append("하루짜리 여행 세 개") }
-                append("로 읽어요. 사진은 나중에 더 고를 수도 있어요.")
+                appendTemplate(body, { withStyle(SpanStyle(color = colors.onSurface, fontWeight = FontWeight.Bold)) { append(bodyEm) } })
             },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,

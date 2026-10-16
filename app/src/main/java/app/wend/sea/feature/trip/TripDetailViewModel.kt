@@ -3,6 +3,8 @@ package app.wend.sea.feature.trip
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.Trip
@@ -55,7 +57,7 @@ data class PlaceUi(
     val media: List<Pair<Boolean, Long>> = emptyList(),
 ) {
     val number: Int get() = index + 1
-    val autoName: String get() = city ?: "장소 $number"
+    val autoName: String get() = city ?: AppText.string(R.string.place_auto_name, number)
     val name: String get() = userName ?: autoName
 }
 
@@ -185,7 +187,7 @@ class TripDetailViewModel @Inject constructor(
         if (name == trip.name) return
         val before = trip.userName
         setTripName(name.takeIf { it != trip.autoName })
-        _events.trySend(TripDetailEvent.Renamed("여행 이름을 바꿨어요") { setTripName(before) })
+        _events.trySend(TripDetailEvent.Renamed(AppText.string(R.string.trip_renamed)) { setTripName(before) })
     }
 
     private fun setTripName(userName: String?) {
@@ -217,7 +219,7 @@ class TripDetailViewModel @Inject constructor(
     private fun applyPlaceNames(indices: List<Int>, name: String) {
         val before = indices.associateWith { i -> _uiState.value.places.first { it.index == i }.userName }
         setPlaceNames(indices.associateWith { name })
-        val message = if (indices.size > 1) "장소 ${indices.size}곳의 이름을 바꿨어요" else "장소 이름을 바꿨어요"
+        val message = if (indices.size > 1) AppText.string(R.string.places_renamed, indices.size) else AppText.string(R.string.place_renamed)
         _events.trySend(TripDetailEvent.Renamed(message) { setPlaceNames(before, raw = true) })
     }
 

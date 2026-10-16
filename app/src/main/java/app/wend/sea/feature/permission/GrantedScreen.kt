@@ -29,6 +29,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.res.stringResource
+import app.wend.sea.R
+import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.feature.analysis.rememberStartWithNotificationPermission
 import androidx.compose.ui.Alignment
@@ -118,7 +121,7 @@ fun GrantedScreen(
         bottomBar = {
             PermBottomBar {
                 WendPrimaryButton(
-                    text = "여행 찾기 시작",
+                    text = stringResource(R.string.granted_start),
                     onClick = viewModel::onStartAnalysis,
                 )
             }
@@ -132,28 +135,34 @@ fun GrantedScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 16.dp),
         ) {
+            val primary = MaterialTheme.colorScheme.primary
+            val title = stringResource(R.string.granted_title)
+            val titleEm = stringResource(R.string.granted_title_em)
             PermHeading(
                 buildAnnotatedString {
-                    append("${uiState.nickname}님의 앨범이\n")
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("열렸어요") }
+                    appendTemplate(
+                        title,
+                        { append(uiState.nickname) },
+                        { withStyle(SpanStyle(color = primary)) { append(titleEm) } },
+                    )
                 },
                 modifier = Modifier.padding(top = 24.dp),
             )
-            PermSub("지구본의 방울이 이제 실제 사진이에요.")
+            PermSub(stringResource(R.string.granted_sub))
             AlbumStage(
                 lit = ALBUM_DOT_COUNT,
                 height = 268.dp,
                 globeSize = 260.dp,
-                description = "앨범이 열리면서 지구본의 방울이 앞쪽부터 진하게 채워지는 애니메이션",
-                caption = listOf(InkDot to "볼 수 있는 사진"),
+                description = stringResource(R.string.granted_globe_description),
+                caption = listOf(InkDot to stringResource(R.string.granted_caption)),
             )
             val f = fill.value
             Column(Modifier.padding(top = 4.dp)) {
-                CountRow(Icons.Outlined.PhotoLibrary, "사진", (uiState.photos * f).toInt(), "장")
+                CountRow(Icons.Outlined.PhotoLibrary, stringResource(R.string.granted_photos), (uiState.photos * f).toInt(), stringResource(R.string.unit_photos))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                CountRow(Icons.Outlined.Videocam, "영상", (uiState.videos * f).toInt(), "개")
+                CountRow(Icons.Outlined.Videocam, stringResource(R.string.granted_videos), (uiState.videos * f).toInt(), stringResource(R.string.unit_items))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                CountRow(Icons.Rounded.LocationOn, "위치가 남아 있는 사진·영상", (uiState.withLocation * f).toInt(), "개", pin = true)
+                CountRow(Icons.Rounded.LocationOn, stringResource(R.string.granted_with_location), (uiState.withLocation * f).toInt(), stringResource(R.string.unit_items), pin = true)
             }
         }
     }

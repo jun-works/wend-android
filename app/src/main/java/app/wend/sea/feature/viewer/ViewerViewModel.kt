@@ -2,12 +2,15 @@ package app.wend.sea.feature.viewer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import app.wend.sea.data.analysis.TripChoice
 import app.wend.sea.data.analysis.TripDetail
 import app.wend.sea.feature.analysis.name
+import app.wend.sea.feature.analysis.photoCount
 import app.wend.sea.feature.left.NewTripUi
 import app.wend.sea.feature.left.dateTripName
 import app.wend.sea.feature.left.rangeText
@@ -138,7 +141,7 @@ class ViewerViewModel @Inject constructor(
             loaded = true,
             items = p.media.map { ViewerItem(MediaThumbnail(it.id, it.video), it.takenAt, ratios[it.video to it.id]) },
             startIndex = index.coerceIn(0, (p.media.size - 1).coerceAtLeast(0)),
-            placeName = detail.placeUserNames[place] ?: detail.placeCities[place] ?: "장소 ${place + 1}",
+            placeName = detail.placeUserNames[place] ?: detail.placeCities[place] ?: AppText.string(R.string.place_auto_name, place + 1),
             day = dates.indexOf(dateOf(p.start)).coerceAtLeast(0),
         )
     }
@@ -146,7 +149,7 @@ class ViewerViewModel @Inject constructor(
     /** 이 사진을 베스트샷으로 — 같은 장면에서 고른 다른 사진은 내려온다 */
     fun onBestShot(item: ViewerItem) {
         if (item.media.video) {
-            _events.trySend(ViewerEvent.ShowMessage("영상은 베스트샷으로 고를 수 없어요"))
+            _events.trySend(ViewerEvent.ShowMessage(AppText.string(R.string.viewer_video_not_best)))
             return
         }
         if (item.media.mediaId in _uiState.value.best) return
@@ -154,7 +157,7 @@ class ViewerViewModel @Inject constructor(
             analysisRepository.setBestShot(trip, item.media)
             val best = analysisRepository.bestShots()
             _uiState.update { it.copy(best = best) }
-            _events.send(ViewerEvent.BestChanged("이 사진을 ${_uiState.value.placeName}의 베스트샷으로 골랐어요"))
+            _events.send(ViewerEvent.BestChanged(AppText.string(R.string.viewer_best_picked, _uiState.value.placeName)))
         }
     }
 
@@ -169,11 +172,11 @@ class ViewerViewModel @Inject constructor(
     fun askNew(item: ViewerItem) {
         viewModelScope.launch {
             val time = leftTimes[item.media] ?: run {
-                _events.send(ViewerEvent.ShowMessage("찍은 날짜가 있는 사진이어야 여행을 만들 수 있어요"))
+                _events.send(ViewerEvent.ShowMessage(AppText.string(R.string.needs_dated_photo_single)))
                 return@launch
             }
             val suggested = analysisRepository.suggestTripName(listOf(item.media)) ?: dateTripName(listOf(time))
-            _uiState.update { it.copy(newTrip = NewTripUi("${rangeText(listOf(time))} · 1장", suggested)) }
+            _uiState.update { it.copy(newTrip = NewTripUi("${rangeText(listOf(time))} · ${photoCount(1)}", suggested)) }
         }
     }
 
@@ -183,7 +186,7 @@ class ViewerViewModel @Inject constructor(
         _uiState.update { it.copy(choices = null) }
         viewModelScope.launch {
             analysisRepository.addToTrip(choice.trip.number, listOf(item.media))
-            _events.send(ViewerEvent.Moved("1장을 ${tripPhrase(choice.trip.name)}에 넣었어요"))
+            _events.send(ViewerEvent.Moved(AppText.plural(R.plurals.added_to_trip, 1, 1, tripPhrase(choice.trip.name))))
         }
     }
 
@@ -192,9 +195,9 @@ class ViewerViewModel @Inject constructor(
         viewModelScope.launch {
             val made = analysisRepository.newTrip(listOf(item.media), name) != null
             if (made) {
-                _events.send(ViewerEvent.Moved("‘$name’ 여행을 만들었어요. 여행 목록에서 볼 수 있어요"))
+                _events.send(ViewerEvent.Moved(AppText.string(R.string.trip_created, name)))
             } else {
-                _events.send(ViewerEvent.ShowMessage("찍은 날짜가 있는 사진이어야 여행을 만들 수 있어요"))
+                _events.send(ViewerEvent.ShowMessage(AppText.string(R.string.needs_dated_photo_single)))
             }
         }
     }
@@ -214,7 +217,7 @@ class ViewerViewModel @Inject constructor(
     fun onTrashed(item: ViewerItem) {
         viewModelScope.launch {
             _uiState.update { it.copy(items = it.items - item) }
-            _events.send(ViewerEvent.ShowMessage("1장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요"))
+            _events.send(ViewerEvent.ShowMessage(AppText.plural(R.plurals.moved_to_trash, 1, 1)))
         }
     }
 }

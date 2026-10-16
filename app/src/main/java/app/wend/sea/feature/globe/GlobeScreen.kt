@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -35,11 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendPrimaryButton
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import app.wend.sea.core.text.appendTemplate
 
 @Composable
 fun GlobeScreen(
@@ -73,7 +76,7 @@ private fun GlobeContent(
         topBar = { WendTopAppBar(onBack = onBack) },
         bottomBar = {
             WendPrimaryButton(
-                text = "어떻게 묶는지 들어볼게요",
+                text = stringResource(R.string.globe_next),
                 onClick = onNext,
                 modifier = Modifier
                     .navigationBarsPadding()
@@ -87,11 +90,15 @@ private fun GlobeContent(
                 .padding(padding)
                 .padding(horizontal = 24.dp),
         ) {
+            val title = stringResource(R.string.globe_title)
+            val titleEm = stringResource(R.string.globe_title_em)
             Text(
                 text = buildAnnotatedString {
-                    append("${uiState.nickname}님의 흩어진 사진을\n")
-                    withStyle(SpanStyle(color = colors.primary)) { append("여행 단위") }
-                    append("로 모아 드릴게요")
+                    appendTemplate(
+                        title,
+                        { append(uiState.nickname) },
+                        { withStyle(SpanStyle(color = colors.primary)) { append(titleEm) } },
+                    )
                 },
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(top = 4.dp),
@@ -113,7 +120,7 @@ private fun GlobeContent(
                 GlobeGuides()
                 OrbGlobe(step = uiState.step)
                 Text(
-                    text = "지구본을 톡 건드려 보세요",
+                    text = stringResource(R.string.globe_hint),
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
@@ -192,7 +199,7 @@ private fun StepCard(
                 color = content.copy(alpha = if (selected) .75f else .7f),
             )
             Spacer(Modifier.height(8.dp))
-            Text(text = step.label, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+            Text(text = stringResource(step.label), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
         }
     }
 }

@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.Bot
 import app.wend.sea.core.designsystem.component.BotAvatar
 import app.wend.sea.core.designsystem.component.BotBubble
@@ -161,18 +163,18 @@ private fun GuideContent(
                         BotAvatar(Bot.Pin, clock, Modifier.size(28.dp).offset(x = 20.dp))
                     }
                     Spacer(Modifier.width(10.dp))
-                    Text("틱 & 핀")
+                    Text(stringResource(R.string.guide_title))
                 },
                 actions = {
                     IconButton(onClick = onReplay) {
-                        Icon(Icons.Rounded.Replay, contentDescription = "처음부터 다시 듣기", tint = colors.onSurfaceVariant)
+                        Icon(Icons.Rounded.Replay, contentDescription = stringResource(R.string.guide_replay), tint = colors.onSurfaceVariant)
                     }
                 },
             )
         },
         bottomBar = {
             WendPrimaryButton(
-                text = "알겠어요, 시작할게요",
+                text = stringResource(R.string.guide_finish),
                 onClick = onFinish,
                 enabled = uiState.canFinish,
                 modifier = Modifier
@@ -214,7 +216,7 @@ private fun GuideContent(
 private fun DayDivider() {
     Box(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp), contentAlignment = Alignment.Center) {
         Text(
-            text = "오늘 · 처음 만나는 날",
+            text = stringResource(R.string.guide_day),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
@@ -240,7 +242,7 @@ private fun BotRow(bot: Bot, showHeader: Boolean, clock: State<Float>, content: 
         ) {
             if (showHeader) {
                 Text(
-                    text = bot.title,
+                    text = stringResource(bot.title),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = 12.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 4.dp),
@@ -304,19 +306,19 @@ private fun ExampleCard() {
             .paperCard(BotBubbleShape, colors.surfaceContainerLowest)
             .padding(14.dp),
     ) {
-        CardLabel(Icons.Rounded.CheckCircle, "여행에 담겨요", IncludedGreen)
+        CardLabel(Icons.Rounded.CheckCircle, stringResource(R.string.guide_card_included), IncludedGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Thumbnail("카메라", 78.dp) { SeaPhoto() }
+            Thumbnail(stringResource(R.string.guide_card_camera), 78.dp) { SeaPhoto() }
             Column(Modifier.align(Alignment.CenterVertically), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                MetaLine(Icons.Outlined.Schedule, "2026. 7. 14 오후 6:32", IncludedGreen)
-                MetaLine(Icons.Outlined.LocationOn, "제주 애월읍", IncludedGreen)
+                MetaLine(Icons.Outlined.Schedule, stringResource(R.string.guide_card_time), IncludedGreen)
+                MetaLine(Icons.Outlined.LocationOn, stringResource(R.string.guide_card_place), IncludedGreen)
             }
         }
         DashedDivider(Modifier.padding(vertical = 14.dp))
-        CardLabel(Icons.Rounded.Cancel, "여행에 담기지 않을 수 있어요", colors.error)
+        CardLabel(Icons.Rounded.Cancel, stringResource(R.string.guide_card_excluded), colors.error)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Thumbnail("캡처", 64.dp) { ScreenshotPhoto() }
-            MetaLine(Icons.Outlined.LocationOff, "위치 없음", colors.error, struck = true, modifier = Modifier.align(Alignment.CenterVertically))
+            Thumbnail(stringResource(R.string.guide_card_screenshot), 64.dp) { ScreenshotPhoto() }
+            MetaLine(Icons.Outlined.LocationOff, stringResource(R.string.guide_card_no_location), colors.error, struck = true, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
 }

@@ -35,9 +35,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import app.wend.sea.R
 
 /** 시안 대화상자의 글자 버튼: 종이색 위 대비 4.5:1 을 넘게 진한 코랄 */
 private val DialogAction = Color(0xFF9A2A14)
@@ -81,7 +84,7 @@ fun RenameDialog(
                         }
                     },
                     label = { Text(label) },
-                    supportingText = { Text(if (error) "이름을 입력해 주세요" else "처음 이름: $autoName") },
+                    supportingText = { Text(if (error) stringResource(R.string.rename_empty) else stringResource(R.string.rename_original, autoName)) },
                     isError = error,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
@@ -95,10 +98,10 @@ fun RenameDialog(
                     if (name.isEmpty()) error = true else onSave(name)
                 },
                 colors = ButtonDefaults.textButtonColors(contentColor = DialogAction),
-            ) { Text("저장") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text("취소") }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -118,13 +121,13 @@ fun SameNameDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.EditLocationAlt, contentDescription = null) },
-        title = { Text("같은 이름이 ${where.size}곳 더 있어요") },
-        text = { Text("‘$oldName’ — ${where.joinToString(", ")}에 들른 곳도 같이 바꿀까요?") },
+        title = { Text(pluralStringResource(R.plurals.same_name_title, where.size, where.size)) },
+        text = { Text(stringResource(R.string.same_name_body, oldName, where.joinToString(", "))) },
         confirmButton = {
-            TextButton(onClick = onAll, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text("같이 바꾸기") }
+            TextButton(onClick = onAll, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text(stringResource(R.string.same_name_all)) }
         },
         dismissButton = {
-            TextButton(onClick = onOnlyThis, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text("이 장소만") }
+            TextButton(onClick = onOnlyThis, colors = ButtonDefaults.textButtonColors(contentColor = DialogAction)) { Text(stringResource(R.string.same_name_only_this)) }
         },
     )
 }

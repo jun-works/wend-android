@@ -21,7 +21,9 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.wend.sea.R
 
 /**
  * 시안 `.top-app-bar`: 높이 64, 좌우 4, 뒤로 버튼 48, 제목은 버튼 뒤 4dp 에서 시작(title-l),
@@ -35,7 +37,7 @@ fun WendTopAppBar(
     actions: @Composable RowScope.() -> Unit = {},
     /** 선택 모드 등에서 ✕ 로 바꿀 때 */
     backIcon: ImageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-    backLabel: String = "뒤로",
+    backLabel: String = stringResource(R.string.action_back),
     containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     val colors = MaterialTheme.colorScheme

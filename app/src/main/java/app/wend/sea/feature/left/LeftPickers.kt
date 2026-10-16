@@ -41,19 +41,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.tripColor
 import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.analysis.TripChoice
-import app.wend.sea.feature.analysis.formatCount
+import app.wend.sea.feature.analysis.dateRangeText
 import app.wend.sea.feature.analysis.name
 import app.wend.sea.feature.analysis.period
+import app.wend.sea.feature.analysis.photoCount
 import java.time.Instant
 import java.time.ZoneId
 
@@ -62,10 +67,10 @@ internal val PickAccent = Color(0xFF9A2A14)
 
 /** "같은 기간" · "하루 차이" · "12일 차이" · "3달 차이" */
 internal fun gapLabel(days: Int): String = when {
-    days == 0 -> "같은 기간"
-    days == 1 -> "하루 차이"
-    days < 60 -> "${days}일 차이"
-    else -> "${Math.round(days / 30f)}달 차이"
+    days == 0 -> AppText.string(R.string.gap_same)
+    days == 1 -> AppText.string(R.string.gap_one_day)
+    days < 60 -> AppText.plural(R.plurals.gap_days, days, days)
+    else -> Math.round(days / 30f).let { AppText.plural(R.plurals.gap_months, it, it) }
 }
 
 /** 고른 사진의 날짜 범위: "2026. 6. 20", "2026. 6. 20 – 6. 22", 해가 다르면 둘 다 연도 */
@@ -73,21 +78,19 @@ internal fun rangeText(times: List<Long>): String {
     val zone = ZoneId.systemDefault()
     val a = Instant.ofEpochMilli(times.min()).atZone(zone).toLocalDate()
     val b = Instant.ofEpochMilli(times.max()).atZone(zone).toLocalDate()
-    val from = "${a.year}. ${a.monthValue}. ${a.dayOfMonth}"
-    return when {
-        a == b -> from
-        a.year == b.year -> "$from – ${b.monthValue}. ${b.dayOfMonth}"
-        else -> "$from – ${b.year}. ${b.monthValue}. ${b.dayOfMonth}"
-    }
+    return dateRangeText(a, b)
 }
 
 /** "부산 여행", 이름이 이미 "…여행"이면 그대로("7월 9일 여행") */
-internal fun tripPhrase(name: String): String = if (name.endsWith("여행")) name else "$name 여행"
+internal fun tripPhrase(name: String): String {
+    val suffix = AppText.string(R.string.trip_phrase_suffix)
+    return if (suffix.isNotEmpty() && name.endsWith(suffix)) name else AppText.string(R.string.trip_phrase, name)
+}
 
 /** 위치가 없을 때 새 여행 이름: 첫 날짜로 "7월 9일 여행" */
 internal fun dateTripName(times: List<Long>): String {
     val d = Instant.ofEpochMilli(times.min()).atZone(ZoneId.systemDefault()).toLocalDate()
-    return "${d.monthValue}월 ${d.dayOfMonth}일 여행"
+    return AppText.string(R.string.date_trip_name, d.format(AppText.dateFormat(R.string.pattern_month_day)))
 }
 
 /**
@@ -105,7 +108,7 @@ fun AddToTripSheet(count: Int, choices: List<TripChoice>, onPick: (TripChoice) -
     ) {
         Column(Modifier.navigationBarsPadding().padding(horizontal = 12.dp)) {
             Text(
-                "${count}장을 어느 여행에 넣을까요?",
+                pluralStringResource(R.plurals.add_sheet_title, count, count),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
                 modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
@@ -119,7 +122,7 @@ fun AddToTripSheet(count: Int, choices: List<TripChoice>, onPick: (TripChoice) -
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(contentColor = PickAccent),
                 modifier = Modifier.align(Alignment.End).padding(top = 8.dp, bottom = 8.dp),
-            ) { Text("취소") }
+            ) { Text(stringResource(R.string.action_cancel)) }
         }
     }
 }
@@ -148,13 +151,13 @@ private fun TripRow(choice: TripChoice, nearest: Boolean, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Text(trip.name, style = RowNameStyle, color = colors.onSurface)
             Text(
-                "${trip.period} · ${formatCount(trip.mediaCount)}장",
+                "${trip.period} · ${photoCount(trip.mediaCount)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
         }
         Text(
-            choice.gapDays?.let { (if (nearest) "가장 가까워요 · " else "") + gapLabel(it) }.orEmpty(),
+            choice.gapDays?.let { if (nearest) stringResource(R.string.gap_nearest, gapLabel(it)) else gapLabel(it) }.orEmpty(),
             style = MaterialTheme.typography.labelMedium.let { if (nearest) it.copy(fontWeight = FontWeight.SemiBold) else it },
             color = if (nearest) PickAccent else colors.onSurfaceVariant,
         )
@@ -174,7 +177,7 @@ fun NewTripDialog(context: String, suggested: String, onMake: (String) -> Unit, 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.AddLocationAlt, contentDescription = null) },
-        title = { Text("새 여행 만들기") },
+        title = { Text(stringResource(R.string.make_new_trip)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -184,8 +187,8 @@ fun NewTripDialog(context: String, suggested: String, onMake: (String) -> Unit, 
                 TextField(
                     value = value,
                     onValueChange = { if (it.text.length <= NAME_MAX) value = it },
-                    label = { Text("여행 이름") },
-                    supportingText = { Text("나중에 바꿀 수 있어요") },
+                    label = { Text(stringResource(R.string.trip_name)) },
+                    supportingText = { Text(stringResource(R.string.new_trip_name_help)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 )
@@ -195,10 +198,10 @@ fun NewTripDialog(context: String, suggested: String, onMake: (String) -> Unit, 
             TextButton(
                 onClick = { onMake(value.text.trim().ifEmpty { suggested }) },
                 colors = ButtonDefaults.textButtonColors(contentColor = PickAccent),
-            ) { Text("만들기") }
+            ) { Text(stringResource(R.string.new_trip_make)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = PickAccent)) { Text("취소") }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = PickAccent)) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }

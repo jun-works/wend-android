@@ -3,6 +3,8 @@ package app.wend.sea.feature.trip
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -69,7 +71,7 @@ class BestShotViewModel @Inject constructor(
                 if (list.isEmpty()) return@mapIndexedNotNull null
                 BestPlaceUi(
                     index = i,
-                    name = detail.placeUserNames[i] ?: detail.placeCities[i] ?: "장소 ${i + 1}",
+                    name = detail.placeUserNames[i] ?: detail.placeCities[i] ?: AppText.string(R.string.place_auto_name, i + 1),
                     scenes = list.mapIndexed { j, s -> BestSceneUi("$i:$j", s.start, s.photos) },
                     day = dates.indexOf(dateOf(detail.places[i].start)).coerceAtLeast(0),
                 )

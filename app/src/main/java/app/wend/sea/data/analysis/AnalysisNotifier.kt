@@ -31,11 +31,11 @@ class AnalysisNotifier @Inject constructor(
     init {
         manager.createNotificationChannels(
             listOf(
-                NotificationChannel(CHANNEL_PROGRESS, "여행 찾는 중", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "여행을 찾는 동안 진행 상황을 보여 줘요"
+                NotificationChannel(CHANNEL_PROGRESS, context.getString(R.string.notif_channel_progress), NotificationManager.IMPORTANCE_LOW).apply {
+                    description = context.getString(R.string.notif_channel_progress_description)
                 },
-                NotificationChannel(CHANNEL_DONE, "여행 찾기 완료", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                    description = "여행을 다 찾으면 알려 드려요"
+                NotificationChannel(CHANNEL_DONE, context.getString(R.string.notif_channel_done), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    description = context.getString(R.string.notif_channel_done_description)
                 },
             ),
         )
@@ -44,8 +44,11 @@ class AnalysisNotifier @Inject constructor(
     fun progressInfo(done: Int, total: Int): ForegroundInfo {
         val notification = NotificationCompat.Builder(context, CHANNEL_PROGRESS)
             .setSmallIcon(R.drawable.ic_stat_wend)
-            .setContentTitle("여행을 찾고 있어요")
-            .setContentText(if (total > 0) "사진 ${format(done)} / ${format(total)} · 앱을 닫아도 계속돼요" else "앱을 닫아도 계속돼요")
+            .setContentTitle(context.getString(R.string.notif_progress_title))
+            .setContentText(
+                if (total > 0) context.getString(R.string.notif_progress_count, format(done), format(total))
+                else context.getString(R.string.notif_progress_text),
+            )
             .setProgress(total, done, total == 0)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -61,8 +64,11 @@ class AnalysisNotifier @Inject constructor(
         if (!canNotify()) return
         val notification: Notification = NotificationCompat.Builder(context, CHANNEL_DONE)
             .setSmallIcon(R.drawable.ic_stat_wend)
-            .setContentTitle(if (tripCount > 0) "여행 ${tripCount}개를 찾았어요" else "아직 여행을 찾지 못했어요")
-            .setContentText(if (tripCount > 0) "눌러서 찾은 여행을 확인해 보세요" else "눌러서 이유를 확인해 보세요")
+            .setContentTitle(
+                if (tripCount > 0) context.resources.getQuantityString(R.plurals.notif_done_title, tripCount, tripCount)
+                else context.getString(R.string.notif_none_title),
+            )
+            .setContentText(context.getString(if (tripCount > 0) R.string.notif_done_text else R.string.notif_none_text))
             .setAutoCancel(true)
             .setContentIntent(openApp())
             .build()

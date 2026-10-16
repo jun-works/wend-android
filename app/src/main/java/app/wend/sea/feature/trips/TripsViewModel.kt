@@ -2,6 +2,8 @@ package app.wend.sea.feature.trips
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wend.sea.R
+import app.wend.sea.core.text.AppText
 import app.wend.sea.data.AnalysisSummary
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
@@ -119,7 +121,7 @@ class TripsViewModel @Inject constructor(
         if (name == trip.name) return
         val before = trip.userName
         setTripName(number, name.takeIf { it != trip.autoName })
-        _events.trySend(TripsEvent.Renamed("여행 이름을 바꿨어요") { setTripName(number, before) })
+        _events.trySend(TripsEvent.Renamed(AppText.string(R.string.trip_renamed)) { setTripName(number, before) })
     }
 
     private fun setTripName(number: Int, userName: String?) {

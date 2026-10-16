@@ -68,6 +68,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -80,6 +82,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import app.wend.sea.core.designsystem.component.gooey
 import app.wend.sea.core.designsystem.component.rememberReducedMotion
@@ -88,7 +91,7 @@ import app.wend.sea.core.designsystem.theme.CssLineHeight
 import app.wend.sea.core.designsystem.theme.GowunBatang
 import app.wend.sea.data.LibraryItem
 import app.wend.sea.data.MediaThumbnail
-import app.wend.sea.feature.analysis.formatCount
+import app.wend.sea.feature.analysis.photoCount
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -128,17 +131,17 @@ fun LeftScreen(
             WendTopAppBar(
                 onBack = { if (uiState.selecting) viewModel.setSelecting(false) else onBack() },
                 backIcon = if (uiState.selecting) Icons.Rounded.Close else Icons.AutoMirrored.Rounded.ArrowBack,
-                backLabel = if (uiState.selecting) "선택 끝내기" else "뒤로",
+                backLabel = stringResource(if (uiState.selecting) R.string.left_end_selection else R.string.action_back),
                 containerColor = if (uiState.selecting) colors.surfaceContainer else colors.surface,
                 title = {
                     if (uiState.selecting) {
-                        Text(if (count > 0) "${count}장 선택됨" else "사진을 골라 주세요")
+                        Text(if (count > 0) pluralStringResource(R.plurals.left_selected, count, count) else stringResource(R.string.pick_photos))
                     } else {
                         Column {
-                            Text("여행에 담기지 않은 사진")
+                            Text(stringResource(R.string.left_title))
                             if (uiState.loaded) {
                                 Text(
-                                    "${formatCount(uiState.total)}장 · 최신순",
+                                    stringResource(R.string.left_subtitle, photoCount(uiState.total)),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = colors.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 2.dp),
@@ -150,7 +153,7 @@ fun LeftScreen(
                 actions = {
                     if (!uiState.selecting && uiState.total > 0) {
                         IconButton(onClick = { viewModel.setSelecting(true) }) {
-                            Icon(Icons.Outlined.Checklist, contentDescription = "사진 선택", tint = colors.onSurfaceVariant)
+                            Icon(Icons.Outlined.Checklist, contentDescription = stringResource(R.string.left_select), tint = colors.onSurfaceVariant)
                         }
                     }
                 },
@@ -158,9 +161,9 @@ fun LeftScreen(
             if (!uiState.loaded) return@Column
             if (uiState.total == 0) {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("모든 사진이 여행에 담겼어요", style = DayStyle, color = colors.onSurface)
+                    Text(stringResource(R.string.left_empty_title), style = DayStyle, color = colors.onSurface)
                     Text(
-                        "새로 찍은 사진 중 여행에 담기지 않은 사진이 생기면 여기에 모여요.",
+                        stringResource(R.string.left_empty_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp),
@@ -172,7 +175,7 @@ fun LeftScreen(
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 24.dp)) {
                 item(key = "intro") {
                     Text(
-                        "찍은 날짜순으로 모아 뒀어요. 사진을 골라 여행에 넣거나 새 여행으로 만들 수 있어요.",
+                        stringResource(R.string.left_intro),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 6.dp),
@@ -197,7 +200,7 @@ fun LeftScreen(
                             row.forEach { item ->
                                 LeftTile(
                                     item = item,
-                                    label = "${day.label} 사진",
+                                    label = stringResource(R.string.left_tile_label, day.label),
                                     selecting = uiState.selecting,
                                     selected = item.media in uiState.selected,
                                     hidden = item.media in flying,
@@ -234,13 +237,13 @@ fun LeftScreen(
                         enabled = count > 0 && uiState.flight == null,
                         contentPadding = PaddingValues(horizontal = 12.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                    ) { ButtonLabel(Icons.Outlined.LibraryAdd, "여행에 넣기") }
+                    ) { ButtonLabel(Icons.Outlined.LibraryAdd, stringResource(R.string.add_to_trip)) }
                     Button(
                         onClick = viewModel::askNew,
                         enabled = count > 0 && uiState.flight == null,
                         contentPadding = PaddingValues(horizontal = 12.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                    ) { ButtonLabel(Icons.Outlined.AddLocationAlt, "새 여행 만들기") }
+                    ) { ButtonLabel(Icons.Outlined.AddLocationAlt, stringResource(R.string.make_new_trip)) }
                 }
             }
         }
@@ -283,13 +286,13 @@ private fun DayHeader(day: LeftDayUi, selecting: Boolean, onSelectDay: () -> Uni
     ) {
         Text(day.label, style = DayStyle, color = colors.onSurface)
         Text(
-            (day.date?.let { "${it.year} · " } ?: "") + "${day.items.size}장",
+            (day.date?.let { "${it.year} · " } ?: "") + photoCount(day.items.size),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         if (selecting) {
-            TextButton(onClick = onSelectDay) { Text("모두 선택", style = MaterialTheme.typography.labelLarge) }
+            TextButton(onClick = onSelectDay) { Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelLarge) }
         }
     }
 }

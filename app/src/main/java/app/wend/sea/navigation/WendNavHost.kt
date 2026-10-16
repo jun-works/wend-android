@@ -22,8 +22,10 @@ import androidx.navigation.NavBackStackEntry
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.rememberUpdatedState
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.AlbumUnfold
 import app.wend.sea.core.designsystem.component.PhotoEasing
+import app.wend.sea.core.text.AppText
 import app.wend.sea.feature.left.LeftScreen
 import app.wend.sea.feature.left.LeftViewModel
 import app.wend.sea.feature.trip.BestShotScreen
@@ -350,7 +352,7 @@ fun WendNavHost() {
                 onDone = { count ->
                     navController.previousBackStackEntry?.savedStateHandle?.set(
                         TripDetailViewModel.VIEWER_RESULT,
-                        "베스트샷 ${count}장을 골랐어요. 사진에 별이 붙어 있어요",
+                        AppText.plural(R.plurals.best_shots_picked, count, count),
                     )
                     navController.popBackStack()
                 },
@@ -362,7 +364,7 @@ fun WendNavHost() {
                 onDone = { count ->
                     navController.previousBackStackEntry?.savedStateHandle?.set(
                         TripDetailViewModel.VIEWER_RESULT,
-                        "${count}장을 휴지통으로 옮겼어요. 30일 안에 갤러리에서 되살릴 수 있어요",
+                        AppText.plural(R.plurals.moved_to_trash, count, count),
                     )
                     navController.popBackStack()
                 },

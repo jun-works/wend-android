@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.gooey
 import app.wend.sea.core.designsystem.theme.OrbColors
 import kotlinx.coroutines.delay
@@ -112,7 +114,7 @@ fun SplashScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 role = Role.Button,
-                onClickLabel = "시작하기",
+                onClickLabel = stringResource(R.string.splash_start),
                 onClick = { finish() },
             )
             // 시안처럼 상태바·내비게이션 바를 뺀 영역 기준으로 가운데 정렬
@@ -145,14 +147,14 @@ fun SplashScreen(
                 Text(text = "Wend", style = MaterialTheme.typography.displayLarge)
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "사진 속 여행을 다시 펼쳐요",
+                    text = stringResource(R.string.splash_tagline),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         Text(
-            text = "화면을 누르면 시작해요",
+            text = stringResource(R.string.splash_tap),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

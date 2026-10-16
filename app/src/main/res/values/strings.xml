@@ -1,3 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Wend</string>
+    <string name="app_name" translatable="false">Wend</string>
+
+    <!-- common -->
+    <string name="format_locale">en</string>
+    <string name="pattern_date">MMM d, yyyy</string>
+    <string name="pattern_range_from">MMM d</string>
+    <string name="pattern_range_to">MMM d, yyyy</string>
+    <string name="date_range">%1$s – %2$s</string>
+    <string name="pattern_time">h:mm a</string>
+    <string name="pattern_month_day_weekday">EEEE, MMM d</string>
+    <string name="period_day_trip">%1$s · Day trip</string>
+    <plurals name="period_days">
+        <item quantity="one">%1$s · %2$d day</item>
+        <item quantity="other">%1$s · %2$d days</item>
+    </plurals>
+    <string name="trip_auto_name">Trip %1$d</string>
+    <string name="place_auto_name">Place %1$d</string>
+    <string name="default_nickname">Traveler</string>
+    <plurals name="count_photos">
+        <item quantity="one">%1$s photo</item>
+        <item quantity="other">%1$s photos</item>
+    </plurals>
+    <plurals name="count_places">
+        <item quantity="one">%1$s place</item>
+        <item quantity="other">%1$s places</item>
+    </plurals>
+    <string name="day_ordinal">Day %1$d</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_back">Back</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_share">Share</string>
+    <string name="action_got_it">Got it</string>
+    <string name="allow_all_photos">Allow all photos</string>
+    <string name="best_shot">Best shot</string>
+    <string name="trip_name">Trip name</string>
+    <string name="rename_trip">Rename trip</string>
+    <string name="rename_place">Rename place</string>
+    <string name="place_name">Place name</string>
+    <string name="trip_renamed">Trip renamed</string>
+    <string name="pick_best_shots">Pick best shots</string>
+    <string name="clean_up_photos">Clean up photos</string>
+    <string name="still_reviewing">Still looking through your photos. Check back in a moment.</string>
+    <string name="zoom_label">View %1$s larger</string>
+    <plurals name="moved_to_trash">
+        <item quantity="one">Moved %1$d photo to trash. You can restore it from your gallery within 30 days.</item>
+        <item quantity="other">Moved %1$d photos to trash. You can restore them from your gallery within 30 days.</item>
+    </plurals>
+    <string name="needs_dated_photo">You need at least one photo with a date to make a trip</string>
+    <string name="trip_created">Made the trip ‘%1$s’. You can find it in your trips.</string>
+    <string name="trip_phrase">‘%1$s’</string>
+    <string name="trip_phrase_suffix">\</string>
+    <plurals name="added_to_trip">
+        <item quantity="one">Added %1$d photo to %2$s</item>
+        <item quantity="other">Added %1$d photos to %2$s</item>
+    </plurals>
+    <string name="date_trip_name">%1$s trip</string>
+    <string name="pattern_month_day">MMMM d</string>
+    <string name="add_to_trip">Add to trip</string>
+    <string name="new_trip">New trip</string>
+    <string name="make_new_trip">Make a new trip</string>
+    <string name="photo">Photo</string>
+    <string name="video">Video</string>
+    <string name="allowed">Allowed</string>
+    <string name="allow_all">Allow all</string>
+    <string name="not_allowed">Not allowed</string>
+    <string name="settings">Settings</string>
+
+    <!-- shared -->
+    <plurals name="best_shots_picked">
+        <item quantity="one">Picked %1$d best shot. Look for the star on the photo.</item>
+        <item quantity="other">Picked %1$d best shots. Look for the stars on the photos.</item>
+    </plurals>
+    <string name="globe_scatter">Scatter the bubbles</string>
+    <string name="orb_globe_description">Animation of colored bubbles, each one a photo, floating in the shape of a globe</string>
+    <string name="rename_empty">Enter a name</string>
+    <string name="rename_original">Original name: %1$s</string>
+    <plurals name="same_name_title">
+        <item quantity="one">%1$d more place has this name</item>
+        <item quantity="other">%1$d more places have this name</item>
+    </plurals>
+    <string name="same_name_body">‘%1$s’ — rename the stops at %2$s too?</string>
+    <string name="same_name_all">Rename all</string>
+    <string name="same_name_only_this">Just this one</string>
+    <string name="bot_tick_title">Tick · Time keeper</string>
+    <string name="bot_pin_title">Pin · Place finder</string>
+
+    <!-- left -->
+    <string name="gap_same">Same dates</string>
+    <string name="gap_one_day">1 day apart</string>
+    <plurals name="gap_days">
+        <item quantity="one">%1$d day apart</item>
+        <item quantity="other">%1$d days apart</item>
+    </plurals>
+    <plurals name="gap_months">
+        <item quantity="one">%1$d month apart</item>
+        <item quantity="other">%1$d months apart</item>
+    </plurals>
+    <string name="gap_nearest">Closest · %1$s</string>
+    <plurals name="add_sheet_title">
+        <item quantity="one">Which trip should this photo go in?</item>
+        <item quantity="other">Which trip should these %1$d photos go in?</item>
+    </plurals>
+    <string name="new_trip_name_help">You can change it later</string>
+    <string name="new_trip_make">Make</string>
+    <string name="left_end_selection">Done selecting</string>
+    <plurals name="left_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="pick_photos">Select photos</string>
+    <string name="left_title">Photos not in a trip</string>
+    <string name="left_subtitle">%1$s · Newest first</string>
+    <string name="left_select">Select photos</string>
+    <string name="left_empty_title">Every photo is in a trip</string>
+    <string name="left_empty_body">New photos that don’t fit into a trip will show up here.</string>
+    <string name="left_intro">Sorted by the date they were taken. Select photos to add them to a trip or make a new one.</string>
+    <string name="left_tile_label">Photo from %1$s</string>
+    <string name="left_no_date">No date</string>
+    <string name="select_all">Select all</string>
+
+    <!-- viewer -->
+    <string name="pattern_viewer_datetime">MMM d, yyyy h:mm a</string>
+    <string name="viewer_video_not_best">Videos can’t be best shots</string>
+    <string name="viewer_best_picked">Picked this as the best shot of %1$s</string>
+    <string name="needs_dated_photo_single">Only photos with a date can make a trip</string>
+    <string name="viewer_removed">Removed from the trip. You can add it back from Photos not in a trip.</string>
+    <string name="viewer_make_best">Best shot</string>
+    <string name="viewer_remove_from_trip">Remove</string>
+    <string name="viewer_trash">Trash</string>
+    <string name="viewer_play_video">Play video</string>
+
+    <!-- onboarding -->
+    <string name="globe_step_when">When</string>
+    <string name="globe_step_where">Where</string>
+    <string name="globe_step_group">Into trips</string>
+    <string name="globe_next">Tell me how it works</string>
+    <string name="globe_title">%1$s, we’ll gather your scattered photos into %2$s</string>
+    <string name="globe_title_em">trips</string>
+    <string name="globe_hint">Give the globe a tap</string>
+    <string name="guide_q_deleted">Do left-out photos get deleted?</string>
+    <string name="guide_a_deleted">Nope! I never delete or move a photo unless you choose to. It just stays out of your trips.</string>
+    <string name="guide_q_location">How do I save location?</string>
+    <string name="guide_a_location">Turn on **location tags** in your camera app settings and I’ll find your trips more accurately.</string>
+    <string name="guide_q_video">Do videos work the same way?</string>
+    <string name="guide_a_video">Yep, videos work just like photos.</string>
+    <string name="guide_line_1">Nice to meet you, %1$s! I’m Tick. I read **when** each photo was taken.</string>
+    <string name="guide_line_2">And I’m Pin. I read **where** it was taken. Together, we group your photos into trips.</string>
+    <string name="guide_line_3">Before we start, there’s one thing you should know.</string>
+    <string name="guide_line_4">Photos and videos usually store the **time taken** and **location** inside them. That’s what we use to find your trips.</string>
+    <string name="guide_line_5">So photos and videos without a time or location **might not make it into a trip.**</string>
+    <string name="guide_line_6">Here’s an example.</string>
+    <string name="guide_title">Tick &amp; Pin</string>
+    <string name="guide_replay">Hear it again from the start</string>
+    <string name="guide_finish">Got it, let’s start</string>
+    <string name="guide_day">Today · The day we met</string>
+    <string name="guide_card_included">Goes into a trip</string>
+    <string name="guide_card_camera">Camera</string>
+    <string name="guide_card_time">Jul 14, 2026 6:32 PM</string>
+    <string name="guide_card_place">Aewol, Jeju</string>
+    <string name="guide_card_excluded">Might not make it into a trip</string>
+    <string name="guide_card_screenshot">Capture</string>
+    <string name="guide_card_no_location">No location</string>
+    <string name="nickname">Nickname</string>
+    <string name="nickname_title">Nice to meet you.\nWhat should we call you?</string>
+    <string name="nickname_sub">We’ll use this name while we sort your trips.</string>
+    <string name="nickname_help">2–10 letters or numbers</string>
+    <string name="nickname_invalid">Only letters and numbers, please</string>
+    <string name="nickname_too_short">Enter at least 2 characters</string>
+    <string name="nickname_suggestions">How about one of these?</string>
+    <string name="nickname_privacy">Your nickname and photos stay on this device. Nothing is uploaded.</string>
+    <string name="nickname_placeholder">Enter a nickname</string>
+    <string name="nickname_suggestion_1">Wayfarer</string>
+    <string name="nickname_suggestion_2">Sea Lover</string>
+    <string name="nickname_suggestion_3">Sunseeker</string>
+    <string name="nickname_suggestion_4">Jet Setter</string>
+    <string name="action_next">Next</string>
+    <string name="splash_start">Start</string>
+    <string name="splash_tagline">Unfold the trips in your photos</string>
+    <string name="splash_tap">Tap anywhere to start</string>
+
+    <!-- permission -->
+    <string name="perm_hint">On the next screen, choose %1$s</string>
+    <string name="perm_hint_allow_all">Allow all</string>
+    <string name="perm_allow">Allow photo access</string>
+    <string name="perm_title">%1$s, please open\nyour album</string>
+    <string name="perm_sub">We can’t see any photos yet, so the globe is empty.</string>
+    <string name="perm_globe_description">A pale globe standing for an album that isn’t open yet</string>
+    <string name="perm_why_all_title">See all photos and videos</string>
+    <string name="perm_why_all_body">A trip only shows up when photos run across several days. With just some of them, trips get cut apart.</string>
+    <string name="read_photo_location">Read photo locations</string>
+    <string name="perm_why_location_body">Pin uses this to figure out places. It’s requested along with photo access.</string>
+    <string name="perm_why_private_title">Nothing leaves your device</string>
+    <string name="perm_why_private_body">Nothing is uploaded; it’s all read right on this phone. And nothing is deleted unless you choose to.</string>
+    <string name="partial_start_with_picked">Start with the photos I picked</string>
+    <string name="partial_title">We can only see\nthe %1$s you picked</string>
+    <string name="partial_globe_description">A mostly pale globe with dark bubbles here and there, only as many as the photos you picked</string>
+    <string name="partial_caption_picked">Picked photos</string>
+    <string name="partial_caption_hidden">Hidden photos</string>
+    <string name="partial_cut_title">Trips can get cut apart like this</string>
+    <string name="partial_cut_start">Jul 12</string>
+    <string name="partial_cut_trip">Jeju · 41 photos in 12 days</string>
+    <string name="partial_cut_end">Jul 23</string>
+    <string name="partial_cut_body">Pick just 3 photos and Tick and Pin will read them as %1$s. You can always pick more photos later.</string>
+    <string name="partial_cut_body_em">three one-day trips</string>
+    <string name="denied_allow_in_settings">Allow in Settings</string>
+    <string name="denied_allow_again">Allow again</string>
+    <string name="denied_title">Your album is closed,\nso we can’t find trips</string>
+    <string name="denied_globe_description">An empty globe with every bubble still pale</string>
+    <string name="denied_bot_settings">After you decline twice, Android stops showing the prompt. You just need to change it once in Settings.</string>
+    <string name="denied_bot">Without photos to read, Tick and I can’t do anything. Your photos are never uploaded, and nothing is deleted unless you choose to.</string>
+    <string name="denied_steps">%1$s Please change it in Settings.\n%2$s Permissions %3$s Photos and videos %3$s %4$s</string>
+    <string name="denied_steps_no_prompt">The prompt won’t show up again.</string>
+    <string name="denied_steps_always_allow_all">Always allow all</string>
+    <string name="granted_start">Start finding trips</string>
+    <string name="granted_title">%1$s, your album\nis %2$s</string>
+    <string name="granted_title_em">open</string>
+    <string name="granted_sub">The bubbles on the globe are now your real photos.</string>
+    <string name="granted_globe_description">Animation of the album opening as the globe’s bubbles fill in from the front</string>
+    <string name="granted_caption">Photos we can see</string>
+    <string name="granted_photos">Photos</string>
+    <string name="granted_videos">Videos</string>
+    <string name="granted_with_location">Photos and videos with a location</string>
+    <string name="unit_photos">\</string>
+    <string name="unit_items">\</string>
+
+    <!-- analysis -->
+    <string name="analyze_status_time">Tick is reading your photos in the order they were taken</string>
+    <string name="analyze_status_place">Pin is checking where each photo was taken</string>
+    <string name="analyze_status_group">Gathering photos from the same trip</string>
+    <string name="analyze_title">%1$s, we’re %2$s\nyour trips</string>
+    <string name="analyze_title_em">finding</string>
+    <string name="analyze_globe_description">Animation of photo bubbles taking on colors and clustering by trip</string>
+    <string name="analyze_found_trips">Trips found</string>
+    <string name="analyze_still_finding">Still looking</string>
+    <string name="analyze_read_photos">Photos read</string>
+    <string name="analyze_note_background">Finding trips keeps going even if you close the app. We’ll let you know when it’s done.</string>
+    <string name="analyze_note_private">Everything is read on this phone. Your photos are never uploaded.</string>
+    <string name="found_browse">See my trips</string>
+    <string name="found_title">%1$s, we found\n%2$s</string>
+    <string name="found_title_partial">Found %2$s\nin the photos you picked</string>
+    <plurals name="found_trip_count">
+        <item quantity="one">%1$d trip</item>
+        <item quantity="other">%1$d trips</item>
+    </plurals>
+    <plurals name="found_summary">
+        <item quantity="one">Of your %1$s photo or video, %2$s made it into a trip.</item>
+        <item quantity="other">Of your %1$s photos and videos, %2$s made it into trips. The rest stay in your album, untouched.</item>
+    </plurals>
+    <plurals name="found_summary_partial">
+        <item quantity="one">Of the %1$s photo you picked, %2$s made it into a trip.</item>
+        <item quantity="other">Of the %1$s photos you picked, %2$s made it into trips.</item>
+    </plurals>
+    <string name="count_photos_short">%1$s</string>
+    <string name="count_items_short">%1$s</string>
+    <string name="found_globe_description">A globe clustered into a different color for each trip</string>
+    <plurals name="found_more">
+        <item quantity="one">%1$d more trip</item>
+        <item quantity="other">%1$d more trips</item>
+    </plurals>
+    <string name="found_partial_note">With only the photos you picked, one trip may look like several. Allow all photos and we’ll keep looking.</string>
+    <string name="nofound_browse_anyway">Look around as is</string>
+    <string name="nofound_ok">OK</string>
+    <string name="nofound_title">No trips\nfound yet</string>
+    <plurals name="nofound_summary">
+        <item quantity="one">We read your %1$s photo or video, but nothing could be grouped into a trip.</item>
+        <item quantity="other">We read all %1$s photos and videos, but none could be grouped into a trip.</item>
+    </plurals>
+    <plurals name="nofound_summary_partial">
+        <item quantity="one">It was hard to find a trip in the %1$s photo you picked.</item>
+        <item quantity="other">It was hard to find trips in the %1$s photos you picked.</item>
+    </plurals>
+    <string name="nofound_globe_description">A globe left with only gray, uncolored bubbles</string>
+    <string name="nofound_bot_partial">Trips only show up when photos run in a row. Allow all photos and I’ll look again from the start.</string>
+    <string name="nofound_bot">Without a location in your photos, trips are hard to find. Turn on location tags in your camera and I’ll find your next trip.</string>
+    <string name="nofound_steps">%1$s Camera %2$s Settings %2$s Turn on %3$s</string>
+    <string name="location_tag">Location tags</string>
+    <string name="reanalyze_title">Find trips again from scratch?</string>
+    <string name="reanalyze_body">We’ll read every photo again to find your trips. Photos you added or removed, trips you made, best shots and names you changed will all be reset.</string>
+    <string name="reanalyze_confirm">Find again</string>
+    <string name="notif_channel_progress">Finding trips</string>
+    <string name="notif_channel_progress_description">Shows progress while trips are being found</string>
+    <string name="notif_channel_done">Trips found</string>
+    <string name="notif_channel_done_description">Lets you know when all your trips are found</string>
+    <string name="notif_progress_title">Finding your trips</string>
+    <string name="notif_progress_count">Photos %1$s / %2$s · Keeps going if you close the app</string>
+    <string name="notif_progress_text">Keeps going if you close the app</string>
+    <plurals name="notif_done_title">
+        <item quantity="one">Found %1$d trip</item>
+        <item quantity="other">Found %1$d trips</item>
+    </plurals>
+    <string name="notif_none_title">No trips found yet</string>
+    <string name="notif_done_text">Tap to see the trips we found</string>
+    <string name="notif_none_text">Tap to see why</string>
+
+    <!-- settings -->
+    <string name="settings_globe_description">Album globe, filled in as much as the photos we can see</string>
+    <string name="settings_name">%1$s</string>
+    <plurals name="count_media">
+        <item quantity="one">%1$s photo or video</item>
+        <item quantity="other">%1$s photos and videos</item>
+    </plurals>
+    <plurals name="count_trips">
+        <item quantity="one">%1$s trip</item>
+        <item quantity="other">%1$s trips</item>
+    </plurals>
+    <string name="change_nickname">Change nickname</string>
+    <string name="settings_section_access">Photo access</string>
+    <string name="settings_photos_videos">Photos and videos</string>
+    <string name="settings_photos_videos_sub">You can change this in Android settings</string>
+    <string name="settings_partial">Some allowed</string>
+    <string name="settings_location_sub">Allowed along with photo access</string>
+    <string name="settings_location_tag_howto">How to turn on camera location tags</string>
+    <string name="settings_location_tag_sub">With it on, trips are found more accurately</string>
+    <string name="settings_section_find">Finding trips</string>
+    <string name="settings_rescan">Find trips again from scratch</string>
+    <string name="settings_rescan_sub">Any changes you made will be reset</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_wipe">Clear Wend data</string>
+    <string name="settings_wipe_sub">Clears the trips found and your edits. Your photos stay as they are</string>
+    <string name="settings_section_about">About</string>
+    <string name="open_source_licenses">Open source licenses</string>
+    <string name="settings_wipe_title">Clear Wend data?</string>
+    <string name="settings_wipe_body">Your trips, best shots, photos you added or removed and your nickname will be cleared, and you’ll go back to the start. **Not a single photo on your device will be deleted.**</string>
+    <string name="settings_wipe_confirm">Clear</string>
+    <string name="howto_step_1">Open your camera app</string>
+    <string name="howto_step_2">Tap Settings (⚙) at the top left</string>
+    <string name="howto_step_3">Turn on %1$s</string>
+    <string name="howto_bot">Places are saved from the photos you take after turning it on. Menu names may differ a little by device.</string>
+    <string name="settings_all">All allowed</string>
+
+    <!-- trips -->
+    <string name="trips_globe_description">A globe clustered into a different color for each trip. Tap a cluster to go to that trip</string>
+    <plurals name="trips_hero_trips">
+        <item quantity="one">%1$s trip</item>
+        <item quantity="other">%1$s trips</item>
+    </plurals>
+    <plurals name="trips_hero_photos">
+        <item quantity="one">%1$s photo</item>
+        <item quantity="other">%1$s photos</item>
+    </plurals>
+    <string name="trips_hero_none">No trips found yet</string>
+    <string name="trips_hero_hint">Tap a color cluster to go to that trip</string>
+    <string name="trips_open">Open %1$s</string>
+    <string name="trips_rename_label">Rename trip %1$s</string>
+    <string name="trips_partial_banner">Only showing trips found in the photos you picked.</string>
+    <string name="trips_empty_title">Your trips will gather here</string>
+    <string name="trips_empty_body">Once you have photos taken with location tags on, Tick and Pin will find your trips.</string>
+    <plurals name="trips_left_row">
+        <item quantity="one">%1$s photo or video not in a trip</item>
+        <item quantity="other">%1$s photos and videos not in a trip</item>
+    </plurals>
+
+    <!-- trip -->
+    <string name="places_renamed">Renamed %1$d places</string>
+    <string name="place_renamed">Place renamed</string>
+    <string name="clean_similar">Similar photos</string>
+    <string name="clean_similar_sub">Almost the same as the best shot</string>
+    <string name="clean_dark">Too-dark photos</string>
+    <string name="trip_end">Trip ends · %1$s, %2$s</string>
+    <string name="edit_label_description">%1$s, current name %2$s</string>
+    <string name="place_view_all_description">%1$s, view all %2$s</string>
+    <string name="place_photo_description">%1$s, photo %2$d, view larger</string>
+    <string name="place_photo_best_description">%1$s, photo %2$d, best shot, view larger</string>
+    <string name="view_all">View all</string>
+    <string name="map_description">Map of the day’s route. As you scroll, the pin follows the route</string>
+    <string name="place_photos_title">Place photos</string>
+    <string name="photo_n">%1$s, photo %2$d</string>
+    <string name="view_larger">view larger</string>
+    <string name="place_photos_none">No photos left from this place</string>
+    <string name="place_photos_end">That’s every moment you captured here</string>
+    <string name="place_photos_order">In the order taken</string>
+    <string name="best_intro">We’ve grouped photos of the same scene taken several times. Pick your favorite from each scene — or don’t, that’s fine too. Your picks become the trip’s cover photos.</string>
+    <string name="best_none">This trip has no scenes shot more than once.</string>
+    <plurals name="best_similar_count">
+        <item quantity="one">%1$d similar photo</item>
+        <item quantity="other">%1$d similar photos</item>
+    </plurals>
+    <string name="best_photo_label">%1$s %2$s similar photo %3$d</string>
+    <plurals name="best_confirm">
+        <item quantity="one">Choose %1$d photo</item>
+        <item quantity="other">Choose %1$d photos</item>
+    </plurals>
+    <string name="best_picked">Picked</string>
+    <string name="best_pick_this">Pick this photo</string>
+    <string name="clean_intro">We’ve picked out photos you may not need. Tap any you want to keep to take them off the list.</string>
+    <string name="clean_none">Nothing in this trip needs cleaning up.</string>
+    <string name="clean_none_no_best">Nothing in this trip needs cleaning up. Once you pick best shots, you can clean up the rest of each scene here.</string>
+    <string name="clean_trash_note">Photos moved to trash can be restored from your gallery for 30 days.</string>
+    <plurals name="clean_confirm">
+        <item quantity="one">Move %1$d photo to trash</item>
+        <item quantity="other">Move %1$d photos to trash</item>
+    </plurals>
+    <string name="clean_pick">Select photos to move</string>
+    <string name="clean_checked">Clean up</string>
+    <string name="clean_keep">Keep</string>
 </resources>

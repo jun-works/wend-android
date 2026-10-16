@@ -15,10 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.wend.sea.R
 import app.wend.sea.core.designsystem.component.WendTopAppBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,7 +39,7 @@ fun LicensesScreen(onBack: () -> Unit) {
         }
     }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
-        WendTopAppBar(onBack = onBack, title = { Text("오픈소스 라이선스") })
+        WendTopAppBar(onBack = onBack, title = { Text(stringResource(R.string.open_source_licenses)) })
         LazyColumn(
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 24.dp),
             modifier = Modifier.navigationBarsPadding(),
