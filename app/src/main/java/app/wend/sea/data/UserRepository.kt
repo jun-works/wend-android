@@ -32,6 +32,11 @@ class UserRepository @Inject constructor(
         dataStore.edit { it[KEY_NICKNAME] = nickname }
     }
 
+    /** Wend 데이터 지우기: 닉네임·온보딩·분석 요약까지 모두 지운다 */
+    suspend fun clearAll() {
+        dataStore.edit { it.clear() }
+    }
+
     /** 틱·핀 안내까지 마쳤는지. 마쳤으면 다음 실행부터 사진 접근 단계로 바로 간다. */
     val onboardingDone: Flow<Boolean> = dataStore.data.map { it[KEY_ONBOARDING_DONE] ?: false }
 

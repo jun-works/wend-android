@@ -26,7 +26,7 @@ private val Notices = listOf(
     Notice("IBM Plex Sans KR", "SIL Open Font License 1.1\n줄 높이 값만 고쳐 Wend Sans KR 로 이름을 바꿈"),
 )
 
-/** 오픈소스 라이선스. 설정 화면이 생기면 설정 › 정보 아래로 옮긴다 */
+/** 오픈소스 라이선스(설정 › 정보) */
 @Composable
 fun LicensesScreen(onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {

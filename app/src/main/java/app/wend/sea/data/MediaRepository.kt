@@ -41,6 +41,9 @@ class MediaRepository @Inject constructor(
 
     fun currentAccess(): MediaAccess = MediaPermissions.currentAccess(context)
 
+    /** 사진 속 위치(EXIF GPS)를 지우지 않고 읽을 수 있는지 */
+    fun canReadLocation(): Boolean = MediaPermissions.canReadLocation(context)
+
     suspend fun counts(): MediaCounts = withContext(Dispatchers.IO) {
         MediaCounts(
             photos = items(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, video = false).size,

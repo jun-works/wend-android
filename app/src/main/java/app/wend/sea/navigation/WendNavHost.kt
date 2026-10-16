@@ -58,6 +58,7 @@ import app.wend.sea.feature.permission.PermScreen
 import app.wend.sea.feature.splash.SplashDestination
 import app.wend.sea.feature.splash.SplashScreen
 import app.wend.sea.feature.settings.LicensesScreen
+import app.wend.sea.feature.settings.SettingsScreen
 import app.wend.sea.feature.trip.TripDetailScreen
 import app.wend.sea.feature.trip.TripDetailViewModel
 import app.wend.sea.feature.viewer.ViewerArgs
@@ -87,6 +88,7 @@ import kotlinx.serialization.Serializable
 /** [x]·[y]·[w]·[h] 는 앨범이 펼쳐질 `+N / 전체 보기` 타일 자리(화면 좌표), 없으면 -1 */
 @Serializable data class PlacePhotosRoute(val trip: Int, val place: Int, val x: Float = -1f, val y: Float = -1f, val w: Float = -1f, val h: Float = -1f)
 @Serializable data object LicensesRoute
+@Serializable data object SettingsRoute
 @Serializable data class BestShotRoute(val trip: Int)
 @Serializable data class CleanUpRoute(val trip: Int)
 
@@ -201,8 +203,7 @@ fun WendNavHost() {
             TripsScreen(
                 onReanalyze = { navController.reanalyze(TripsRoute) },
                 onTripClick = { number, origin -> navController.navigate(TripRoute(number, origin.x, origin.y)) },
-                // 설정 화면이 생기기 전까지는 라이선스로 바로 간다
-                onSettingsClick = { navController.navigate(LicensesRoute) },
+                onSettingsClick = { navController.navigate(SettingsRoute) },
                 onLeftClick = { navController.navigate(LeftRoute) },
             )
         }
@@ -220,6 +221,24 @@ fun WendNavHost() {
             }
         }
         composable<LicensesRoute> { LicensesScreen(onBack = { navController.popBackStack() }) }
+        composable<SettingsRoute> {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                // 처음부터 다시 찾기: 목록·설정은 기록에서 지우고 분석 화면으로 — 끝나면 결과 화면
+                onRescan = {
+                    navController.navigate(AnalyzeRoute) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                },
+                // 데이터를 지웠으면 처음 실행처럼 스플래시부터
+                onWiped = {
+                    navController.navigate(SplashRoute) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                },
+                onLicenses = { navController.navigate(LicensesRoute) },
+            )
+        }
         composable<TripRoute>(
             // 목록 ↔ 상세: 겹쳐 흐리게 바꾸지 않고, 상세가 카드 방울에서 퍼지고(아래 TripReveal) 방울로 오므라든다.
             // 크게 보기·장소 사진은 상세 위에 열리고 닫힌다 — 상세는 아래에 그대로 둔다
