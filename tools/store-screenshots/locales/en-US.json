@@ -1,0 +1,98 @@
+{
+  "locale": "en-US",
+  "edition": "Unfold the trips in your photos",
+  "fixtureTrip": "Summer in the Dolomites",
+  "bestButton": "Pick best shots",
+  "cleanButton": "Clean up photos",
+  "slides": [
+    {
+      "id": "01-rediscover",
+      "eyebrow": "TRIPS HIDDEN IN YOUR CAMERA ROLL",
+      "title": [
+        "Find your trips",
+        "in your phone’s photos."
+      ],
+      "body": [
+        "From recent getaways to long-forgotten adventures,",
+        "Wend groups photos on your phone into trips."
+      ],
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "02-your-globe",
+      "source": "01-rediscover",
+      "layout": "globe",
+      "eyebrow": "YOUR PHOTOS. YOUR TRIPS. YOUR GLOBE.",
+      "title": [
+        "All your trips.",
+        "One personal globe."
+      ],
+      "body": [
+        "See the trips found in your photos come together.",
+        "Tap a colored cluster to open that trip."
+      ],
+      "note": "An enlarged view of the globe in the app.",
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "03-relive",
+      "eyebrow": "DAY BY DAY, PLACE BY PLACE",
+      "title": [
+        "Follow your photos.",
+        "Feel it all again."
+      ],
+      "body": [
+        "Remember where you went and what you saw.",
+        "Revisit each trip through maps and photos."
+      ],
+      "accent": "#28665F",
+      "wash": "#D9E5DC",
+      "source": "02-relive"
+    },
+    {
+      "id": "04-best-shots",
+      "eyebrow": "THE ONE WORTH KEEPING",
+      "title": [
+        "Similar moments.",
+        "Your favorite shot."
+      ],
+      "body": [
+        "Compare similar photos side by side.",
+        "Pick the one that means the most to you."
+      ],
+      "accent": "#92631E",
+      "wash": "#F0E2C4",
+      "source": "03-best-shots"
+    },
+    {
+      "id": "05-clean-up",
+      "eyebrow": "LESS CLUTTER, SAME MEMORIES",
+      "title": [
+        "Keep the memories.",
+        "Clear the extras."
+      ],
+      "body": [
+        "Review the similar photos left after your picks.",
+        "Only tidy up the photos you choose."
+      ],
+      "accent": "#406D87",
+      "wash": "#DCE6EA",
+      "source": "04-clean-up"
+    }
+  ],
+  "fixture": {
+    "trips": [
+      "A summer to remember",
+      "Winds of Iceland",
+      "Summer in the Dolomites"
+    ],
+    "places": {
+      "dolomites": "Morning in the Dolomites",
+      "tre-cime": "Tre Cime",
+      "braies": "Lake Braies",
+      "iceland": "Iceland waterfalls"
+    }
+  }
+}

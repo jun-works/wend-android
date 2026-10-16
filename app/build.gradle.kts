@@ -8,6 +8,9 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
+// Opt-in, isolated screenshot app: never installs over the user's real Wend app.
+val storeScreenshots = providers.gradleProperty("storeScreenshots").orNull == "true"
+
 android {
     namespace = "app.wend.sea"
     compileSdk {
@@ -27,6 +30,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            if (storeScreenshots) applicationIdSuffix = ".screenshots"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -41,6 +47,21 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    if (storeScreenshots) {
+        sourceSets.getByName("androidTest").apply {
+            kotlin.srcDir("../tools/store-screenshots/androidTest")
+            assets.srcDir("../tools/store-screenshots/assets")
+            assets.srcDir("../tools/store-screenshots/locales")
+        }
+        sourceSets.getByName("debug").manifest.srcFile("../tools/store-screenshots/AndroidManifest.xml")
+    }
+}
+
+// The isolated package has no Firebase project and must not send demo analytics.
+if (storeScreenshots) {
+    tasks.configureEach {
+        if (name.contains("GoogleServices") || name.contains("Crashlytics")) enabled = false
     }
 }
 

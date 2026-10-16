@@ -1,0 +1,38 @@
+[
+  {
+    "file": "dolomites.jpg",
+    "author": "Connor Stirling",
+    "source": "https://unsplash.com/photos/lake-near-snow-covered-mountain-during-daytime-vfWAYeKye58",
+    "download": "https://images.unsplash.com/photo-1609155627149-8c6b32d4e222?auto=format&fm=jpg&w=1600&q=90",
+    "license": "https://unsplash.com/license",
+    "verified": "2026-10-16",
+    "sha256": "bd8ce3ec70317bf0b7789f50624173abf6678957156a68f97f624783ffd60354"
+  },
+  {
+    "file": "tre-cime.jpg",
+    "author": "GEORGE ALEXANDRU NOVAC",
+    "source": "https://unsplash.com/photos/landscape-photo-of-mountains-and-lake-OzRUBg8_A3k",
+    "download": "https://images.unsplash.com/photo-1536784710453-3fcac92d2dc8?auto=format&fm=jpg&w=1600&q=90",
+    "license": "https://unsplash.com/license",
+    "verified": "2026-10-16",
+    "sha256": "cd01582e8d1bbdbafbfb64b0b978ba26bba02324009ee07e069920af007466bc"
+  },
+  {
+    "file": "braies.jpg",
+    "author": "Micah & Sammie Chaffin",
+    "source": "https://unsplash.com/photos/a-beautiful-mountain-lake-with-dock-zWTmywY3nyg",
+    "download": "https://images.unsplash.com/photo-1741893041975-94a0e8656209?auto=format&fm=jpg&w=1600&q=90",
+    "license": "https://unsplash.com/license",
+    "verified": "2026-10-16",
+    "sha256": "98b0ca909cada41584632ddce9631fddd34f282814f104c381b567d9f9fb5e1e"
+  },
+  {
+    "file": "iceland.jpg",
+    "author": "Camila Camacho",
+    "source": "https://unsplash.com/photos/waterfalls-during-daytime-Ku8DoAaeyjc",
+    "download": "https://images.unsplash.com/photo-1564586432351-980df1b473bf?auto=format&fm=jpg&w=1600&q=90",
+    "license": "https://unsplash.com/license",
+    "verified": "2026-10-16",
+    "sha256": "7186cf635f1d099aefff4324da2f80eb4dcc8d068ea8e97ea59ed6f9a8a3ec2e"
+  }
+]
