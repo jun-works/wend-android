@@ -8,42 +8,45 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.wend.sea.core.designsystem.component.WendTopAppBar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-private data class Notice(val title: String, val body: String)
-
-/** 앱에 넣은 데이터·글꼴의 출처와 라이선스 */
-private val Notices = listOf(
-    Notice("도시 이름", "도시 데이터: GeoNames (geonames.org), CC BY 4.0\n이름 일부: Wikidata (wikidata.org), CC0"),
-    Notice("기본 지도", "Natural Earth (naturalearthdata.com), 퍼블릭 도메인"),
-    Notice("Gowun Batang", "SIL Open Font License 1.1\n줄 높이 값만 고쳐 Wend Batang 으로 이름을 바꿈"),
-    Notice("IBM Plex Sans KR", "SIL Open Font License 1.1\n줄 높이 값만 고쳐 Wend Sans KR 로 이름을 바꿈"),
-)
-
-/** 오픈소스 라이선스(설정 › 정보) */
+/**
+ * 오픈소스 라이선스(설정 › 정보). 기본 갤러리 앱처럼 쓴 라이선스 목록과 전문을 그대로 보여 준다 —
+ * 내용은 assets/open_source_licenses.txt.
+ */
 @Composable
 fun LicensesScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    // 문단 단위로 나눠 보이는 만큼만 그린다
+    val paragraphs by produceState(emptyList<String>()) {
+        value = withContext(Dispatchers.IO) {
+            context.assets.open("open_source_licenses.txt").bufferedReader().use { it.readText() }.split("\n\n")
+        }
+    }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         WendTopAppBar(onBack = onBack, title = { Text("오픈소스 라이선스") })
-        LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), modifier = Modifier.navigationBarsPadding()) {
-            items(Notices, key = { it.title }) { notice ->
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
-                    Text(notice.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                    Text(
-                        notice.body,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
-                HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        LazyColumn(
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 24.dp),
+            modifier = Modifier.navigationBarsPadding(),
+        ) {
+            items(paragraphs) { paragraph ->
+                Text(paragraph, style = LicenseStyle, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 14.dp))
             }
         }
     }
 }
+
+private val LicenseStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp, lineHeight = 16.sp)
