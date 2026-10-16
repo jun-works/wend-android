@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.coroutineContext
@@ -39,6 +40,9 @@ class MediaRepository @Inject constructor(
     /** 앨범 열림 화면과 분석이 동시에 위치를 읽지 않게 — 뒤에 온 쪽은 앞쪽이 채운 저장값을 쓴다 */
     private val syncLock = Mutex()
 
+    /** 분석이 잠금을 기다리는 중 — 앨범 열림 화면의 개수 세기는 읽던 것까지 저장하고 멈춰 자리를 내준다 */
+    private val analysisWaiting = AtomicBoolean(false)
+
     fun currentAccess(): MediaAccess = MediaPermissions.currentAccess(context)
 
     /** 사진 속 위치(EXIF GPS)를 지우지 않고 읽을 수 있는지 */
@@ -53,7 +57,7 @@ class MediaRepository @Inject constructor(
 
     /** 위치가 남아 있는 사진·영상 수. 읽는 동안 늘어나는 수를 계속 내보낸다. */
     fun locationCount(): Flow<Int> = channelFlow {
-        syncLocations(allItems()) { send(it.withLocation) }
+        syncLocations(allItems(), yieldToAnalysis = true) { send(it.withLocation) }
     }
 
     /** 분석할 사진·영상 수(캡처 제외) */
@@ -166,7 +170,8 @@ class MediaRepository @Inject constructor(
      */
     suspend fun analysisPoints(onProgress: suspend (LocationSyncProgress) -> Unit): List<MediaPoint> {
         val items = withContext(Dispatchers.IO) { allItems() }.filterNot { it.screenshot }
-        val locations = syncLocations(items, onProgress)
+        analysisWaiting.set(true)
+        val locations = syncLocations(items, onProgress = onProgress)
         return items.map { item ->
             val location = locations[item.video to item.id]
             MediaPoint(item.id, item.video, item.takenAt, location?.first, location?.second)
@@ -179,8 +184,10 @@ class MediaRepository @Inject constructor(
      */
     private suspend fun syncLocations(
         items: List<MediaItem>,
+        yieldToAnalysis: Boolean = false,
         onProgress: suspend (LocationSyncProgress) -> Unit,
     ): Map<Pair<Boolean, Long>, Pair<Double, Double>> = syncLock.withLock {
+        if (!yieldToAnalysis) analysisWaiting.set(false)
         withContext(Dispatchers.IO) {
             val result = HashMap<Pair<Boolean, Long>, Pair<Double, Double>>()
             if (!MediaPermissions.canReadLocation(context)) {
@@ -201,8 +208,12 @@ class MediaRepository @Inject constructor(
             onProgress(LocationSyncProgress(done, items.size, result.size))
 
             val batch = mutableListOf<MediaLocationEntity>()
-            toRead.forEachIndexed { index, item ->
+            for ((index, item) in toRead.withIndex()) {
                 coroutineContext.ensureActive()
+                if (yieldToAnalysis && analysisWaiting.get()) {
+                    if (batch.isNotEmpty()) locationDao.upsert(batch.toList())
+                    return@withContext result
+                }
                 thermal.pace()
                 val location = if (item.video) videoLocation(item.uri) else photoLocation(item.uri)
                 if (location != null) result[item.video to item.id] = location
