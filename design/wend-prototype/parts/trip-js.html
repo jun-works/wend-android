@@ -312,8 +312,9 @@ function renderBest() {
 }
 function bestCount() {
   var n = Object.keys(App.state.bestDraft).length, b = document.getElementById('bs-done');
-  b.disabled = !n;
-  b.textContent = n ? n + '장으로 정하기' : '사진을 골라 주세요';
+  var had = Object.keys(App.state.best).length > 0;
+  b.disabled = !n && !had;
+  b.textContent = n ? n + '장으로 정하기' : had ? '선택 해제 적용' : '사진을 골라 주세요';
 }
 App.onEnter('best', renderBest);
 /* tap picks one in that scene; tapping the picked one again clears it (a scene may stay without a best shot) */
@@ -332,13 +333,80 @@ function togglePick(key, s, k) {
   if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
 }
 App.actions.viewBest = function (el) { App.state.keepPick = true; openViewer('best', el.getAttribute('data-key'), +el.getAttribute('data-k')); return false; };
-App.actions.bestDone = function () {
+// 저장 방식은 여행 재탐색과 별개인 앱 설정. 모든 베스트샷 확정 경로가 공유한다.
+// 시안은 새로 열거나 새로고침하면 미선택으로 시작한다. 실제 앱의 영구 설정과 구분한다.
+var bestPreference = null, pendingBestSave = null;
+function renderBestPreference() {
+  var label = document.getElementById('pf-best-mode');
+  if (label) {
+    label.textContent = bestPreference === 'gallery' ? '즐겨찾기에도 추가' : bestPreference === 'app' ? 'Wend 안에서만' : '아직 선택하지 않았어요';
+    label.classList.toggle('is-set', !!bestPreference);
+  }
+  document.querySelectorAll('#best-favorite .bf-options button').forEach(function (button) {
+    var selected = bestPreference === (button.getAttribute('data-action') === 'bestFavoriteAdd' ? 'gallery' : 'app');
+    button.setAttribute('aria-pressed', String(selected));
+    var mark = button.querySelector('.bf-selected');
+    if (mark) mark.hidden = !selected;
+  });
+}
+function saveBestPreference(mode) {
+  bestPreference = mode;
+  renderBestPreference();
+}
+function requestBestSave(picks, done) {
+  pendingBestSave = { picks: picks, done: done };
+  if (picks.length && !bestPreference) { renderBestPreference(); App.dialog('best-favorite'); return; }
+  continueBestSave();
+}
+function continueBestSave() {
+  var request = pendingBestSave;
+  pendingBestSave = null;
+  if (!request) return;
+  var favorites = App.state.galleryFavorites || (App.state.galleryFavorites = {});
+  var fresh = bestPreference === 'gallery' ? request.picks.filter(function (p) { return !favorites[p.s + ':' + p.k]; }) : [];
+  // 앱 안내는 반복하지 않는다. 실제 Android 시스템 승인은 별도이며 생략할 수 없다.
+  request.done(false);
+  if (fresh.length) {
+    App.state.pendingFavorites = fresh;
+    document.getElementById('bf-system-count').textContent = fresh.length + '장';
+    App.dialog('sys-favorite');
+  }
+}
+App.actions.bestDone = function () { requestBestSave(Object.values(App.state.bestDraft), finishBest); return false; };
+function chooseBestPreference(mode) {
+  saveBestPreference(mode);
+  App.close();
+  continueBestSave();
+  return false;
+}
+App.actions.bestFavoriteSkip = function () { return chooseBestPreference('app'); };
+App.actions.bestFavoriteAdd = function () { return chooseBestPreference('gallery'); };
+App.actions.bestPreferenceOpen = function () { pendingBestSave = null; renderBestPreference(); App.dialog('best-favorite'); return false; };
+App.actions.bestSystemAllow = function () {
+  var favorites = App.state.galleryFavorites || (App.state.galleryFavorites = {});
+  (App.state.pendingFavorites || []).forEach(function (p) { favorites[p.s + ':' + p.k] = true; });
+  App.state.pendingFavorites = null; App.close();
+  App.snack('갤러리 즐겨찾기에 추가했어요 (시안)'); return false;
+};
+App.actions.bestSystemDeny = function () {
+  App.state.pendingFavorites = null; App.close();
+  App.snack('베스트샷만 저장했어요. 즐겨찾기에는 추가하지 않았어요.'); return false;
+};
+function finishBest(added) {
+  var removed = Object.keys(App.state.best).some(function (key) {
+    return !App.state.bestDraft[key] || App.state.bestDraft[key].k !== App.state.best[key].k;
+  });
   App.state.best = App.state.bestDraft;
   var n = Object.keys(App.state.best).length;
   App.state.bestDone = true;
-  App.back();
-  App.after(320, function () { App.snack('베스트샷 ' + n + '장을 골랐어요. 사진에 별이 붙어 있어요'); });
-};
+  // 시안 화면 목록에서 직접 열면 이전 화면이 splash이므로 완료 목적지를 보장한다.
+  if (App.stack[App.stack.length - 2] === 'trip') App.back();
+  else App.tab('trip');
+  App.after(320, function () {
+    App.snack(added ? '베스트샷을 저장하고 즐겨찾기에 추가했어요 (시안)' :
+      removed ? '베스트샷 선택을 변경했어요. 갤러리 즐겨찾기는 그대로예요.' : '베스트샷 ' + n + '장을 저장했어요.');
+  });
+}
 
 /* ── clean up: suggested photos, all pre-checked; Android's own dialog confirms the move to trash ── */
 var CLEAN = [

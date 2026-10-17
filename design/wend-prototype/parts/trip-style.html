@@ -97,4 +97,14 @@
 .btn.danger{background:var(--error);color:var(--on-error)}
 /* the screen under a trip reveal stays visible (shell hides inactive screens) */
 .screen.under{visibility:visible}
+/* 첫 베스트샷 저장 방식: 좁은 화면에서도 버튼과 문구가 겹치지 않는다. */
+#best-favorite{width:calc(100% - 40px);padding:24px;max-width:352px}
+#best-favorite .d-icon{width:44px;height:44px;display:grid;place-items:center;margin:0 auto 14px;border-radius:50%;background:var(--surface-container-high);color:#9a2a14;--ms-size:24px}
+#best-favorite .d-title{font:700 21px/1.4 var(--font-display);text-align:center;word-break:keep-all;margin:0 0 10px}
+#best-favorite .d-text{margin:0;text-align:center;font:400 14px/1.65 var(--font-body);word-break:keep-all}
+.bf-options{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+#best-favorite .bf-options .btn{width:100%;min-height:48px;height:auto;padding:12px 16px;white-space:normal;font:600 15px/1.4 var(--font-body)}
+.bf-note{margin:16px 0 0;text-align:center;font:400 13px/1.65 var(--font-body);color:var(--on-surface-variant)}
+.bf-retain{display:flex;align-items:flex-start;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--outline-variant);font:400 12px/1.65 var(--font-body);color:var(--on-surface-variant);word-break:keep-all}
+.bf-retain .ms{flex:none;--ms-size:17px;margin-top:2px}
 </style>

@@ -5,6 +5,7 @@
 AG.prefs = AlbumGlobe('ag-prefs', 'prefs', 11);
 
 App.onEnter('prefs', function (s) {
+  renderBestPreference();
   App.state.fromSettings = false;   // came back from Android settings: nothing to replay here
   fillNick(s);
   var data = analysisData(), acc = App.state.access;
@@ -51,6 +52,8 @@ App.actions.rescan = function () { App.go('analyze'); return false; };
 App.actions.wipe = function () {
   App.state.nick = ''; App.state.chatFor = null; App.state.bestDone = false; App.state.noti = false;
   App.state.best = {};
+  bestPreference = null; pendingBestSave = null;
+  renderBestPreference();
   document.getElementById('nick-input').value = ''; nickCheck(false);
   App.reset('splash');
   App.after(400, function () { App.snack('Wend 데이터를 지웠어요. 사진은 그대로 있어요'); });

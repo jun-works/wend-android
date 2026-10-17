@@ -812,6 +812,16 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .btn.danger{background:var(--error);color:var(--on-error)}
 /* the screen under a trip reveal stays visible (shell hides inactive screens) */
 .screen.under{visibility:visible}
+/* 첫 베스트샷 저장 방식: 좁은 화면에서도 버튼과 문구가 겹치지 않는다. */
+#best-favorite{width:calc(100% - 40px);padding:24px;max-width:352px}
+#best-favorite .d-icon{width:44px;height:44px;display:grid;place-items:center;margin:0 auto 14px;border-radius:50%;background:var(--surface-container-high);color:#9a2a14;--ms-size:24px}
+#best-favorite .d-title{font:700 21px/1.4 var(--font-display);text-align:center;word-break:keep-all;margin:0 0 10px}
+#best-favorite .d-text{margin:0;text-align:center;font:400 14px/1.65 var(--font-body);word-break:keep-all}
+.bf-options{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+#best-favorite .bf-options .btn{width:100%;min-height:48px;height:auto;padding:12px 16px;white-space:normal;font:600 15px/1.4 var(--font-body)}
+.bf-note{margin:16px 0 0;text-align:center;font:400 13px/1.65 var(--font-body);color:var(--on-surface-variant)}
+.bf-retain{display:flex;align-items:flex-start;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--outline-variant);font:400 12px/1.65 var(--font-body);color:var(--on-surface-variant);word-break:keep-all}
+.bf-retain .ms{flex:none;--ms-size:17px;margin-top:2px}
 </style>
 
 <style id="left-style">
@@ -956,6 +966,9 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
 .pf-say .bub{max-width:none;font:var(--body-m)}
 #prefs-name .btn.text,#prefs-wipe .btn.text,#prefs-rescan .btn.text,#tag-sheet .btn.text{color:#9a2a14}
 #prefs-wipe .btn.text.del{color:var(--error)}
+.pf-note{margin:0;padding:2px 20px 8px 58px;font:400 13px/1.6 var(--font-body);color:var(--on-surface-variant);overflow-wrap:break-word}
+#pf-best-mode{line-height:1.5;overflow-wrap:break-word}
+#prefs #pf-best-mode.is-set{color:#9a2a14;font-weight:600}
 </style>
 
 </head>
@@ -1368,6 +1381,25 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
       </div>
     </section>
 
+    <div class="dialog" id="best-favorite" role="dialog" aria-labelledby="bf-title" aria-describedby="bf-description bf-note">
+      <span class="ms d-icon" aria-hidden="true">star</span>
+      <div class="d-title" id="bf-title">베스트샷, 어디에 남길까요?</div>
+      <p class="d-text" id="bf-description">갤러리 즐겨찾기에도 추가하면<br>다른 앱에서도 찾기 쉬워요.</p>
+      <div class="bf-options">
+        <button class="btn block" data-action="bestFavoriteAdd" aria-pressed="false">즐겨찾기에도 추가<span class="bf-selected" hidden> · 현재 설정</span></button>
+        <button class="btn tonal block" data-action="bestFavoriteSkip" aria-pressed="false">Wend 안에서만<span class="bf-selected" hidden> · 현재 설정</span></button>
+      </div>
+      <p class="bf-note" id="bf-note">한 번 고르면 다시 묻지 않아요.<br>설정에서 언제든 바꿀 수 있어요.</p>
+      <div class="bf-retain"><span class="ms" aria-hidden="true">info</span><span>베스트샷을 해제하거나 다시 찾아도<br>갤러리 즐겨찾기는 남아요.</span></div>
+    </div>
+
+    <div class="dialog sys sysui" id="sys-favorite" role="dialog" aria-label="즐겨찾기 추가 시스템 승인">
+      <span class="sys-tag"><span class="ms">android</span>시스템 안내창 재현</span>
+      <div class="d-title">Wend에서 사진 <b id="bf-system-count">0장</b>을 즐겨찾기에 추가하도록 허용할까요?</div>
+      <div class="d-text">허용하지 않아도 베스트샷은 Wend에 저장돼요.</div>
+      <div class="sys-btns"><button data-action="bestSystemAllow">허용</button><button data-action="bestSystemDeny">허용 안 함</button></div>
+    </div>
+
     <!-- rename: trip (from the list by long-press, or the title here) -->
     <div class="dialog" id="trip-name" aria-label="여행 이름 바꾸기">
       <div class="d-title">여행 이름 바꾸기</div>
@@ -1493,6 +1525,11 @@ button.tk{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
         <div class="pf-div"></div>
         <button class="pf-row" data-sheet="tag-sheet"><span class="ms">photo_camera</span>
           <span class="body"><b>카메라 위치 태그 켜는 법</b><span>켜 두면 여행을 더 정확하게 찾아요</span></span><span class="ms">chevron_right</span></button>
+
+        <div class="pf-sec">베스트샷</div>
+        <button class="pf-row" data-action="bestPreferenceOpen"><span class="ms">star</span>
+          <span class="body"><b>베스트샷 저장 방식</b><span id="pf-best-mode" aria-live="polite">아직 선택하지 않았어요</span></span><span class="ms">chevron_right</span></button>
+        <p class="pf-note">변경 후 고르는 사진부터 적용돼요.<br>이미 추가한 즐겨찾기는 그대로 남아요.</p>
 
         <div class="pf-sec">여행 찾기</div>
         <label class="pf-row"><span class="ms">autorenew</span>
@@ -3259,8 +3296,9 @@ function renderBest() {
 }
 function bestCount() {
   var n = Object.keys(App.state.bestDraft).length, b = document.getElementById('bs-done');
-  b.disabled = !n;
-  b.textContent = n ? n + '장으로 정하기' : '사진을 골라 주세요';
+  var had = Object.keys(App.state.best).length > 0;
+  b.disabled = !n && !had;
+  b.textContent = n ? n + '장으로 정하기' : had ? '선택 해제 적용' : '사진을 골라 주세요';
 }
 App.onEnter('best', renderBest);
 /* tap picks one in that scene; tapping the picked one again clears it (a scene may stay without a best shot) */
@@ -3279,13 +3317,80 @@ function togglePick(key, s, k) {
   if (d[key] && d[key].k === k) delete d[key]; else d[key] = { s: s, k: k };
 }
 App.actions.viewBest = function (el) { App.state.keepPick = true; openViewer('best', el.getAttribute('data-key'), +el.getAttribute('data-k')); return false; };
-App.actions.bestDone = function () {
+// 저장 방식은 여행 재탐색과 별개인 앱 설정. 모든 베스트샷 확정 경로가 공유한다.
+// 시안은 새로 열거나 새로고침하면 미선택으로 시작한다. 실제 앱의 영구 설정과 구분한다.
+var bestPreference = null, pendingBestSave = null;
+function renderBestPreference() {
+  var label = document.getElementById('pf-best-mode');
+  if (label) {
+    label.textContent = bestPreference === 'gallery' ? '즐겨찾기에도 추가' : bestPreference === 'app' ? 'Wend 안에서만' : '아직 선택하지 않았어요';
+    label.classList.toggle('is-set', !!bestPreference);
+  }
+  document.querySelectorAll('#best-favorite .bf-options button').forEach(function (button) {
+    var selected = bestPreference === (button.getAttribute('data-action') === 'bestFavoriteAdd' ? 'gallery' : 'app');
+    button.setAttribute('aria-pressed', String(selected));
+    var mark = button.querySelector('.bf-selected');
+    if (mark) mark.hidden = !selected;
+  });
+}
+function saveBestPreference(mode) {
+  bestPreference = mode;
+  renderBestPreference();
+}
+function requestBestSave(picks, done) {
+  pendingBestSave = { picks: picks, done: done };
+  if (picks.length && !bestPreference) { renderBestPreference(); App.dialog('best-favorite'); return; }
+  continueBestSave();
+}
+function continueBestSave() {
+  var request = pendingBestSave;
+  pendingBestSave = null;
+  if (!request) return;
+  var favorites = App.state.galleryFavorites || (App.state.galleryFavorites = {});
+  var fresh = bestPreference === 'gallery' ? request.picks.filter(function (p) { return !favorites[p.s + ':' + p.k]; }) : [];
+  // 앱 안내는 반복하지 않는다. 실제 Android 시스템 승인은 별도이며 생략할 수 없다.
+  request.done(false);
+  if (fresh.length) {
+    App.state.pendingFavorites = fresh;
+    document.getElementById('bf-system-count').textContent = fresh.length + '장';
+    App.dialog('sys-favorite');
+  }
+}
+App.actions.bestDone = function () { requestBestSave(Object.values(App.state.bestDraft), finishBest); return false; };
+function chooseBestPreference(mode) {
+  saveBestPreference(mode);
+  App.close();
+  continueBestSave();
+  return false;
+}
+App.actions.bestFavoriteSkip = function () { return chooseBestPreference('app'); };
+App.actions.bestFavoriteAdd = function () { return chooseBestPreference('gallery'); };
+App.actions.bestPreferenceOpen = function () { pendingBestSave = null; renderBestPreference(); App.dialog('best-favorite'); return false; };
+App.actions.bestSystemAllow = function () {
+  var favorites = App.state.galleryFavorites || (App.state.galleryFavorites = {});
+  (App.state.pendingFavorites || []).forEach(function (p) { favorites[p.s + ':' + p.k] = true; });
+  App.state.pendingFavorites = null; App.close();
+  App.snack('갤러리 즐겨찾기에 추가했어요 (시안)'); return false;
+};
+App.actions.bestSystemDeny = function () {
+  App.state.pendingFavorites = null; App.close();
+  App.snack('베스트샷만 저장했어요. 즐겨찾기에는 추가하지 않았어요.'); return false;
+};
+function finishBest(added) {
+  var removed = Object.keys(App.state.best).some(function (key) {
+    return !App.state.bestDraft[key] || App.state.bestDraft[key].k !== App.state.best[key].k;
+  });
   App.state.best = App.state.bestDraft;
   var n = Object.keys(App.state.best).length;
   App.state.bestDone = true;
-  App.back();
-  App.after(320, function () { App.snack('베스트샷 ' + n + '장을 골랐어요. 사진에 별이 붙어 있어요'); });
-};
+  // 시안 화면 목록에서 직접 열면 이전 화면이 splash이므로 완료 목적지를 보장한다.
+  if (App.stack[App.stack.length - 2] === 'trip') App.back();
+  else App.tab('trip');
+  App.after(320, function () {
+    App.snack(added ? '베스트샷을 저장하고 즐겨찾기에 추가했어요 (시안)' :
+      removed ? '베스트샷 선택을 변경했어요. 갤러리 즐겨찾기는 그대로예요.' : '베스트샷 ' + n + '장을 저장했어요.');
+  });
+}
 
 /* ── clean up: suggested photos, all pre-checked; Android's own dialog confirms the move to trash ── */
 var CLEAN = [
@@ -3625,10 +3730,12 @@ App.actions.vwClean = function () { var it = vwCur(); App.state.cleanSel[it.ci][
 App.actions.vwBest = function () {
   var it = vwCur();
   if (isBest(it.s, it.k)) return;   // already the best shot of its scene — nothing to change
+  requestBestSave([{ s: it.s, k: it.k }], function () {
   App.state.best[bestKey(it.s, it.k)] = { s: it.s, k: it.k }; App.state.bestDone = true;
   vwSlides(); vwActions();
   var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
   App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
+  });
 };
 App.actions.vwOut = function () {
   var it = vwCur(), v = App.state.vw;
@@ -3851,6 +3958,7 @@ App.back = function () {
 AG.prefs = AlbumGlobe('ag-prefs', 'prefs', 11);
 
 App.onEnter('prefs', function (s) {
+  renderBestPreference();
   App.state.fromSettings = false;   // came back from Android settings: nothing to replay here
   fillNick(s);
   var data = analysisData(), acc = App.state.access;
@@ -3897,6 +4005,8 @@ App.actions.rescan = function () { App.go('analyze'); return false; };
 App.actions.wipe = function () {
   App.state.nick = ''; App.state.chatFor = null; App.state.bestDone = false; App.state.noti = false;
   App.state.best = {};
+  bestPreference = null; pendingBestSave = null;
+  renderBestPreference();
   document.getElementById('nick-input').value = ''; nickCheck(false);
   App.reset('splash');
   App.after(400, function () { App.snack('Wend 데이터를 지웠어요. 사진은 그대로 있어요'); });

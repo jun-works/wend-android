@@ -98,10 +98,12 @@ App.actions.vwClean = function () { var it = vwCur(); App.state.cleanSel[it.ci][
 App.actions.vwBest = function () {
   var it = vwCur();
   if (isBest(it.s, it.k)) return;   // already the best shot of its scene — nothing to change
+  requestBestSave([{ s: it.s, k: it.k }], function () {
   App.state.best[bestKey(it.s, it.k)] = { s: it.s, k: it.k }; App.state.bestDone = true;
   vwSlides(); vwActions();
   var tr = document.getElementById('vw-track'); tr.scrollLeft = App.state.vw.i * tr.clientWidth;
   App.snack('이 사진을 ' + it.place + '의 베스트샷으로 골랐어요');
+  });
 };
 App.actions.vwOut = function () {
   var it = vwCur(), v = App.state.vw;
