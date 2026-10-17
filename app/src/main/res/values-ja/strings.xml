@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- common -->
+    <string name="format_locale">ja</string>
+    <string name="pattern_date">yyyy年M月d日</string>
+    <string name="pattern_range_from">yyyy年M月d日</string>
+    <string name="pattern_range_to">M月d日</string>
+    <string name="date_range">%1$s～%2$s</string>
+    <string name="pattern_time">H:mm</string>
+    <string name="pattern_month_day_weekday">M月d日 EEEE</string>
+    <string name="period_day_trip">%1$s · 日帰り</string>
+    <plurals name="period_days">
+        <item quantity="other">%1$s · %2$d日間</item>
+    </plurals>
+    <string name="trip_auto_name">旅 %1$d</string>
+    <string name="place_auto_name">場所 %1$d</string>
+    <string name="default_nickname">旅人</string>
+    <plurals name="count_photos">
+        <item quantity="other">%1$s枚</item>
+    </plurals>
+    <plurals name="count_places">
+        <item quantity="other">%1$sか所</item>
+    </plurals>
+    <string name="day_ordinal">%1$d日目</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_save">保存</string>
+    <string name="action_back">戻る</string>
+    <string name="action_undo">元に戻す</string>
+    <string name="action_share">共有</string>
+    <string name="action_got_it">わかりました</string>
+    <string name="allow_all_photos">すべての写真を許可</string>
+    <string name="best_shot">ベストショット</string>
+    <string name="trip_name">旅の名前</string>
+    <string name="rename_trip">旅の名前を変更</string>
+    <string name="rename_place">場所の名前を変更</string>
+    <string name="place_name">場所の名前</string>
+    <string name="trip_renamed">旅の名前を変更しました</string>
+    <string name="pick_best_shots">ベストショットを選ぶ</string>
+    <string name="clean_up_photos">写真を整理する</string>
+    <string name="still_reviewing">まだ写真を確認しています。少ししてからもう一度開いてください。</string>
+    <string name="zoom_label">%1$sを大きく表示</string>
+    <plurals name="moved_to_trash">
+        <item quantity="other">%1$d枚をゴミ箱に移動しました。30日以内ならギャラリーから復元できます</item>
+    </plurals>
+    <string name="needs_dated_photo">旅を作るには撮影日のある写真が必要です</string>
+    <string name="trip_created">旅「%1$s」を作りました。旅の一覧で見られます</string>
+    <string name="trip_phrase">「%1$s」</string>
+    <string name="trip_phrase_suffix">\</string>
+    <plurals name="added_to_trip">
+        <item quantity="other">%1$d枚を%2$sに追加しました</item>
+    </plurals>
+    <string name="date_trip_name">%1$sの旅</string>
+    <string name="pattern_month_day">M月d日</string>
+    <string name="add_to_trip">旅に追加</string>
+    <string name="new_trip">新しい旅</string>
+    <string name="make_new_trip">新しい旅を作る</string>
+    <string name="photo">写真</string>
+    <string name="video">動画</string>
+    <string name="allowed">許可</string>
+    <string name="allow_all">すべて許可</string>
+    <string name="not_allowed">許可しない</string>
+    <string name="settings">設定</string>
+
+    <!-- shared -->
+    <plurals name="best_shots_picked">
+        <item quantity="other">ベストショットを%1$d枚選びました。写真に星が付いています</item>
+    </plurals>
+    <string name="globe_scatter">泡を散らす</string>
+    <string name="orb_globe_description">写真を表す色とりどりの泡が地球儀の形に浮かぶアニメーション</string>
+    <string name="rename_empty">名前を入力してください</string>
+    <string name="rename_original">元の名前：%1$s</string>
+    <plurals name="same_name_title">
+        <item quantity="other">同じ名前の場所があと%1$dか所あります</item>
+    </plurals>
+    <string name="same_name_body">「%1$s」— %2$sに立ち寄った場所もまとめて変更しますか？</string>
+    <string name="same_name_all">まとめて変更</string>
+    <string name="same_name_only_this">この場所だけ</string>
+    <string name="bot_tick_title">ティック · 時間係</string>
+    <string name="bot_pin_title">ピン · 場所係</string>
+
+    <!-- left -->
+    <string name="gap_same">同じ期間</string>
+    <string name="gap_one_day">1日違い</string>
+    <plurals name="gap_days">
+        <item quantity="other">%1$d日違い</item>
+    </plurals>
+    <plurals name="gap_months">
+        <item quantity="other">%1$dか月違い</item>
+    </plurals>
+    <string name="gap_nearest">いちばん近い · %1$s</string>
+    <plurals name="add_sheet_title">
+        <item quantity="other">%1$d枚をどの旅に追加しますか？</item>
+    </plurals>
+    <string name="new_trip_name_help">あとで変更できます</string>
+    <string name="new_trip_make">作る</string>
+    <string name="left_end_selection">選択を終了</string>
+    <plurals name="left_selected">
+        <item quantity="other">%1$d枚を選択中</item>
+    </plurals>
+    <string name="pick_photos">写真を選んでください</string>
+    <string name="left_title">旅に入っていない写真</string>
+    <string name="left_subtitle">%1$s · 新しい順</string>
+    <string name="left_select">写真を選択</string>
+    <string name="left_empty_title">すべての写真が旅に入りました</string>
+    <string name="left_empty_body">新しく撮った写真のうち、旅に入らなかったものがここに集まります。</string>
+    <string name="left_intro">撮影日順に並べています。写真を選んで旅に追加したり、新しい旅を作ったりできます。</string>
+    <string name="left_tile_label">%1$sの写真</string>
+    <string name="left_no_date">日付情報なし</string>
+    <string name="select_all">すべて選択</string>
+
+    <!-- viewer -->
+    <string name="pattern_viewer_datetime">yyyy年M月d日 H:mm</string>
+    <string name="viewer_video_not_best">動画はベストショットに選べません</string>
+    <string name="viewer_best_picked">この写真を%1$sのベストショットに選びました</string>
+    <string name="needs_dated_photo_single">旅を作れるのは撮影日のある写真だけです</string>
+    <string name="viewer_removed">旅から外しました。旅に入っていない写真から戻せます</string>
+    <string name="viewer_make_best">ベストショットに</string>
+    <string name="viewer_remove_from_trip">旅から外す</string>
+    <string name="viewer_trash">ゴミ箱</string>
+    <string name="viewer_play_video">動画を再生</string>
+
+    <!-- onboarding -->
+    <string name="globe_step_when">いつ撮ったか</string>
+    <string name="globe_step_where">どこで撮ったか</string>
+    <string name="globe_step_group">旅にまとめる</string>
+    <string name="globe_next">まとめ方を聞いてみる</string>
+    <string name="globe_title">%1$sさんの散らばった写真を\n%2$sにまとめます</string>
+    <string name="globe_title_em">旅ごと</string>
+    <string name="globe_hint">地球儀をタップしてみてください</string>
+    <string name="guide_q_deleted">外れた写真は消えますか？</string>
+    <string name="guide_a_deleted">いいえ！自分で選ばない限り、写真を消したり移動したりしません。旅の整理から外れるだけです。</string>
+    <string name="guide_q_location">位置情報はどう残すの？</string>
+    <string name="guide_a_location">カメラアプリの設定で**位置情報タグ**をオンにしておくと、旅をもっと正確に見つけられます。</string>
+    <string name="guide_q_video">動画も同じですか？</string>
+    <string name="guide_a_video">はい、動画も写真と同じです。</string>
+    <string name="guide_line_1">%1$sさん、はじめまして！ぼくは写真が**いつ**撮られたかを読むティックです。</string>
+    <string name="guide_line_2">わたしは**どこで**撮られたかを読むピンです。ふたりで力を合わせて写真を旅ごとにまとめます。</string>
+    <string name="guide_line_3">はじめる前に、ひとつ知っておいてほしいことがあります。</string>
+    <string name="guide_line_4">写真や動画には、ふつう**撮影日時**と**位置情報**が一緒に保存されています。それを見て旅を探します。</string>
+    <string name="guide_line_5">なので、日時や位置情報のない写真・動画は**旅に入らないことがあります。**</string>
+    <string name="guide_line_6">たとえば、こんなふうに。</string>
+    <string name="guide_title">ティック &amp; ピン</string>
+    <string name="guide_replay">最初からもう一度聞く</string>
+    <string name="guide_finish">わかりました、はじめます</string>
+    <string name="guide_day">今日 · はじめて会った日</string>
+    <string name="guide_card_included">旅に入ります</string>
+    <string name="guide_card_camera">カメラ</string>
+    <string name="guide_card_time">2026年7月14日 18:32</string>
+    <string name="guide_card_place">済州 涯月</string>
+    <string name="guide_card_excluded">旅に入らないことがあります</string>
+    <string name="guide_card_screenshot">スクリーンショット</string>
+    <string name="guide_card_no_location">位置情報なし</string>
+    <string name="nickname">ニックネーム</string>
+    <string name="nickname_title">はじめまして。\nなんとお呼びしましょう？</string>
+    <string name="nickname_sub">旅を整理するとき、この名前でお呼びします。</string>
+    <string name="nickname_help">2～10文字、文字・数字</string>
+    <string name="nickname_invalid">使えるのは文字と数字だけです</string>
+    <string name="nickname_too_short">2文字以上入力してください</string>
+    <string name="nickname_suggestions">こんな名前はどうですか？</string>
+    <string name="nickname_privacy">ニックネームと写真はこの端末の中だけで使います。どこにもアップロードしません。</string>
+    <string name="nickname_placeholder">ニックネームを入力</string>
+    <string name="nickname_suggestion_1">週末おさんぽ</string>
+    <string name="nickname_suggestion_2">方向音痴探検家</string>
+    <string name="nickname_suggestion_3">海好きさん</string>
+    <string name="nickname_suggestion_4">スーツケース妖精</string>
+    <string name="action_next">次へ</string>
+    <string name="splash_start">はじめる</string>
+    <string name="splash_tagline">写真の中の旅を、もう一度ひらく</string>
+    <string name="splash_tap">画面をタップしてはじめる</string>
+
+    <!-- permission -->
+    <string name="perm_hint">次の画面で%1$sを選んでください</string>
+    <string name="perm_hint_allow_all">すべて許可</string>
+    <string name="perm_allow">写真へのアクセスを許可</string>
+    <string name="perm_title">%1$sさんのアルバムを\n開いてください</string>
+    <string name="perm_sub">今は写真が見えないので、地球儀が空っぽです。</string>
+    <string name="perm_globe_description">まだ開いていないアルバムを表す淡い色の地球儀</string>
+    <string name="perm_why_all_title">写真・動画をすべて見る</string>
+    <string name="perm_why_all_body">旅は写真が何日も続いていないと見つけられないので、一部だけだと旅が途切れてしまいます。</string>
+    <string name="read_photo_location">写真の位置情報を読む</string>
+    <string name="perm_why_location_body">ピンが場所を調べるときに使います。写真の権限と一緒にリクエストされます。</string>
+    <string name="perm_why_private_title">端末の外には送りません</string>
+    <string name="perm_why_private_body">どこにもアップロードせず、このスマホの中だけで読みます。自分で選ばない限り削除しません。</string>
+    <string name="partial_start_with_picked">選んだ写真ではじめる</string>
+    <string name="partial_title">選んだ%1$sだけ\n見ることができます</string>
+    <string name="partial_globe_description">地球儀の大部分は淡いまま、選んだ写真の数だけ濃い泡がところどころに見える様子</string>
+    <string name="partial_caption_picked">選んだ写真</string>
+    <string name="partial_caption_hidden">見えない写真</string>
+    <string name="partial_cut_title">こんなふうに旅が途切れることがあります</string>
+    <string name="partial_cut_start">7月12日</string>
+    <string name="partial_cut_trip">済州 · 12日間で41枚</string>
+    <string name="partial_cut_end">7月23日</string>
+    <string name="partial_cut_body">3枚だけ選ぶと、ティックとピンは%1$sとして読みます。写真はあとから追加で選べます。</string>
+    <string name="partial_cut_body_em">日帰り旅行3回</string>
+    <string name="denied_allow_in_settings">設定で許可する</string>
+    <string name="denied_allow_again">もう一度許可する</string>
+    <string name="denied_title">アルバムが閉じているので\n旅を見つけられません</string>
+    <string name="denied_globe_description">泡がすべて淡い色のまま残っている空っぽの地球儀</string>
+    <string name="denied_bot_settings">2回拒否すると、Androidは確認画面を表示しなくなります。設定で一度だけ変更してください。</string>
+    <string name="denied_bot">読む写真がないと、ティックもわたしも何もできません。写真はどこにもアップロードせず、自分で選ばない限り削除しません。</string>
+    <string name="denied_steps">%1$s 設定から直接変更してください。\n%2$s 権限 %3$s 写真と動画 %3$s %4$s</string>
+    <string name="denied_steps_no_prompt">確認画面はもう表示されません。</string>
+    <string name="denied_steps_always_allow_all">常にすべて許可</string>
+    <string name="granted_start">旅探しをはじめる</string>
+    <string name="granted_title">%1$sさんのアルバムが\n%2$s</string>
+    <string name="granted_title_em">開きました</string>
+    <string name="granted_sub">地球儀の泡が、本物の写真になりました。</string>
+    <string name="granted_globe_description">アルバムが開き、地球儀の泡が手前から濃く満ちていくアニメーション</string>
+    <string name="granted_caption">見られる写真</string>
+    <string name="granted_photos">写真</string>
+    <string name="granted_videos">動画</string>
+    <string name="granted_with_location">位置情報のある写真・動画</string>
+    <string name="unit_photos">枚</string>
+    <string name="unit_items">件</string>
+
+    <!-- analysis -->
+    <string name="analyze_status_time">ティックが写真を撮った順に読んでいます</string>
+    <string name="analyze_status_place">ピンが写真の場所を調べています</string>
+    <string name="analyze_status_group">同じ旅の写真どうしをまとめています</string>
+    <string name="analyze_title">%1$sさんの旅を\n%2$s</string>
+    <string name="analyze_title_em">探しています</string>
+    <string name="analyze_globe_description">写真の泡が色づきながら旅ごとのかたまりに集まるアニメーション</string>
+    <string name="analyze_found_trips">見つけた旅</string>
+    <string name="analyze_still_finding">まだ探しています</string>
+    <string name="analyze_read_photos">読んだ写真</string>
+    <string name="analyze_note_background">アプリを閉じても旅探しは続きます。見つかったらお知らせします。</string>
+    <string name="analyze_note_private">このスマホの中だけで読みます。写真はどこにもアップロードしません。</string>
+    <string name="found_browse">旅を見に行く</string>
+    <string name="found_title">%1$sさんの旅を\n%2$s見つけました</string>
+    <string name="found_title_partial">選んだ写真から\n旅を%2$s見つけました</string>
+    <plurals name="found_trip_count">
+        <item quantity="other">%1$d件</item>
+    </plurals>
+    <plurals name="found_summary">
+        <item quantity="other">写真・動画%1$s件のうち、%2$sが旅に入りました。残りはアルバムにそのまま残っています。</item>
+    </plurals>
+    <plurals name="found_summary_partial">
+        <item quantity="other">選んだ%1$s枚のうち、%2$sが旅に入りました。</item>
+    </plurals>
+    <string name="count_photos_short">%1$s枚</string>
+    <string name="count_items_short">%1$s件</string>
+    <string name="found_globe_description">旅ごとに違う色のかたまりに集まった地球儀</string>
+    <plurals name="found_more">
+        <item quantity="other">ほかに旅が%1$d件あります</item>
+    </plurals>
+    <string name="found_partial_note">選んだ写真だけだと、ひとつの旅がいくつかに分かれて見えることがあります。すべての写真を許可すると、続けて探します。</string>
+    <string name="nofound_browse_anyway">このまま見てみる</string>
+    <string name="nofound_ok">わかりました</string>
+    <string name="nofound_title">まだ旅を\n見つけられていません</string>
+    <plurals name="nofound_summary">
+        <item quantity="other">写真・動画%1$s件をすべて読みましたが、旅にまとめられる写真がありませんでした。</item>
+    </plurals>
+    <plurals name="nofound_summary_partial">
+        <item quantity="other">選んだ%1$s枚では旅を見つけるのが難しかったです。</item>
+    </plurals>
+    <string name="nofound_globe_description">色のつかない灰色の泡だけが残った地球儀</string>
+    <string name="nofound_bot_partial">旅は写真が何枚も続いていないと見えてきません。すべての写真を許可してくれたら、最初から探し直します。</string>
+    <string name="nofound_bot">写真に位置情報が残っていないと、旅を見つけるのは難しいです。カメラで位置情報タグをオンにしておけば、次の旅から見つけます。</string>
+    <string name="nofound_steps">%1$s カメラ %2$s 設定 %2$s %3$sをオン</string>
+    <string name="location_tag">位置情報タグ</string>
+    <string name="reanalyze_title">最初から探し直しますか？</string>
+    <string name="reanalyze_body">すべての写真を読み直して旅を探します。自分で追加・削除した写真、作った旅、ベストショット、変更した名前はすべて元に戻ります。</string>
+    <string name="reanalyze_confirm">探し直す</string>
+    <string name="notif_channel_progress">旅を探しています</string>
+    <string name="notif_channel_progress_description">旅を探している間、進み具合を表示します</string>
+    <string name="notif_channel_done">旅探し完了</string>
+    <string name="notif_channel_done_description">旅をすべて見つけたらお知らせします</string>
+    <string name="notif_progress_title">旅を探しています</string>
+    <string name="notif_progress_count">写真 %1$s / %2$s · アプリを閉じても続きます</string>
+    <string name="notif_progress_text">アプリを閉じても続きます</string>
+    <plurals name="notif_done_title">
+        <item quantity="other">旅を%1$d件見つけました</item>
+    </plurals>
+    <string name="notif_none_title">まだ旅を見つけられていません</string>
+    <string name="notif_done_text">タップして見つけた旅を確認しましょう</string>
+    <string name="notif_none_text">タップして理由を確認しましょう</string>
+
+    <!-- settings -->
+    <string name="settings_globe_description">アルバムの地球儀。見られる写真の分だけ濃く満たされています</string>
+    <string name="settings_name">%1$sさん</string>
+    <plurals name="count_media">
+        <item quantity="other">写真・動画%1$s件</item>
+    </plurals>
+    <plurals name="count_trips">
+        <item quantity="other">旅%1$s件</item>
+    </plurals>
+    <string name="change_nickname">ニックネームを変更</string>
+    <string name="settings_section_access">写真へのアクセス</string>
+    <string name="settings_photos_videos">写真と動画</string>
+    <string name="settings_photos_videos_sub">Androidの設定で変更できます</string>
+    <string name="settings_partial">一部を許可</string>
+    <string name="settings_location_sub">写真の権限と一緒に許可されます</string>
+    <string name="settings_location_tag_howto">カメラの位置情報タグをオンにする方法</string>
+    <string name="settings_location_tag_sub">オンにすると旅をもっと正確に見つけられます</string>
+    <string name="settings_section_find">旅探し</string>
+    <string name="settings_rescan">最初から探し直す</string>
+    <string name="settings_rescan_sub">自分で直した内容はすべて元に戻ります</string>
+    <string name="settings_section_data">データ</string>
+    <string name="settings_wipe">Wendのデータを消去</string>
+    <string name="settings_wipe_sub">見つけた旅と整理した記録を消去します。写真はそのまま残ります</string>
+    <string name="settings_section_about">情報</string>
+    <string name="open_source_licenses">オープンソースライセンス</string>
+    <string name="settings_wipe_title">Wendのデータを消去しますか？</string>
+    <string name="settings_wipe_body">見つけた旅、ベストショット、自分で追加・削除した記録、ニックネームが消去され、最初の画面に戻ります。**端末の写真は1枚も削除されません。**</string>
+    <string name="settings_wipe_confirm">消去</string>
+    <string name="howto_step_1">カメラアプリを開きます</string>
+    <string name="howto_step_2">左上の設定（⚙）をタップします</string>
+    <string name="howto_step_3">%1$sをオンにします</string>
+    <string name="howto_bot">オンにしたあとに撮った写真から場所が残ります。メニューの名前は端末によって少し違うことがあります。</string>
+    <string name="settings_all">すべて許可</string>
+
+    <!-- trips -->
+    <string name="trips_globe_description">旅ごとに違う色のかたまりに集まった地球儀。かたまりをタップするとその旅に移動します</string>
+    <plurals name="trips_hero_trips">
+        <item quantity="other">旅%1$s件</item>
+    </plurals>
+    <plurals name="trips_hero_photos">
+        <item quantity="other">写真%1$s枚</item>
+    </plurals>
+    <string name="trips_hero_none">まだ見つけた旅がありません</string>
+    <string name="trips_hero_hint">色のかたまりをタップするとその旅に移動します</string>
+    <string name="trips_open">%1$sを開く</string>
+    <string name="trips_rename_label">旅「%1$s」の名前を変更</string>
+    <string name="trips_partial_banner">選んだ写真から見つけた旅だけを表示しています。</string>
+    <string name="trips_empty_title">旅ができたらここに集まります</string>
+    <string name="trips_empty_body">位置情報タグをオンにして撮った写真がたまれば、ティックとピンが旅を見つけます。</string>
+    <plurals name="trips_left_row">
+        <item quantity="other">旅に入っていない写真・動画%1$s件</item>
+    </plurals>
+
+    <!-- trip -->
+    <string name="places_renamed">%1$dか所の名前を変更しました</string>
+    <string name="place_renamed">場所の名前を変更しました</string>
+    <string name="clean_similar">似ている写真</string>
+    <string name="clean_similar_sub">ベストショットとほぼ同じ写真</string>
+    <string name="clean_dark">暗すぎる写真</string>
+    <string name="trip_end">旅の終わり · %1$s %2$s</string>
+    <string name="edit_label_description">%1$s、今の名前は%2$s</string>
+    <string name="place_view_all_description">%1$sの写真%2$sをすべて表示</string>
+    <string name="place_photo_description">%1$sの写真%2$dを大きく表示</string>
+    <string name="place_photo_best_description">%1$sの写真%2$d、ベストショットを大きく表示</string>
+    <string name="view_all">すべて表示</string>
+    <string name="map_description">その日の移動ルートの地図。スクロールするとピンがルートに沿って動きます</string>
+    <string name="place_photos_title">場所の写真</string>
+    <string name="photo_n">%1$s、写真%2$d</string>
+    <string name="view_larger">大きく表示</string>
+    <string name="place_photos_none">この場所に残っている写真はありません</string>
+    <string name="place_photos_end">ここで残した瞬間をすべて広げました</string>
+    <string name="place_photos_order">撮影順</string>
+    <string name="best_intro">同じ場面を何度も撮った写真をまとめました。場面ごとに気に入った1枚を選んでください。選ばなくても大丈夫です。選んだ写真は旅の代表写真になります。</string>
+    <string name="best_none">この旅には、同じ場面を何度も撮った写真がありません。</string>
+    <plurals name="best_similar_count">
+        <item quantity="other">似ている写真%1$d枚</item>
+    </plurals>
+    <string name="best_photo_label">%1$s %2$s 似ている写真%3$d</string>
+    <plurals name="best_confirm">
+        <item quantity="other">%1$d枚に決める</item>
+    </plurals>
+    <string name="best_picked">選びました</string>
+    <string name="best_pick_this">この写真を選ぶ</string>
+    <string name="clean_intro">いらなそうな写真を選んでおきました。残したい写真はタップして外してください。</string>
+    <string name="clean_none">この旅には整理するような写真がありません。</string>
+    <string name="clean_none_no_best">この旅には整理するような写真がありません。ベストショットを選ぶと、同じ場面の残りの写真をここで整理できます。</string>
+    <string name="clean_trash_note">ゴミ箱に移動した写真は、30日間ギャラリーから復元できます。</string>
+    <plurals name="clean_confirm">
+        <item quantity="other">%1$d枚をゴミ箱に移動</item>
+    </plurals>
+    <string name="clean_pick">移動する写真を選んでください</string>
+    <string name="clean_checked">整理する</string>
+    <string name="clean_keep">残す</string>
+</resources>

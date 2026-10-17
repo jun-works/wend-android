@@ -47,6 +47,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.wend.sea.R
@@ -160,6 +161,9 @@ private fun TripRow(choice: TripChoice, nearest: Boolean, onClick: () -> Unit) {
             choice.gapDays?.let { if (nearest) stringResource(R.string.gap_nearest, gapLabel(it)) else gapLabel(it) }.orEmpty(),
             style = MaterialTheme.typography.labelMedium.let { if (nearest) it.copy(fontWeight = FontWeight.SemiBold) else it },
             color = if (nearest) PickAccent else colors.onSurfaceVariant,
+            // 긴 번역에서 라벨이 폭을 다 가져가 여행 이름이 찌그러지지 않게, 이름 칸과 나눠 쓴다
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f, fill = false),
         )
     }
 }

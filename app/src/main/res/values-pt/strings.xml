@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- common -->
+    <string name="format_locale">pt-BR</string>
+    <string name="pattern_date">d MMM yyyy</string>
+    <string name="pattern_range_from">d MMM</string>
+    <string name="pattern_range_to">d MMM yyyy</string>
+    <string name="date_range">%1$s – %2$s</string>
+    <string name="pattern_time">HH:mm</string>
+    <string name="pattern_month_day_weekday">EEE, d MMM</string>
+    <string name="period_day_trip">%1$s · Bate-volta</string>
+    <plurals name="period_days">
+        <item quantity="one">%1$s · %2$d dia</item>
+        <item quantity="other">%1$s · %2$d dias</item>
+    </plurals>
+    <string name="trip_auto_name">Viagem %1$d</string>
+    <string name="place_auto_name">Lugar %1$d</string>
+    <string name="default_nickname">Viajante</string>
+    <plurals name="count_photos">
+        <item quantity="one">%1$s foto</item>
+        <item quantity="other">%1$s fotos</item>
+    </plurals>
+    <plurals name="count_places">
+        <item quantity="one">%1$s lugar</item>
+        <item quantity="other">%1$s lugares</item>
+    </plurals>
+    <string name="day_ordinal">Dia %1$d</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Salvar</string>
+    <string name="action_back">Voltar</string>
+    <string name="action_undo">Desfazer</string>
+    <string name="action_share">Compartilhar</string>
+    <string name="action_got_it">Entendi</string>
+    <string name="allow_all_photos">Permitir todas as fotos</string>
+    <string name="best_shot">Melhor foto</string>
+    <string name="trip_name">Nome da viagem</string>
+    <string name="rename_trip">Renomear viagem</string>
+    <string name="rename_place">Renomear lugar</string>
+    <string name="place_name">Nome do lugar</string>
+    <string name="trip_renamed">Viagem renomeada</string>
+    <string name="pick_best_shots">Melhores fotos</string>
+    <string name="clean_up_photos">Organizar fotos</string>
+    <string name="still_reviewing">Ainda estamos olhando suas fotos. Abra de novo daqui a pouco.</string>
+    <string name="zoom_label">Ver %1$s maior</string>
+    <plurals name="moved_to_trash">
+        <item quantity="one">%1$d foto foi para a lixeira. Você pode restaurá-la pela galeria em até 30 dias.</item>
+        <item quantity="other">%1$d fotos foram para a lixeira. Você pode restaurá-las pela galeria em até 30 dias.</item>
+    </plurals>
+    <string name="needs_dated_photo">Você precisa de pelo menos uma foto com data para criar uma viagem</string>
+    <string name="trip_created">Criamos a viagem “%1$s”. Ela está nas suas viagens.</string>
+    <string name="trip_phrase">“%1$s”</string>
+    <string name="trip_phrase_suffix">\</string>
+    <plurals name="added_to_trip">
+        <item quantity="one">%1$d foto adicionada a %2$s</item>
+        <item quantity="other">%1$d fotos adicionadas a %2$s</item>
+    </plurals>
+    <string name="date_trip_name">Viagem de %1$s</string>
+    <string name="pattern_month_day">d \'de\' MMMM</string>
+    <string name="add_to_trip">Adicionar</string>
+    <string name="new_trip">Nova viagem</string>
+    <string name="make_new_trip">Nova viagem</string>
+    <string name="photo">Foto</string>
+    <string name="video">Vídeo</string>
+    <string name="allowed">Permitido</string>
+    <string name="allow_all">Permitir tudo</string>
+    <string name="not_allowed">Não permitido</string>
+    <string name="settings">Configurações</string>
+
+    <!-- shared -->
+    <plurals name="best_shots_picked">
+        <item quantity="one">%1$d melhor foto escolhida. Procure a estrela na foto.</item>
+        <item quantity="other">%1$d melhores fotos escolhidas. Procure as estrelas nas fotos.</item>
+    </plurals>
+    <string name="globe_scatter">Espalhar as bolhas</string>
+    <string name="orb_globe_description">Animação de bolhas coloridas, cada uma uma foto, flutuando em forma de globo</string>
+    <string name="rename_empty">Digite um nome</string>
+    <string name="rename_original">Nome original: %1$s</string>
+    <plurals name="same_name_title">
+        <item quantity="one">Mais %1$d lugar tem este nome</item>
+        <item quantity="other">Mais %1$d lugares têm este nome</item>
+    </plurals>
+    <string name="same_name_body">“%1$s”: renomear também as paradas em %2$s?</string>
+    <string name="same_name_all">Renomear todos</string>
+    <string name="same_name_only_this">Só este</string>
+    <string name="bot_tick_title">Tick · Guardião do tempo</string>
+    <string name="bot_pin_title">Pin · Descobridor de lugares</string>
+
+    <!-- left -->
+    <string name="gap_same">Mesmas datas</string>
+    <string name="gap_one_day">A 1 dia</string>
+    <plurals name="gap_days">
+        <item quantity="one">A %1$d dia</item>
+        <item quantity="other">A %1$d dias</item>
+    </plurals>
+    <plurals name="gap_months">
+        <item quantity="one">A %1$d mês</item>
+        <item quantity="other">A %1$d meses</item>
+    </plurals>
+    <string name="gap_nearest">Mais perto · %1$s</string>
+    <plurals name="add_sheet_title">
+        <item quantity="one">Em qual viagem colocar %1$d foto?</item>
+        <item quantity="other">Em qual viagem colocar %1$d fotos?</item>
+    </plurals>
+    <string name="new_trip_name_help">Você pode mudar depois</string>
+    <string name="new_trip_make">Criar</string>
+    <string name="left_end_selection">Concluir seleção</string>
+    <plurals name="left_selected">
+        <item quantity="one">%1$d selecionada</item>
+        <item quantity="other">%1$d selecionadas</item>
+    </plurals>
+    <string name="pick_photos">Selecione fotos</string>
+    <string name="left_title">Fotos fora de viagens</string>
+    <string name="left_subtitle">%1$s · Mais recentes primeiro</string>
+    <string name="left_select">Selecionar fotos</string>
+    <string name="left_empty_title">Todas as fotos estão em uma viagem</string>
+    <string name="left_empty_body">Fotos novas que não se encaixarem em uma viagem vão aparecer aqui.</string>
+    <string name="left_intro">Organizadas pela data em que foram tiradas. Selecione fotos para adicioná-las a uma viagem ou criar uma nova.</string>
+    <string name="left_tile_label">Foto de %1$s</string>
+    <string name="left_no_date">Sem data</string>
+    <string name="select_all">Selecionar tudo</string>
+
+    <!-- viewer -->
+    <string name="pattern_viewer_datetime">d MMM yyyy, HH:mm</string>
+    <string name="viewer_video_not_best">Vídeos não podem ser a melhor foto</string>
+    <string name="viewer_best_picked">Esta foi escolhida como a melhor foto de %1$s</string>
+    <string name="needs_dated_photo_single">Só fotos com data podem formar uma viagem</string>
+    <string name="viewer_removed">Removida da viagem. Você pode adicioná-la de volta em Fotos fora de viagens.</string>
+    <string name="viewer_make_best">Melhor foto</string>
+    <string name="viewer_remove_from_trip">Remover</string>
+    <string name="viewer_trash">Lixeira</string>
+    <string name="viewer_play_video">Reproduzir vídeo</string>
+
+    <!-- onboarding -->
+    <string name="globe_step_when">Quando</string>
+    <string name="globe_step_where">Onde</string>
+    <string name="globe_step_group">Em viagens</string>
+    <string name="globe_next">Me conta como funciona</string>
+    <string name="globe_title">%1$s, vamos juntar suas fotos espalhadas em %2$s</string>
+    <string name="globe_title_em">viagens</string>
+    <string name="globe_hint">Toque no globo</string>
+    <string name="guide_q_deleted">As fotos que ficam de fora são apagadas?</string>
+    <string name="guide_a_deleted">Não! Eu nunca apago nem movo uma foto, a não ser que você escolha. Ela só fica fora das suas viagens.</string>
+    <string name="guide_q_location">Como eu salvo a localização?</string>
+    <string name="guide_a_location">Ative a **marcação de local** nas configurações do app da câmera e eu vou encontrar suas viagens com mais precisão.</string>
+    <string name="guide_q_video">Vídeos funcionam do mesmo jeito?</string>
+    <string name="guide_a_video">Sim, vídeos funcionam igualzinho às fotos.</string>
+    <string name="guide_line_1">Prazer, %1$s! Eu sou o Tick. Eu leio **quando** cada foto foi tirada.</string>
+    <string name="guide_line_2">E eu sou o Pin. Eu leio **onde** ela foi tirada. Juntos, agrupamos suas fotos em viagens.</string>
+    <string name="guide_line_3">Antes de começar, tem uma coisa que você precisa saber.</string>
+    <string name="guide_line_4">Fotos e vídeos costumam guardar o **horário** e o **local** em que foram feitos. É isso que usamos para encontrar suas viagens.</string>
+    <string name="guide_line_5">Então fotos e vídeos sem horário ou local **podem ficar de fora** de uma viagem.</string>
+    <string name="guide_line_6">Veja um exemplo.</string>
+    <string name="guide_title">Tick &amp; Pin</string>
+    <string name="guide_replay">Ouvir de novo desde o início</string>
+    <string name="guide_finish">Entendi, vamos começar</string>
+    <string name="guide_day">Hoje · O dia em que nos conhecemos</string>
+    <string name="guide_card_included">Entra em uma viagem</string>
+    <string name="guide_card_camera">Câmera</string>
+    <string name="guide_card_time">14 jul 2026, 18:32</string>
+    <string name="guide_card_place">Aewol, Jeju</string>
+    <string name="guide_card_excluded">Pode não entrar em uma viagem</string>
+    <string name="guide_card_screenshot">Captura</string>
+    <string name="guide_card_no_location">Sem local</string>
+    <string name="nickname">Apelido</string>
+    <string name="nickname_title">Prazer em conhecer.\nComo podemos te chamar?</string>
+    <string name="nickname_sub">Vamos usar este nome enquanto organizamos suas viagens.</string>
+    <string name="nickname_help">De 2 a 10 letras ou números</string>
+    <string name="nickname_invalid">Só letras e números, por favor</string>
+    <string name="nickname_too_short">Digite pelo menos 2 caracteres</string>
+    <string name="nickname_suggestions">Que tal um destes?</string>
+    <string name="nickname_privacy">Seu apelido e suas fotos ficam neste aparelho. Nada é enviado.</string>
+    <string name="nickname_placeholder">Digite um apelido</string>
+    <string name="nickname_suggestion_1">Andarilho</string>
+    <string name="nickname_suggestion_2">Marinheiro</string>
+    <string name="nickname_suggestion_3">Caça Sol</string>
+    <string name="nickname_suggestion_4">Mochileiro</string>
+    <string name="action_next">Próximo</string>
+    <string name="splash_start">Começar</string>
+    <string name="splash_tagline">Desdobre as viagens nas suas fotos</string>
+    <string name="splash_tap">Toque em qualquer lugar para começar</string>
+
+    <!-- permission -->
+    <string name="perm_hint">Na próxima tela, escolha %1$s</string>
+    <string name="perm_hint_allow_all">Permitir tudo</string>
+    <string name="perm_allow">Permitir acesso às fotos</string>
+    <string name="perm_title">%1$s, abra\nseu álbum</string>
+    <string name="perm_sub">Ainda não vemos nenhuma foto, por isso o globo está vazio.</string>
+    <string name="perm_globe_description">Um globo pálido que representa um álbum ainda fechado</string>
+    <string name="perm_why_all_title">Ver todas as fotos e vídeos</string>
+    <string name="perm_why_all_body">Uma viagem só aparece quando as fotos se estendem por vários dias. Com só algumas, as viagens ficam cortadas.</string>
+    <string name="read_photo_location">Ler o local das fotos</string>
+    <string name="perm_why_location_body">O Pin usa isso para descobrir os lugares. É pedido junto com o acesso às fotos.</string>
+    <string name="perm_why_private_title">Nada sai do seu aparelho</string>
+    <string name="perm_why_private_body">Nada é enviado; tudo é lido neste celular. E nada é apagado, a não ser que você escolha.</string>
+    <string name="partial_start_with_picked">Começar com as fotos que escolhi</string>
+    <string name="partial_title">Só vemos\nas %1$s que você escolheu</string>
+    <string name="partial_globe_description">Um globo quase todo pálido com bolhas escuras aqui e ali, tantas quanto as fotos que você escolheu</string>
+    <string name="partial_caption_picked">Fotos escolhidas</string>
+    <string name="partial_caption_hidden">Fotos ocultas</string>
+    <string name="partial_cut_title">As viagens podem ficar cortadas assim</string>
+    <string name="partial_cut_start">12 jul</string>
+    <string name="partial_cut_trip">Jeju · 41 fotos em 12 dias</string>
+    <string name="partial_cut_end">23 jul</string>
+    <string name="partial_cut_body">Escolhendo só 3 fotos, o Tick e o Pin vão entendê-las como %1$s. Você pode escolher mais fotos depois.</string>
+    <string name="partial_cut_body_em">três viagens de um dia</string>
+    <string name="denied_allow_in_settings">Permitir nas Configurações</string>
+    <string name="denied_allow_again">Permitir de novo</string>
+    <string name="denied_title">Seu álbum está fechado,\nentão não encontramos viagens</string>
+    <string name="denied_globe_description">Um globo vazio com todas as bolhas ainda pálidas</string>
+    <string name="denied_bot_settings">Depois de recusar duas vezes, o Android para de mostrar o aviso. Basta mudar uma vez nas Configurações.</string>
+    <string name="denied_bot">Sem fotos para ler, o Tick e eu não conseguimos fazer nada. Suas fotos nunca são enviadas, e nada é apagado, a não ser que você escolha.</string>
+    <string name="denied_steps">%1$s Mude nas Configurações.\n%2$s Permissões %3$s Fotos e vídeos %3$s %4$s</string>
+    <string name="denied_steps_no_prompt">O aviso não vai aparecer de novo.</string>
+    <string name="denied_steps_always_allow_all">Sempre permitir tudo</string>
+    <string name="granted_start">Começar a encontrar viagens</string>
+    <string name="granted_title">%1$s, seu álbum\nestá %2$s</string>
+    <string name="granted_title_em">aberto</string>
+    <string name="granted_sub">As bolhas do globo agora são suas fotos de verdade.</string>
+    <string name="granted_globe_description">Animação do álbum se abrindo enquanto as bolhas do globo se preenchem a partir da frente</string>
+    <string name="granted_caption">Fotos que podemos ver</string>
+    <string name="granted_photos">Fotos</string>
+    <string name="granted_videos">Vídeos</string>
+    <string name="granted_with_location">Fotos e vídeos com local</string>
+    <string name="unit_photos">\</string>
+    <string name="unit_items">\</string>
+
+    <!-- analysis -->
+    <string name="analyze_status_time">O Tick está lendo suas fotos na ordem em que foram tiradas</string>
+    <string name="analyze_status_place">O Pin está vendo onde cada foto foi tirada</string>
+    <string name="analyze_status_group">Juntando fotos da mesma viagem</string>
+    <string name="analyze_title">%1$s, estamos %2$s\nsuas viagens</string>
+    <string name="analyze_title_em">encontrando</string>
+    <string name="analyze_globe_description">Animação de bolhas de fotos ganhando cor e se agrupando por viagem</string>
+    <string name="analyze_found_trips">Viagens encontradas</string>
+    <string name="analyze_still_finding">Ainda procurando</string>
+    <string name="analyze_read_photos">Fotos lidas</string>
+    <string name="analyze_note_background">A busca por viagens continua mesmo se você fechar o app. Avisamos quando terminar.</string>
+    <string name="analyze_note_private">Tudo é lido neste celular. Suas fotos nunca são enviadas.</string>
+    <string name="found_browse">Ver minhas viagens</string>
+    <string name="found_title">%1$s, encontramos\n%2$s</string>
+    <string name="found_title_partial">Encontramos %2$s\nnas fotos que você escolheu</string>
+    <plurals name="found_trip_count">
+        <item quantity="one">%1$d viagem</item>
+        <item quantity="other">%1$d viagens</item>
+    </plurals>
+    <plurals name="found_summary">
+        <item quantity="one">Da sua %1$s foto ou vídeo, %2$s entrou em uma viagem.</item>
+        <item quantity="other">Das suas %1$s fotos e vídeos, %2$s entraram em viagens. O resto fica no seu álbum, intocado.</item>
+    </plurals>
+    <plurals name="found_summary_partial">
+        <item quantity="one">Da %1$s foto que você escolheu, %2$s entrou em uma viagem.</item>
+        <item quantity="other">Das %1$s fotos que você escolheu, %2$s entraram em viagens.</item>
+    </plurals>
+    <string name="count_photos_short">%1$s</string>
+    <string name="count_items_short">%1$s</string>
+    <string name="found_globe_description">Um globo agrupado em uma cor diferente para cada viagem</string>
+    <plurals name="found_more">
+        <item quantity="one">Mais %1$d viagem</item>
+        <item quantity="other">Mais %1$d viagens</item>
+    </plurals>
+    <string name="found_partial_note">Só com as fotos que você escolheu, uma viagem pode parecer várias. Permita todas as fotos e continuamos procurando.</string>
+    <string name="nofound_browse_anyway">Dar uma olhada assim mesmo</string>
+    <string name="nofound_ok">OK</string>
+    <string name="nofound_title">Nenhuma viagem\nencontrada ainda</string>
+    <plurals name="nofound_summary">
+        <item quantity="one">Lemos sua %1$s foto ou vídeo, mas não deu para agrupar em uma viagem.</item>
+        <item quantity="other">Lemos todas as %1$s fotos e vídeos, mas nenhum deu para agrupar em uma viagem.</item>
+    </plurals>
+    <plurals name="nofound_summary_partial">
+        <item quantity="one">Foi difícil encontrar uma viagem na %1$s foto que você escolheu.</item>
+        <item quantity="other">Foi difícil encontrar viagens nas %1$s fotos que você escolheu.</item>
+    </plurals>
+    <string name="nofound_globe_description">Um globo só com bolhas cinzas, sem cor</string>
+    <string name="nofound_bot_partial">As viagens só aparecem quando as fotos vêm em sequência. Permita todas as fotos e eu procuro de novo desde o início.</string>
+    <string name="nofound_bot">Sem local nas fotos, fica difícil encontrar viagens. Ative a marcação de local na câmera e eu encontro sua próxima viagem.</string>
+    <string name="nofound_steps">%1$s Câmera %2$s Configurações %2$s Ative %3$s</string>
+    <string name="location_tag">Marcação de local</string>
+    <string name="reanalyze_title">Encontrar viagens de novo do zero?</string>
+    <string name="reanalyze_body">Vamos ler todas as fotos de novo para encontrar suas viagens. Fotos que você adicionou ou removeu, viagens que criou, melhores fotos e nomes que mudou vão voltar ao início.</string>
+    <string name="reanalyze_confirm">Encontrar de novo</string>
+    <string name="notif_channel_progress">Encontrando viagens</string>
+    <string name="notif_channel_progress_description">Mostra o progresso enquanto as viagens são encontradas</string>
+    <string name="notif_channel_done">Viagens encontradas</string>
+    <string name="notif_channel_done_description">Avisa quando todas as suas viagens forem encontradas</string>
+    <string name="notif_progress_title">Encontrando suas viagens</string>
+    <string name="notif_progress_count">Fotos %1$s / %2$s · Continua mesmo se você fechar o app</string>
+    <string name="notif_progress_text">Continua mesmo se você fechar o app</string>
+    <plurals name="notif_done_title">
+        <item quantity="one">%1$d viagem encontrada</item>
+        <item quantity="other">%1$d viagens encontradas</item>
+    </plurals>
+    <string name="notif_none_title">Nenhuma viagem encontrada ainda</string>
+    <string name="notif_done_text">Toque para ver as viagens encontradas</string>
+    <string name="notif_none_text">Toque para ver o motivo</string>
+
+    <!-- settings -->
+    <string name="settings_globe_description">Globo do álbum, preenchido conforme as fotos que podemos ver</string>
+    <string name="settings_name">%1$s</string>
+    <plurals name="count_media">
+        <item quantity="one">%1$s foto ou vídeo</item>
+        <item quantity="other">%1$s fotos e vídeos</item>
+    </plurals>
+    <plurals name="count_trips">
+        <item quantity="one">%1$s viagem</item>
+        <item quantity="other">%1$s viagens</item>
+    </plurals>
+    <string name="change_nickname">Mudar apelido</string>
+    <string name="settings_section_access">Acesso às fotos</string>
+    <string name="settings_photos_videos">Fotos e vídeos</string>
+    <string name="settings_photos_videos_sub">Você pode mudar isso nas configurações do Android</string>
+    <string name="settings_partial">Algumas permitidas</string>
+    <string name="settings_location_sub">Permitido junto com o acesso às fotos</string>
+    <string name="settings_location_tag_howto">Como ativar a marcação de local da câmera</string>
+    <string name="settings_location_tag_sub">Com ela ativada, as viagens são encontradas com mais precisão</string>
+    <string name="settings_section_find">Busca de viagens</string>
+    <string name="settings_rescan">Encontrar viagens de novo do zero</string>
+    <string name="settings_rescan_sub">Todas as mudanças que você fez vão voltar ao início</string>
+    <string name="settings_section_data">Dados</string>
+    <string name="settings_wipe">Limpar dados do Wend</string>
+    <string name="settings_wipe_sub">Limpa as viagens encontradas e suas edições. Suas fotos ficam como estão</string>
+    <string name="settings_section_about">Sobre</string>
+    <string name="open_source_licenses">Licenças de código aberto</string>
+    <string name="settings_wipe_title">Limpar dados do Wend?</string>
+    <string name="settings_wipe_body">Suas viagens, melhores fotos, fotos que você adicionou ou removeu e seu apelido serão apagados, e você volta ao início. **Nenhuma foto do seu aparelho será apagada.**</string>
+    <string name="settings_wipe_confirm">Limpar</string>
+    <string name="howto_step_1">Abra o app da câmera</string>
+    <string name="howto_step_2">Toque em Configurações (⚙) no canto superior esquerdo</string>
+    <string name="howto_step_3">Ative %1$s</string>
+    <string name="howto_bot">Os lugares são salvos nas fotos que você tirar depois de ativar. Os nomes dos menus podem variar um pouco conforme o aparelho.</string>
+    <string name="settings_all">Tudo permitido</string>
+
+    <!-- trips -->
+    <string name="trips_globe_description">Um globo agrupado em uma cor diferente para cada viagem. Toque em um grupo para ir até essa viagem</string>
+    <plurals name="trips_hero_trips">
+        <item quantity="one">%1$s viagem</item>
+        <item quantity="other">%1$s viagens</item>
+    </plurals>
+    <plurals name="trips_hero_photos">
+        <item quantity="one">%1$s foto</item>
+        <item quantity="other">%1$s fotos</item>
+    </plurals>
+    <string name="trips_hero_none">Nenhuma viagem encontrada ainda</string>
+    <string name="trips_hero_hint">Toque em um grupo de cor para ir até essa viagem</string>
+    <string name="trips_open">Abrir %1$s</string>
+    <string name="trips_rename_label">Renomear viagem %1$s</string>
+    <string name="trips_partial_banner">Mostrando só as viagens encontradas nas fotos que você escolheu.</string>
+    <string name="trips_empty_title">Suas viagens vão se reunir aqui</string>
+    <string name="trips_empty_body">Quando você tiver fotos tiradas com a marcação de local ativada, o Tick e o Pin vão encontrar suas viagens.</string>
+    <plurals name="trips_left_row">
+        <item quantity="one">%1$s foto ou vídeo fora de viagens</item>
+        <item quantity="other">%1$s fotos e vídeos fora de viagens</item>
+    </plurals>
+
+    <!-- trip -->
+    <string name="places_renamed">%1$d lugares renomeados</string>
+    <string name="place_renamed">Lugar renomeado</string>
+    <string name="clean_similar">Fotos parecidas</string>
+    <string name="clean_similar_sub">Quase iguais à melhor foto</string>
+    <string name="clean_dark">Fotos escuras demais</string>
+    <string name="trip_end">Fim da viagem · %1$s, %2$s</string>
+    <string name="edit_label_description">%1$s, nome atual %2$s</string>
+    <string name="place_view_all_description">%1$s, ver todas as %2$s</string>
+    <string name="place_photo_description">%1$s, foto %2$d, ver maior</string>
+    <string name="place_photo_best_description">%1$s, foto %2$d, melhor foto, ver maior</string>
+    <string name="view_all">Ver tudo</string>
+    <string name="map_description">Mapa do trajeto do dia. Ao rolar, o pin segue o trajeto</string>
+    <string name="place_photos_title">Fotos do lugar</string>
+    <string name="photo_n">%1$s, foto %2$d</string>
+    <string name="view_larger">ver maior</string>
+    <string name="place_photos_none">Não sobrou nenhuma foto deste lugar</string>
+    <string name="place_photos_end">Esses são todos os momentos que você registrou aqui</string>
+    <string name="place_photos_order">Na ordem em que foram tiradas</string>
+    <string name="best_intro">Agrupamos fotos da mesma cena tiradas várias vezes. Escolha sua favorita de cada cena, ou não, tudo bem também. As escolhidas viram as fotos de capa da viagem.</string>
+    <string name="best_none">Esta viagem não tem cenas fotografadas mais de uma vez.</string>
+    <plurals name="best_similar_count">
+        <item quantity="one">%1$d foto parecida</item>
+        <item quantity="other">%1$d fotos parecidas</item>
+    </plurals>
+    <string name="best_photo_label">%1$s %2$s foto parecida %3$d</string>
+    <plurals name="best_confirm">
+        <item quantity="one">Escolher %1$d foto</item>
+        <item quantity="other">Escolher %1$d fotos</item>
+    </plurals>
+    <string name="best_picked">Escolhida</string>
+    <string name="best_pick_this">Escolher esta foto</string>
+    <string name="clean_intro">Separamos fotos de que talvez você não precise. Toque nas que quiser manter para tirá-las da lista.</string>
+    <string name="clean_none">Nada para organizar nesta viagem.</string>
+    <string name="clean_none_no_best">Nada para organizar nesta viagem. Depois de escolher as melhores fotos, você pode organizar aqui o resto de cada cena.</string>
+    <string name="clean_trash_note">As fotos movidas para a lixeira podem ser restauradas pela galeria por 30 dias.</string>
+    <plurals name="clean_confirm">
+        <item quantity="one">Mover %1$d foto para a lixeira</item>
+        <item quantity="other">Mover %1$d fotos para a lixeira</item>
+    </plurals>
+    <string name="clean_pick">Selecione as fotos para mover</string>
+    <string name="clean_checked">Organizar</string>
+    <string name="clean_keep">Manter</string>
+</resources>
