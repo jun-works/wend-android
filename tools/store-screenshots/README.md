@@ -39,7 +39,7 @@ Playwright가 다른 경로에 설치되어 있으면 `PLAYWRIGHT_MODULE=/absolu
 5. 미리보기에서 줄바꿈·앱 언어·잘림·사진 로딩을 확인합니다. 렌더러는 설명과 화면의 겹침을 검사합니다.
 
 ## 안전한 분리
-`-PstoreScreenshots=true`일 때만 debug 패키지가 `app.wend.sea.screenshots`로 분리됩니다. 실제 앱의 데이터나 사진은 건드리지 않습니다. Firebase 초기화도 촬영 빌드에서 제외됩니다. 예시 사진은 테스트 APK에만 포함되며 release APK에는 포함되지 않습니다. 일반 debug/release 빌드는 기존 설정 그대로입니다.
+`-PstoreScreenshots=true`일 때만 debug 패키지가 `app.wend.sea.screenshots`로 분리됩니다. 실제 앱의 데이터나 사진은 건드리지 않습니다. Firebase 초기화도 촬영 빌드에서 제외됩니다. 예시 사진은 테스트 APK에만 포함되며 release APK에는 포함되지 않습니다. 일반 debug 빌드는 `app.wend.sea.dev`, release 빌드는 `app.wend.sea`입니다.
 
 ## 사진 사용과 규격
 Unsplash 무료 라이선스 사진 4장만 사용합니다. 작가·원문 링크는 `assets/sources.json`에 보관했습니다. 인물이나 브랜드 중심 사진은 사용하지 않았습니다. 원본 사진을 그대로 상품으로 판매하거나 사진 서비스로 재배포하기 위한 자료가 아닙니다.

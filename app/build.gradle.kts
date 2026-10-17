@@ -31,7 +31,8 @@ android {
 
     buildTypes {
         debug {
-            if (storeScreenshots) applicationIdSuffix = ".screenshots"
+            // 스토어 설치본과 따로 설치되도록 분리한다.
+            applicationIdSuffix = if (storeScreenshots) ".screenshots" else ".dev"
         }
         release {
             // R8: 안 쓰는 코드·리소스를 빼고 클래스·메서드 이름을 난독화
