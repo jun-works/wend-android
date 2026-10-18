@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- common -->
+    <string name="format_locale">zh-CN</string>
+    <string name="pattern_date">yyyy年M月d日</string>
+    <string name="pattern_range_from">yyyy年M月d日</string>
+    <string name="pattern_range_to">M月d日</string>
+    <string name="date_range">%1$s – %2$s</string>
+    <string name="pattern_time">a h:mm</string>
+    <string name="pattern_month_day_weekday">M月d日 EEEE</string>
+    <string name="period_day_trip">%1$s · 当日往返</string>
+    <plurals name="period_days">
+        <item quantity="other">%1$s · %2$d天</item>
+    </plurals>
+    <string name="trip_auto_name">旅行 %1$d</string>
+    <string name="place_auto_name">地点 %1$d</string>
+    <string name="default_nickname">旅人</string>
+    <plurals name="count_photos">
+        <item quantity="other">%1$s 张</item>
+    </plurals>
+    <plurals name="count_places">
+        <item quantity="other">%1$s 个地点</item>
+    </plurals>
+    <string name="day_ordinal">第 %1$d 天</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
+    <string name="action_back">返回</string>
+    <string name="action_undo">撤销</string>
+    <string name="action_share">分享</string>
+    <string name="action_got_it">知道了</string>
+    <string name="allow_all_photos">允许访问所有照片</string>
+    <string name="best_shot">最佳照片</string>
+    <string name="trip_name">旅行名称</string>
+    <string name="rename_trip">重命名旅行</string>
+    <string name="rename_place">重命名地点</string>
+    <string name="place_name">地点名称</string>
+    <string name="trip_renamed">已重命名旅行</string>
+    <string name="pick_best_shots">挑选最佳照片</string>
+    <string name="clean_up_photos">整理照片</string>
+    <string name="still_reviewing">还在查看你的照片，请稍后再打开。</string>
+    <string name="zoom_label">放大查看%1$s</string>
+    <plurals name="moved_to_trash">
+        <item quantity="other">已将 %1$d 张移到回收站。30 天内可以从相册恢复</item>
+    </plurals>
+    <string name="needs_dated_photo">需要有拍摄日期的照片才能创建旅行</string>
+    <string name="trip_created">已创建旅行“%1$s”，可以在旅行列表中查看</string>
+    <string name="trip_phrase">“%1$s”</string>
+    <string name="trip_phrase_suffix">\</string>
+    <plurals name="added_to_trip">
+        <item quantity="other">已将 %1$d 张加入%2$s</item>
+    </plurals>
+    <string name="date_trip_name">%1$s的旅行</string>
+    <string name="pattern_month_day">M月d日</string>
+    <string name="add_to_trip">加入旅行</string>
+    <string name="new_trip">新旅行</string>
+    <string name="make_new_trip">创建新旅行</string>
+    <string name="photo">照片</string>
+    <string name="video">视频</string>
+    <string name="allowed">已允许</string>
+    <string name="allow_all">全部允许</string>
+    <string name="not_allowed">不允许</string>
+    <string name="settings">设置</string>
+
+    <!-- shared -->
+    <plurals name="best_shots_picked">
+        <item quantity="other">已挑选 %1$d 张最佳照片，照片上会有星标</item>
+    </plurals>
+    <string name="globe_scatter">打散泡泡</string>
+    <string name="orb_globe_description">代表照片的彩色泡泡排成地球仪形状漂浮的动画</string>
+    <string name="rename_empty">请输入名称</string>
+    <string name="rename_original">原来的名称：%1$s</string>
+    <plurals name="same_name_title">
+        <item quantity="other">还有 %1$d 个地点同名</item>
+    </plurals>
+    <string name="same_name_body">“%1$s”— 要一起更改在 %2$s 去过的地点吗？</string>
+    <string name="same_name_all">一起更改</string>
+    <string name="same_name_only_this">只改这个地点</string>
+    <string name="bot_tick_title">Tick · 时间小帮手</string>
+    <string name="bot_pin_title">Pin · 地点小帮手</string>
+
+    <!-- left -->
+    <string name="gap_same">同一段时间</string>
+    <string name="gap_one_day">相差 1 天</string>
+    <plurals name="gap_days">
+        <item quantity="other">相差 %1$d 天</item>
+    </plurals>
+    <plurals name="gap_months">
+        <item quantity="other">相差 %1$d 个月</item>
+    </plurals>
+    <string name="gap_nearest">最接近 · %1$s</string>
+    <plurals name="add_sheet_title">
+        <item quantity="other">要把这 %1$d 张加入哪个旅行？</item>
+    </plurals>
+    <string name="new_trip_name_help">之后可以更改</string>
+    <string name="new_trip_make">创建</string>
+    <string name="left_end_selection">完成选择</string>
+    <plurals name="left_selected">
+        <item quantity="other">已选择 %1$d 张</item>
+    </plurals>
+    <string name="pick_photos">请选择照片</string>
+    <string name="left_title">未收进旅行的照片</string>
+    <string name="left_subtitle">%1$s · 从新到旧</string>
+    <string name="left_select">选择照片</string>
+    <string name="left_empty_title">所有照片都已收进旅行</string>
+    <string name="left_empty_body">新拍的照片如果没有收进旅行，就会出现在这里。</string>
+    <string name="left_intro">已按拍摄日期排列。选择照片后，可以加入旅行或创建新旅行。</string>
+    <string name="left_tile_label">%1$s的照片</string>
+    <string name="left_no_date">没有日期信息</string>
+    <string name="select_all">全选</string>
+
+    <!-- viewer -->
+    <string name="pattern_viewer_datetime">yyyy年M月d日 a h:mm</string>
+    <string name="viewer_video_not_best">视频无法设为最佳照片</string>
+    <string name="viewer_best_picked">已将这张照片设为%1$s的最佳照片</string>
+    <string name="needs_dated_photo_single">只有含拍摄日期的照片才能创建旅行</string>
+    <string name="viewer_removed">已从旅行中移除。可以从“未收进旅行的照片”再加回来</string>
+    <string name="viewer_make_best">设为最佳照片</string>
+    <string name="viewer_remove_from_trip">从旅行移除</string>
+    <string name="viewer_trash">回收站</string>
+    <string name="viewer_play_video">播放视频</string>
+
+    <!-- onboarding -->
+    <string name="globe_step_when">何时拍的</string>
+    <string name="globe_step_where">在哪拍的</string>
+    <string name="globe_step_group">整理成旅行</string>
+    <string name="globe_next">听听怎么整理</string>
+    <string name="globe_title">%1$s，我们会把你散落的照片\n整理成%2$s</string>
+    <string name="globe_title_em">一段段旅行</string>
+    <string name="globe_hint">轻点一下地球仪看看</string>
+    <string name="guide_q_deleted">没收进旅行的照片会被删除吗？</string>
+    <string name="guide_a_deleted">不会！除非你自己选择，否则我们不会删除或移动照片。它们只是没有收进旅行而已。</string>
+    <string name="guide_q_location">要怎么保留位置？</string>
+    <string name="guide_a_location">在相机应用的设置中开启**位置标记**，就能更准确地找到你的旅行。</string>
+    <string name="guide_q_video">视频也一样吗？</string>
+    <string name="guide_a_video">对，视频和照片一样。</string>
+    <string name="guide_line_1">%1$s，很高兴认识你！我是 Tick，负责读出每张照片是**何时**拍的。</string>
+    <string name="guide_line_2">我是 Pin，负责读出是在**哪里**拍的。我们会一起把你的照片整理成一段段旅行。</string>
+    <string name="guide_line_3">开始之前，有一件事一定要先告诉你。</string>
+    <string name="guide_line_4">照片和视频里通常会记录**拍摄时间**和**位置**，我们就是靠这些来找出旅行。</string>
+    <string name="guide_line_5">所以没有时间或位置信息的照片和视频，**可能不会收进旅行。**</string>
+    <string name="guide_line_6">举个例子。</string>
+    <string name="guide_title">Tick &amp; Pin</string>
+    <string name="guide_replay">从头再听一次</string>
+    <string name="guide_finish">知道了，开始吧</string>
+    <string name="guide_day">今天 · 第一次见面的日子</string>
+    <string name="guide_card_included">会收进旅行</string>
+    <string name="guide_card_camera">相机</string>
+    <string name="guide_card_time">2026/7/14 下午⁠6:32</string>
+    <string name="guide_card_place">济州 涯月</string>
+    <string name="guide_card_excluded">可能不会收进旅行</string>
+    <string name="guide_card_screenshot">屏幕截图</string>
+    <string name="guide_card_no_location">没有位置</string>
+    <string name="nickname">昵称</string>
+    <string name="nickname_title">初次见面。\n该怎么称呼你呢？</string>
+    <string name="nickname_sub">整理旅行时，我们会用这个名字称呼你。</string>
+    <string name="nickname_help">2–10 个字，限文字和数字</string>
+    <string name="nickname_invalid">只能使用文字和数字</string>
+    <string name="nickname_too_short">请输入至少 2 个字</string>
+    <string name="nickname_suggestions">这些名字怎么样？</string>
+    <string name="nickname_privacy">昵称和照片只会在这台设备上使用，不会上传到任何地方。</string>
+    <string name="nickname_placeholder">输入昵称</string>
+    <string name="nickname_suggestion_1">周末散步家</string>
+    <string name="nickname_suggestion_2">路痴探险家</string>
+    <string name="nickname_suggestion_3">爱海的人</string>
+    <string name="nickname_suggestion_4">行李箱精灵</string>
+    <string name="action_next">下一步</string>
+    <string name="splash_start">开始</string>
+    <string name="splash_tagline">重新展开照片里的旅行</string>
+    <string name="splash_tap">轻点屏幕即可开始</string>
+
+    <!-- permission -->
+    <string name="perm_hint">请在下一个界面选择%1$s</string>
+    <string name="perm_hint_allow_all">全部允许</string>
+    <string name="perm_allow">允许访问照片</string>
+    <string name="perm_title">%1$s，请打开\n你的相册</string>
+    <string name="perm_sub">现在看不到任何照片，所以地球仪是空的。</string>
+    <string name="perm_globe_description">代表尚未打开的相册的淡色地球仪</string>
+    <string name="perm_why_all_title">查看所有照片和视频</string>
+    <string name="perm_why_all_body">照片要连续好几天才能找出旅行，只看部分照片的话，旅行会被切断。</string>
+    <string name="read_photo_location">读取照片中的位置</string>
+    <string name="perm_why_location_body">Pin 会用它来判断地点，会和照片权限一起请求。</string>
+    <string name="perm_why_private_title">不会传出设备</string>
+    <string name="perm_why_private_body">不会上传到任何地方，只在这部手机上读取。除非你自己选择，否则不会删除。</string>
+    <string name="partial_start_with_picked">用选择的照片开始</string>
+    <string name="partial_title">只能看到\n你选择的%1$s</string>
+    <string name="partial_globe_description">地球仪大部分仍是淡色，只有和选择照片一样多的深色泡泡零星出现</string>
+    <string name="partial_caption_picked">选择的照片</string>
+    <string name="partial_caption_hidden">看不到的照片</string>
+    <string name="partial_cut_title">旅行可能会像这样被切断</string>
+    <string name="partial_cut_start">7月12日</string>
+    <string name="partial_cut_trip">济州 · 12 天拍了 41 张</string>
+    <string name="partial_cut_end">7月23日</string>
+    <string name="partial_cut_body">只选 3 张的话，Tick 和 Pin 会把它们看成%1$s。之后随时可以再多选一些照片。</string>
+    <string name="partial_cut_body_em">三次一日游</string>
+    <string name="denied_allow_in_settings">前往设置允许</string>
+    <string name="denied_allow_again">再次允许</string>
+    <string name="denied_title">相册是关着的，\n所以找不到旅行</string>
+    <string name="denied_globe_description">泡泡全都保持淡色的空地球仪</string>
+    <string name="denied_bot_settings">拒绝两次之后，Android 就不会再弹出提示。只要在设置中更改一次就好。</string>
+    <string name="denied_bot">没有照片可读的话，Tick 和我什么都做不了。照片不会上传到任何地方，除非你自己选择，否则不会删除。</string>
+    <string name="denied_steps">%1$s 请到设置中更改。\n%2$s 权限 %3$s 照片和视频 %3$s %4$s</string>
+    <string name="denied_steps_no_prompt">提示不会再弹出来了。</string>
+    <string name="denied_steps_always_allow_all">始终全部允许</string>
+    <string name="granted_start">开始寻找旅行</string>
+    <string name="granted_title">%1$s，你的相册\n%2$s</string>
+    <string name="granted_title_em">打开了</string>
+    <string name="granted_sub">地球仪上的泡泡现在是你真正的照片了。</string>
+    <string name="granted_globe_description">相册打开时，地球仪的泡泡从前方开始填满颜色的动画</string>
+    <string name="granted_caption">看得到的照片</string>
+    <string name="granted_photos">照片</string>
+    <string name="granted_videos">视频</string>
+    <string name="granted_with_location">有位置的照片和视频</string>
+    <string name="unit_photos">张</string>
+    <string name="unit_items">个</string>
+
+    <!-- analysis -->
+    <string name="analyze_status_time">Tick 正按拍摄顺序读取你的照片</string>
+    <string name="analyze_status_place">Pin 正在确认每张照片的拍摄地点</string>
+    <string name="analyze_status_group">正在把同一段旅行的照片整理在一起</string>
+    <string name="analyze_title">%1$s，我们正在\n%2$s你的旅行</string>
+    <string name="analyze_title_em">寻找</string>
+    <string name="analyze_globe_description">照片泡泡逐渐染上颜色，按旅行聚集成团的动画</string>
+    <string name="analyze_found_trips">找到的旅行</string>
+    <string name="analyze_still_finding">还在寻找</string>
+    <string name="analyze_read_photos">已读取的照片</string>
+    <string name="analyze_note_background">即使关闭应用，也会继续寻找旅行。找完后会通知你。</string>
+    <string name="analyze_note_private">只在这部手机上读取，照片不会上传到任何地方。</string>
+    <string name="found_browse">去看我的旅行</string>
+    <string name="found_title">%1$s，我们找到了\n%2$s</string>
+    <string name="found_title_partial">在你选择的照片中\n找到了%2$s</string>
+    <plurals name="found_trip_count">
+        <item quantity="other">%1$d 段旅行</item>
+    </plurals>
+    <plurals name="found_summary">
+        <item quantity="other">在 %1$s 个照片和视频中，有 %2$s收进了旅行。其余的都原封不动留在相册里。</item>
+    </plurals>
+    <plurals name="found_summary_partial">
+        <item quantity="other">在你选择的 %1$s 张照片中，有 %2$s收进了旅行。</item>
+    </plurals>
+    <string name="count_photos_short">%1$s 张</string>
+    <string name="count_items_short">%1$s 个</string>
+    <string name="found_globe_description">每段旅行聚成不同颜色团块的地球仪</string>
+    <plurals name="found_more">
+        <item quantity="other">还有 %1$d 段旅行</item>
+    </plurals>
+    <string name="found_partial_note">只看选择的照片时，一段旅行可能会被分成好几段。允许访问所有照片后，我们会继续寻找。</string>
+    <string name="nofound_browse_anyway">先这样看看</string>
+    <string name="nofound_ok">知道了</string>
+    <string name="nofound_title">还没有\n找到旅行</string>
+    <plurals name="nofound_summary">
+        <item quantity="other">我们读完了全部 %1$s 个照片和视频，但没有可以整理成旅行的照片。</item>
+    </plurals>
+    <plurals name="nofound_summary_partial">
+        <item quantity="other">在你选择的 %1$s 张照片中很难找到旅行。</item>
+    </plurals>
+    <string name="nofound_globe_description">只剩下没有颜色的灰色泡泡的地球仪</string>
+    <string name="nofound_bot_partial">照片要连续好几张才看得出旅行。允许访问所有照片的话，我会从头再找一次。</string>
+    <string name="nofound_bot">照片里没有位置的话，很难找到旅行。在相机开启位置标记，从下一次旅行开始我就能帮你找到。</string>
+    <string name="nofound_steps">%1$s 相机 %2$s 设置 %2$s 开启%3$s</string>
+    <string name="location_tag">位置标记</string>
+    <string name="reanalyze_title">要从头重新寻找吗？</string>
+    <string name="reanalyze_body">我们会重新读取所有照片来寻找旅行。你自己加入或移除的照片、创建的旅行、最佳照片和改过的名称都会还原。</string>
+    <string name="reanalyze_confirm">重新寻找</string>
+    <string name="notif_channel_progress">正在寻找旅行</string>
+    <string name="notif_channel_progress_description">寻找旅行时显示进度</string>
+    <string name="notif_channel_done">旅行寻找完成</string>
+    <string name="notif_channel_done_description">找到所有旅行时通知你</string>
+    <string name="notif_progress_title">正在寻找你的旅行</string>
+    <string name="notif_progress_count">照片 %1$s / %2$s · 关闭应用也会继续</string>
+    <string name="notif_progress_text">关闭应用也会继续</string>
+    <plurals name="notif_done_title">
+        <item quantity="other">找到了 %1$d 段旅行</item>
+    </plurals>
+    <string name="notif_none_title">还没有找到旅行</string>
+    <string name="notif_done_text">轻点查看找到的旅行</string>
+    <string name="notif_none_text">轻点查看原因</string>
+
+    <!-- settings -->
+    <string name="settings_globe_description">相册地球仪，按看得到的照片多少填满颜色</string>
+    <string name="settings_name">%1$s</string>
+    <plurals name="count_media">
+        <item quantity="other">%1$s 个照片和视频</item>
+    </plurals>
+    <plurals name="count_trips">
+        <item quantity="other">%1$s 段旅行</item>
+    </plurals>
+    <string name="change_nickname">更改昵称</string>
+    <string name="settings_section_access">照片访问权限</string>
+    <string name="settings_photos_videos">照片和视频</string>
+    <string name="settings_photos_videos_sub">可以在 Android 设置中更改</string>
+    <string name="settings_partial">部分允许</string>
+    <string name="settings_location_sub">会和照片权限一起允许</string>
+    <string name="settings_location_tag_howto">如何开启相机的位置标记</string>
+    <string name="settings_location_tag_sub">开启后能更准确地找到旅行</string>
+    <string name="settings_section_find">寻找旅行</string>
+    <string name="settings_rescan">从头重新寻找旅行</string>
+    <string name="settings_rescan_sub">你做过的所有更改都会还原</string>
+    <string name="settings_section_data">数据</string>
+    <string name="settings_wipe">清除 Wend 数据</string>
+    <string name="settings_wipe_sub">清除找到的旅行和整理记录，照片会保持原样</string>
+    <string name="settings_section_about">关于</string>
+    <string name="open_source_licenses">开源许可</string>
+    <string name="settings_wipe_title">要清除 Wend 数据吗？</string>
+    <string name="settings_wipe_body">找到的旅行、最佳照片、你加入或移除的记录和昵称都会清除，并回到最初的界面。**设备上的照片一张都不会删除。**</string>
+    <string name="settings_wipe_confirm">清除</string>
+    <string name="howto_step_1">打开相机应用</string>
+    <string name="howto_step_2">轻点左上角的设置（⚙）</string>
+    <string name="howto_step_3">开启%1$s</string>
+    <string name="howto_bot">开启后拍的照片才会记录地点。菜单名称可能因设备而略有不同。</string>
+    <string name="settings_all">全部允许</string>
+
+    <!-- trips -->
+    <string name="trips_globe_description">每段旅行聚成不同颜色团块的地球仪。轻点团块即可前往那段旅行</string>
+    <plurals name="trips_hero_trips">
+        <item quantity="other">%1$s 段旅行</item>
+    </plurals>
+    <plurals name="trips_hero_photos">
+        <item quantity="other">%1$s 张照片</item>
+    </plurals>
+    <string name="trips_hero_none">还没有找到旅行</string>
+    <string name="trips_hero_hint">轻点色块即可前往那段旅行</string>
+    <string name="trips_open">打开%1$s</string>
+    <string name="trips_rename_label">重命名旅行“%1$s”</string>
+    <string name="trips_partial_banner">只显示从你选择的照片中找到的旅行。</string>
+    <string name="trips_empty_title">旅行会集中在这里</string>
+    <string name="trips_empty_body">等开启位置标记拍下的照片多起来，Tick 和 Pin 就会帮你找出旅行。</string>
+    <plurals name="trips_left_row">
+        <item quantity="other">%1$s 个未收进旅行的照片和视频</item>
+    </plurals>
+
+    <!-- trip -->
+    <string name="places_renamed">已重命名 %1$d 个地点</string>
+    <string name="place_renamed">已重命名地点</string>
+    <string name="clean_similar">相似的照片</string>
+    <string name="clean_similar_sub">和最佳照片几乎一样</string>
+    <string name="clean_dark">太暗的照片</string>
+    <string name="trip_end">旅行结束 · %1$s %2$s</string>
+    <string name="edit_label_description">%1$s，当前名称为%2$s</string>
+    <string name="place_view_all_description">%1$s，查看全部 %2$s</string>
+    <string name="place_photo_description">%1$s，第 %2$d 张照片，放大查看</string>
+    <string name="place_photo_best_description">%1$s，第 %2$d 张照片，最佳照片，放大查看</string>
+    <string name="view_all">查看全部</string>
+    <string name="map_description">当天移动路线的地图。滚动时，图钉会沿着路线移动</string>
+    <string name="place_photos_title">地点照片</string>
+    <string name="photo_n">%1$s，第 %2$d 张照片</string>
+    <string name="view_larger">放大查看</string>
+    <string name="place_photos_none">这个地点已经没有照片了</string>
+    <string name="place_photos_end">这里留下的每个瞬间都展开了</string>
+    <string name="place_photos_order">按拍摄顺序</string>
+    <string name="best_intro">我们把同一个场景拍了好几次的照片放在一起。每个场景挑一张你最喜欢的吧，不挑也没关系。挑选的照片会成为旅行的代表照片。</string>
+    <string name="best_none">这段旅行没有重复拍摄同一场景的照片。</string>
+    <plurals name="best_similar_count">
+        <item quantity="other">%1$d 张相似的照片</item>
+    </plurals>
+    <string name="best_photo_label">%1$s %2$s 相似的照片 %3$d</string>
+    <plurals name="best_confirm">
+        <item quantity="other">选定 %1$d 张</item>
+    </plurals>
+    <string name="best_picked">已挑选</string>
+    <string name="best_pick_this">挑选这张照片</string>
+    <string name="clean_intro">我们挑出了你可能不需要的照片。想保留的照片，轻点即可从列表中移除。</string>
+    <string name="clean_none">这段旅行没有需要整理的照片。</string>
+    <string name="clean_none_no_best">这段旅行没有需要整理的照片。挑选最佳照片后，就能在这里整理同一场景的其他照片。</string>
+    <string name="clean_trash_note">移到回收站的照片在 30 天内可以从相册恢复。</string>
+    <plurals name="clean_confirm">
+        <item quantity="other">将 %1$d 张移到回收站</item>
+    </plurals>
+    <string name="clean_pick">请选择要移动的照片</string>
+    <string name="clean_checked">整理</string>
+    <string name="clean_keep">保留</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">最佳照片</string>
+    <string name="best_save_setting">最佳照片保存方式</string>
+    <string name="best_save_unset">尚未选择</string>
+    <string name="best_save_app_only">仅保存在 Wend</string>
+    <string name="best_save_gallery">同时加入收藏</string>
+    <string name="best_save_settings_note">选择一次后就不再询问。你随时可以在设置中更改。</string>
+    <string name="best_save_failed">无法保存最佳照片，请再试一次。</string>
+    <string name="best_favorite_failed">最佳照片已保存。未能完成加入收藏，已加入的照片会保留。</string>
+    <string name="best_favorite_declined">最佳照片已保存。已停止加入收藏，已加入的照片会保留。</string>
+    <string name="best_favorite_added">已加入相册的收藏。</string>
+    <string name="best_clear_selection">确认取消选择</string>
+    <string name="best_selection_cleared">已取消最佳照片。相册的收藏保持不变。</string>
+    <string name="best_save_title">最佳照片要保存在哪里？</string>
+    <string name="best_save_description">加入相册的收藏后，在其他应用中也更容易找到。</string>
+    <string name="best_save_retain">取消最佳照片或重新寻找旅行，都不会移除相册的收藏。</string>
+    <string name="best_save_current">当前设置</string>
+    <string name="best_save_error">无法保存，请再试一次。</string>
+    <string name="best_save_processing">正在保存…</string>
+    <string name="best_save_change_note">更改后从新选择的照片开始生效。已加入的收藏会保留。</string>
+</resources>
