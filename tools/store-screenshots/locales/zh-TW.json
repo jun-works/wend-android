@@ -1,0 +1,98 @@
+{
+  "locale": "zh-TW",
+  "edition": "重新展開相片裡的旅行",
+  "fixtureTrip": "多洛米蒂的夏天",
+  "bestButton": "挑選最佳相片",
+  "cleanButton": "整理相片",
+  "slides": [
+    {
+      "id": "01-rediscover",
+      "eyebrow": "藏在相簿裡的旅行",
+      "title": [
+        "從手機相片中",
+        "找回遺忘的旅行"
+      ],
+      "body": [
+        "從最近的旅行到很久以前的旅行，",
+        "把裝置裡的相片依旅行整理好。"
+      ],
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "02-your-globe",
+      "source": "01-rediscover",
+      "layout": "globe",
+      "eyebrow": "相片裡找到的旅行，匯聚在地球儀上",
+      "title": [
+        "旅行匯聚而成的",
+        "專屬地球儀"
+      ],
+      "body": [
+        "在地球儀上看見從相片中找到的旅行。",
+        "輕點色塊，就能打開那趟旅行。"
+      ],
+      "note": "放大顯示的實際 App 地球儀畫面。",
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "03-relive",
+      "eyebrow": "一天一天，一處一處",
+      "title": [
+        "跟著相片",
+        "回到那一天"
+      ],
+      "body": [
+        "去過哪裡，看到了什麼。",
+        "用地圖和相片重溫旅行。"
+      ],
+      "accent": "#28665F",
+      "wash": "#D9E5DC",
+      "source": "02-relive"
+    },
+    {
+      "id": "04-best-shots",
+      "eyebrow": "值得留下的那一張",
+      "title": [
+        "相似的瞬間裡",
+        "挑出你的最佳相片"
+      ],
+      "body": [
+        "把相似的相片放在一起比較，",
+        "親手挑出最喜歡的一張。"
+      ],
+      "accent": "#92631E",
+      "wash": "#F0E2C4",
+      "source": "03-best-shots"
+    },
+    {
+      "id": "05-clean-up",
+      "eyebrow": "回憶留下，相片變輕",
+      "title": [
+        "留下想要的",
+        "輕鬆整理其餘"
+      ],
+      "body": [
+        "挑完最佳相片後剩下的相似相片。",
+        "親自確認，只整理你選擇的相片。"
+      ],
+      "accent": "#406D87",
+      "wash": "#DCE6EA",
+      "source": "04-clean-up"
+    }
+  ],
+  "fixture": {
+    "trips": [
+      "難忘的夏天",
+      "冰島的風",
+      "多洛米蒂的夏天"
+    ],
+    "places": {
+      "dolomites": "多洛米蒂的早晨",
+      "tre-cime": "三峰山",
+      "braies": "布拉耶斯湖",
+      "iceland": "冰島的瀑布"
+    }
+  }
+}

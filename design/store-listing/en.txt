@@ -1,3 +1,10 @@
+[Title] (26/30)
+Wend: Trip Photo Organizer
+
+[Short description] (76/80)
+Finds the trips in your camera roll, sorted by when and where you shot them.
+
+[Full description] (1464/4000)
 Your camera roll already remembers every trip. Wend finds them.
 
 Wend reads when and where each photo and video was taken, and gathers them into trips on its own. No albums to make, no tagging, no planning. Just open the app and watch your photos come together.
@@ -12,7 +19,7 @@ Open a trip and read it the way it happened, day by day and place by place. As y
 Took five almost-identical photos at the same spot? Wend lines them up so you can keep the best one. Your picks become the cover of each trip.
 
 ◆ CLEAN UP WITH CONFIDENCE
-Wend suggests blurry, too-dark and near-duplicate photos you may not need. Nothing is removed until you choose. Photos go to your phone's trash only, so you can restore them for 30 days.
+Wend suggests too-dark and near-duplicate photos you may not need. Nothing is removed until you choose. Photos go to your phone's trash only, so you can restore them for 30 days.
 
 ◆ YOU STAY IN CONTROL
 Missed a few photos? Add them to any trip, or make a new trip yourself.

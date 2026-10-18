@@ -22,18 +22,21 @@ def main():
         return subprocess.check_output(["adb", "-s", args.device, *cmd])
     def shell(*cmd):
         return adb("shell", *cmd).decode()
-    def tap_text(text):
-        for attempt in range(8):
+    def find_text(text, attempts=8, partial=False):
+        for attempt in range(attempts):
             shell("uiautomator", "dump", "/sdcard/wend-store-layout.xml")
             xml = shell("cat", "/sdcard/wend-store-layout.xml")
             for node in ET.fromstring(xml).iter("node"):
-                if node.get("text") == text or node.get("content-desc") == text:
+                label = node.get("text") or node.get("content-desc") or ""
+                if label == text or (partial and text in label):
                     x1,y1,x2,y2 = map(int, re.findall(r"\d+", node.get("bounds")))
-                    shell("input", "tap", str((x1+x2)//2), str((y1+y2)//2))
-                    time.sleep(2)
-                    return
+                    return (x1+x2)//2, (y1+y2)//2
             time.sleep(1)
         raise RuntimeError("UI target missing: " + text + "\n" + xml)
+    def tap_text(text):
+        x, y = find_text(text)
+        shell("input", "tap", str(x), str(y))
+        time.sleep(2)
     original_size = shell("wm", "size")
     original_density = shell("wm", "density")
     def restore(kind, original):
@@ -47,6 +50,9 @@ def main():
             shell("am", "broadcast", "-a", "com.android.systemui.demo", *extras)
         shell("wm", "size", f"{1080*args.scale}x{1920*args.scale}")
         shell("wm", "density", str(360*args.scale))
+        # The first launch after the resolution change is slow (splash, thumbnails); warm the app up once.
+        shell("am", "start", "-W", "-n", PACKAGE + "/app.wend.sea.MainActivity")
+        time.sleep(15)
         for locale in args.locales:
             copy = json.loads((ROOT / "locales" / (locale + ".json")).read_text())
             shell("am", "force-stop", PACKAGE)
@@ -56,16 +62,19 @@ def main():
             if "OK (1 test)" not in result:
                 raise RuntimeError(result)
             shell("am", "start", "-n", PACKAGE + "/app.wend.sea.MainActivity")
-            time.sleep(8)
+            # A cold emulator can still show the splash; wait for the trip list instead of a fixed delay.
+            find_text(copy["fixtureTrip"], attempts=40)
+            find_text("42", attempts=40, partial=True)  # globe header shows the fixture's 42 photos once loaded
             out = ROOT / "raw" / locale
             out.mkdir(parents=True, exist_ok=True)
-            def capture(name):
-                time.sleep(2)
+            def capture(name, wait=6):
+                # Thumbnails load after the screen appears; the trip map's land shapes take longer.
+                time.sleep(wait)
                 (out / (name + ".png")).write_bytes(adb("exec-out", "screencap", "-p"))
                 print(locale, name, flush=True)
             capture("01-rediscover")
             tap_text(copy["fixtureTrip"])
-            capture("02-relive")
+            capture("02-relive", wait=20)
             tap_text(copy["bestButton"])
             capture("03-best-shots")
             shell("input", "keyevent", "KEYCODE_BACK")

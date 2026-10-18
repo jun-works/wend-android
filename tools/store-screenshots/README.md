@@ -1,13 +1,13 @@
 # Wend · Play 스토어 스크린샷
 
 ## 결과물
-- `../../design/store-listing/{ko-KR,en-US}/images/phoneScreenshots/*.png`: 언어당 5장, 1080×1920, 상단 설명 + 하단 실제 앱 화면.
+- `../../design/store-listing/<언어>/images/phoneScreenshots/*.png`: ko-KR · en-US · ja-JP · zh-CN · zh-TW · es-419 · pt-BR, 언어당 5장, 1080×1920, 상단 설명 + 하단 실제 앱 화면.
 - `../../design/store-listing/screenshots-preview.html`: 전체 비교용 미리보기.
 - `raw/<locale>/*.png`: 에뮬레이터 원본. UI를 다시 그리거나 번역 문구를 덮어씌우지 않습니다.
 
 ## 구성
 - `locales/*.json`: 스토어 문구·강조색·화면 이동에 필요한 현지화 라벨.
-- `render.cjs`: 공통 레이아웃. 첫 장은 휴대폰 사진에서 여행을 찾는 기능을 설명하고, 두 번째 장은 실제 목록 화면 속 지구본을 확대합니다. `source`는 원본 캡처 이름, `layout: "globe"`는 확대 레이아웃입니다. 앱에 포함된 Wend 글꼴을 사용하며 외부 폰트 요청은 없습니다.
+- `render.cjs`: 공통 레이아웃. 첫 장은 휴대폰 사진에서 여행을 찾는 기능을 설명하고, 두 번째 장은 실제 목록 화면 속 지구본을 확대합니다. `source`는 원본 캡처 이름, `layout: "globe"`는 확대 레이아웃이고, 지구본 아래 문구가 긴 언어는 `crop`(width·left·top·height)으로 덜 확대합니다. 앱에 포함된 Wend 글꼴을 사용합니다. Wend 글꼴에 없는 일본어·중국어는 Noto Sans/Serif JP·SC·TC, 악센트 라틴 문자는 IBM Plex Sans(모두 OFL)로 채우며, 처음 렌더할 때 Google Fonts 저장소에서 `fonts-cache/`(git 제외)로 한 번 내려받습니다.
 - `capture.py`: 실제 앱의 목록 → 여행 상세 → 베스트샷 → 정리하기를 촬영합니다. 삭제 버튼은 누르지 않습니다.
 - `androidTest/StoreFixtureTest.kt`: 테스트 사진과 여행 데이터를 넣습니다. 테스트용 날짜·위치·이름이며, 연사 예시를 위해 같은 사진을 복제합니다. 화질·유사도는 실제 앱 코드로 계산하고, 베스트샷은 예시 사용자 선택으로 저장합니다. 여행 자동 탐지 정확도를 검증하는 테스트는 아닙니다.
 - `assets/sources.json`: 사진별 원문 페이지·작가·다운로드 주소·라이선스·SHA-256.
@@ -28,6 +28,8 @@ node tools/store-screenshots/render.cjs
 ```
 
 Playwright가 다른 경로에 설치되어 있으면 `PLAYWRIGHT_MODULE=/absolute/path/to/playwright`를 지정합니다. 문구만 바꿀 때는 마지막 렌더 명령만 실행하면 됩니다. `node render.cjs ko-KR`처럼 특정 언어만 렌더할 수도 있습니다.
+
+새로 만든 에뮬레이터는 첫 실행이 느려서, 촬영 전에 앱을 한 번 띄워 두고 목록·사진 수가 나타날 때까지 기다린 뒤 찍습니다. 여행 상세 지도는 땅 모양이 늦게 그려져서 20초 기다립니다.
 
 촬영 시 해상도는 2160×3840, 밀도는 720으로 잠시 바꿉니다(논리 화면 크기는 동일, 지구본 확대용 고해상도 원본). `--scale 1`이면 1080×1920/360으로 촬영합니다. 최종 출력은 1080×1920입니다. 촬영 후 `finally`에서 원래 설정으로 복원합니다. 중간 강제 종료 시 `adb -s emulator-5554 shell wm size reset`, `wm density reset`으로 복원할 수 있습니다.
 

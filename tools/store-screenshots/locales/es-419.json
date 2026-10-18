@@ -1,0 +1,98 @@
+{
+  "locale": "es-419",
+  "edition": "Despliega los viajes de tus fotos",
+  "fixtureTrip": "Verano en los Dolomitas",
+  "bestButton": "Mejores fotos",
+  "cleanButton": "Ordenar fotos",
+  "slides": [
+    {
+      "id": "01-rediscover",
+      "eyebrow": "VIAJES ESCONDIDOS EN TU GALERÍA",
+      "title": [
+        "Encuentra tus viajes",
+        "en las fotos del teléfono."
+      ],
+      "body": [
+        "De escapadas recientes a aventuras olvidadas,",
+        "Wend agrupa las fotos de tu teléfono en viajes."
+      ],
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "02-your-globe",
+      "source": "01-rediscover",
+      "layout": "globe",
+      "eyebrow": "TUS FOTOS. TUS VIAJES. TU GLOBO.",
+      "title": [
+        "Todos tus viajes.",
+        "Un globo solo tuyo."
+      ],
+      "body": [
+        "Mira cómo se reúnen los viajes de tus fotos.",
+        "Toca un grupo de color para abrir ese viaje."
+      ],
+      "note": "Vista ampliada del globo en la app.",
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "03-relive",
+      "eyebrow": "DÍA A DÍA, LUGAR POR LUGAR",
+      "title": [
+        "Sigue tus fotos.",
+        "Vuelve a vivirlo."
+      ],
+      "body": [
+        "Recuerda adónde fuiste y qué viste.",
+        "Revive cada viaje con mapas y fotos."
+      ],
+      "accent": "#28665F",
+      "wash": "#D9E5DC",
+      "source": "02-relive"
+    },
+    {
+      "id": "04-best-shots",
+      "eyebrow": "LA QUE VALE LA PENA GUARDAR",
+      "title": [
+        "Momentos parecidos.",
+        "Tu foto favorita."
+      ],
+      "body": [
+        "Compara fotos parecidas una al lado de otra.",
+        "Elige la que más significa para ti."
+      ],
+      "accent": "#92631E",
+      "wash": "#F0E2C4",
+      "source": "03-best-shots"
+    },
+    {
+      "id": "05-clean-up",
+      "eyebrow": "MENOS DESORDEN, LOS MISMOS RECUERDOS",
+      "title": [
+        "Guarda los recuerdos.",
+        "Quita lo que sobra."
+      ],
+      "body": [
+        "Revisa las fotos parecidas que quedan tras elegir.",
+        "Solo se ordenan las fotos que tú eliges."
+      ],
+      "accent": "#406D87",
+      "wash": "#DCE6EA",
+      "source": "04-clean-up"
+    }
+  ],
+  "fixture": {
+    "trips": [
+      "Un verano para recordar",
+      "Vientos de Islandia",
+      "Verano en los Dolomitas"
+    ],
+    "places": {
+      "dolomites": "Mañana en los Dolomitas",
+      "tre-cime": "Tre Cime",
+      "braies": "Lago di Braies",
+      "iceland": "Cascadas de Islandia"
+    }
+  }
+}

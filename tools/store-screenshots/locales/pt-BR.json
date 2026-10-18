@@ -1,0 +1,104 @@
+{
+  "locale": "pt-BR",
+  "edition": "Reviva as viagens das suas fotos",
+  "fixtureTrip": "Verão nas Dolomitas",
+  "bestButton": "Melhores fotos",
+  "cleanButton": "Organizar fotos",
+  "slides": [
+    {
+      "id": "01-rediscover",
+      "eyebrow": "VIAGENS ESCONDIDAS NA SUA GALERIA",
+      "title": [
+        "Encontre suas viagens",
+        "nas fotos do celular."
+      ],
+      "body": [
+        "De passeios recentes a aventuras esquecidas,",
+        "o Wend agrupa as fotos do seu celular em viagens."
+      ],
+      "accent": "#B6442A",
+      "wash": "#EED9CB"
+    },
+    {
+      "id": "02-your-globe",
+      "source": "01-rediscover",
+      "layout": "globe",
+      "eyebrow": "SUAS FOTOS. SUAS VIAGENS. SEU GLOBO.",
+      "title": [
+        "Todas as suas viagens.",
+        "Um globo só seu."
+      ],
+      "body": [
+        "Veja as viagens das suas fotos se juntarem.",
+        "Toque em um grupo colorido para abrir a viagem."
+      ],
+      "note": "Visão ampliada do globo no app.",
+      "accent": "#B6442A",
+      "wash": "#EED9CB",
+      "crop": {
+        "width": 1540,
+        "left": -290,
+        "top": -196,
+        "height": 1000
+      }
+    },
+    {
+      "id": "03-relive",
+      "eyebrow": "DIA A DIA, LUGAR A LUGAR",
+      "title": [
+        "Siga suas fotos.",
+        "Viva tudo de novo."
+      ],
+      "body": [
+        "Lembre aonde você foi e o que viu.",
+        "Reviva cada viagem com mapas e fotos."
+      ],
+      "accent": "#28665F",
+      "wash": "#D9E5DC",
+      "source": "02-relive"
+    },
+    {
+      "id": "04-best-shots",
+      "eyebrow": "A FOTO QUE VALE GUARDAR",
+      "title": [
+        "Momentos parecidos.",
+        "Sua foto favorita."
+      ],
+      "body": [
+        "Compare fotos parecidas lado a lado.",
+        "Escolha a que mais significa para você."
+      ],
+      "accent": "#92631E",
+      "wash": "#F0E2C4",
+      "source": "03-best-shots"
+    },
+    {
+      "id": "05-clean-up",
+      "eyebrow": "MENOS BAGUNÇA, AS MESMAS MEMÓRIAS",
+      "title": [
+        "Guarde as memórias.",
+        "Tire o que sobra."
+      ],
+      "body": [
+        "Revise as fotos parecidas que sobram após escolher.",
+        "Só as fotos que você escolher são organizadas."
+      ],
+      "accent": "#406D87",
+      "wash": "#DCE6EA",
+      "source": "04-clean-up"
+    }
+  ],
+  "fixture": {
+    "trips": [
+      "Um verão inesquecível",
+      "Ventos da Islândia",
+      "Verão nas Dolomitas"
+    ],
+    "places": {
+      "dolomites": "Manhã nas Dolomitas",
+      "tre-cime": "Tre Cime",
+      "braies": "Lago di Braies",
+      "iceland": "Cachoeiras da Islândia"
+    }
+  }
+}
