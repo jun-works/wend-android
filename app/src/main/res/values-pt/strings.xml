@@ -395,4 +395,25 @@
     <string name="clean_pick">Selecione as fotos para mover</string>
     <string name="clean_checked">Organizar</string>
     <string name="clean_keep">Manter</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">Melhores fotos</string>
+    <string name="best_save_setting">Onde salvar as melhores fotos</string>
+    <string name="best_save_unset">Ainda não escolhido</string>
+    <string name="best_save_app_only">Somente no Wend</string>
+    <string name="best_save_gallery">Adicionar também aos favoritos</string>
+    <string name="best_save_settings_note">Escolha uma vez. Você pode mudar a qualquer momento nas Configurações.</string>
+    <string name="best_save_failed">Não foi possível salvar as melhores fotos. Tente novamente.</string>
+    <string name="best_favorite_failed">Suas melhores fotos foram salvas. Não foi possível concluir a adição aos favoritos. As fotos já adicionadas são mantidas.</string>
+    <string name="best_favorite_declined">Suas melhores fotos foram salvas. A adição aos favoritos foi interrompida. As fotos já adicionadas são mantidas.</string>
+    <string name="best_favorite_added">Adicionadas aos favoritos da galeria.</string>
+    <string name="best_clear_selection">Aplicar remoção da seleção</string>
+    <string name="best_selection_cleared">Seleção removida. Os favoritos da galeria permanecem.</string>
+    <string name="best_save_title">Onde salvar suas melhores fotos?</string>
+    <string name="best_save_description">Adicione também aos favoritos da galeria para encontrá-las mais facilmente em outros apps.</string>
+    <string name="best_save_retain">Remover melhores fotos ou buscar viagens novamente não remove os favoritos da galeria.</string>
+    <string name="best_save_current">Configuração atual</string>
+    <string name="best_save_error">Não foi possível salvar. Tente novamente.</string>
+    <string name="best_save_processing">Salvando…</string>
+    <string name="best_save_change_note">As alterações valem para as fotos que você escolher a partir de agora. Os favoritos existentes são mantidos.</string>
 </resources>

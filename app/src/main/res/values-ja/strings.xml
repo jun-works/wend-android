@@ -369,4 +369,25 @@
     <string name="clean_pick">移動する写真を選んでください</string>
     <string name="clean_checked">整理する</string>
     <string name="clean_keep">残す</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">ベストショット</string>
+    <string name="best_save_setting">ベストショットの保存先</string>
+    <string name="best_save_unset">まだ選択していません</string>
+    <string name="best_save_app_only">Wend内のみ</string>
+    <string name="best_save_gallery">お気に入りにも追加</string>
+    <string name="best_save_settings_note">一度選ぶと次からは確認しません。設定でいつでも変更できます。</string>
+    <string name="best_save_failed">ベストショットを保存できませんでした。もう一度お試しください。</string>
+    <string name="best_favorite_failed">ベストショットは保存しました。お気に入りへの追加を完了できませんでした。追加済みの写真はそのまま残ります。</string>
+    <string name="best_favorite_declined">ベストショットは保存しました。お気に入りへの追加を中止しました。追加済みの写真はそのまま残ります。</string>
+    <string name="best_favorite_added">ギャラリーのお気に入りに追加しました。</string>
+    <string name="best_clear_selection">選択解除を適用</string>
+    <string name="best_selection_cleared">ベストショットを解除しました。ギャラリーのお気に入りはそのままです。</string>
+    <string name="best_save_title">ベストショットの保存先は？</string>
+    <string name="best_save_description">ギャラリーのお気に入りにも追加すると、他のアプリでも見つけやすくなります。</string>
+    <string name="best_save_retain">ベストショットを解除したり旅を探し直したりしても、ギャラリーのお気に入りは残ります。</string>
+    <string name="best_save_current">現在の設定</string>
+    <string name="best_save_error">保存できませんでした。もう一度お試しください。</string>
+    <string name="best_save_processing">保存中…</string>
+    <string name="best_save_change_note">変更後に選ぶ写真から適用されます。追加済みのお気に入りはそのまま残ります。</string>
 </resources>

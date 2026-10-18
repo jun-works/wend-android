@@ -5,6 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.R
 import app.wend.sea.core.text.AppText
+import app.wend.sea.data.FavoriteRepository
+import app.wend.sea.data.UserRepository
+import app.wend.sea.feature.bestshot.BestShotSaveFlow
+import app.wend.sea.feature.bestshot.BestShotSaveResult
+import app.wend.sea.feature.bestshot.message
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +32,7 @@ data class BestPlaceUi(val index: Int, val name: String, val scenes: List<BestSc
 
 data class BestShotUiState(
     val loaded: Boolean = false,
+    val hadPicks: Boolean = false,
     val places: List<BestPlaceUi> = emptyList(),
     /** 장면마다 고른 사진 */
     val picks: Map<String, MediaThumbnail> = emptyMap(),
@@ -47,6 +53,8 @@ data class BestShotUiState(
 class BestShotViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val analysisRepository: AnalysisRepository,
+    userRepository: UserRepository,
+    favoriteRepository: FavoriteRepository,
 ) : ViewModel() {
 
     /** 네비게이션 인자(BestShotRoute.trip) */
@@ -55,8 +63,13 @@ class BestShotViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(BestShotUiState())
     val uiState: StateFlow<BestShotUiState> = _uiState.asStateFlow()
 
-    /** 정했다 — 고른 장수 */
-    private val _done = Channel<Int>(Channel.BUFFERED)
+    val saveFlow = BestShotSaveFlow(viewModelScope, userRepository.bestShotSaveMode, userRepository::setBestShotSaveMode, favoriteRepository::notFavoriteIds)
+    private var originalIds = emptySet<Long>()
+    private val _errors = Channel<String>(Channel.BUFFERED)
+    val errors = _errors.receiveAsFlow()
+
+    /** 확정 및 시스템 승인 처리가 끝난 뒤 표시할 결과 */
+    private val _done = Channel<String>(Channel.BUFFERED)
     val done = _done.receiveAsFlow()
 
     init {
@@ -79,7 +92,8 @@ class BestShotViewModel @Inject constructor(
             val takenAt = detail.places.flatMap { p -> p.media.mapNotNull { m -> m.takenAt?.let { MediaThumbnail(m.id, m.video) to it } } }.toMap()
             // 이미 고른 베스트샷은 고른 채로 보여 준다
             val picks = places.flatMap { it.scenes }.mapNotNull { s -> s.photos.firstOrNull { it.mediaId in best }?.let { s.key to it } }.toMap()
-            _uiState.value = BestShotUiState(loaded = true, places = places, picks = picks, pending = scenes.pending, takenAt = takenAt)
+            originalIds = picks.values.map { it.mediaId }.toSet()
+            _uiState.value = BestShotUiState(loaded = true, hadPicks = picks.isNotEmpty(), places = places, picks = picks, pending = scenes.pending, takenAt = takenAt)
         }
     }
 
@@ -93,10 +107,21 @@ class BestShotViewModel @Inject constructor(
 
     fun save() {
         val state = _uiState.value
-        viewModelScope.launch {
-            val scope = state.places.flatMap { p -> p.scenes.flatMap { s -> s.photos.map { it.mediaId } } }
-            analysisRepository.saveBestShots(scope, state.picks.values.map { it.mediaId })
-            _done.send(state.picks.size)
-        }
+        if (!state.loaded) return
+        val picks = state.picks.values.map { it.mediaId }
+        saveFlow.submit(
+            ids = picks.filterNot { it in originalIds },
+            save = {
+                val scope = state.places.flatMap { p -> p.scenes.flatMap { s -> s.photos.map { it.mediaId } } }
+                analysisRepository.saveBestShots(scope, picks)
+            },
+            onComplete = { result ->
+                val text = result.message(
+                    if (picks.isEmpty()) AppText.string(R.string.best_selection_cleared)
+                    else AppText.plural(R.plurals.best_shots_picked, picks.size, picks.size),
+                )
+                if (result == BestShotSaveResult.SAVE_FAILED) _errors.send(text) else _done.send(text)
+            },
+        )
     }
 }

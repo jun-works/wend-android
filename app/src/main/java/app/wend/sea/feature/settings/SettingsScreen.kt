@@ -3,6 +3,7 @@ package app.wend.sea.feature.settings
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.TravelExplore
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.AlertDialog
@@ -86,6 +88,8 @@ import app.wend.sea.core.designsystem.theme.IbmPlexSansKr
 import app.wend.sea.core.designsystem.theme.IncludedGreen
 import app.wend.sea.core.text.appendTemplate
 import app.wend.sea.data.MediaAccess
+import app.wend.sea.data.BestShotSaveMode
+import app.wend.sea.feature.bestshot.BestShotModeDialog
 import app.wend.sea.feature.analysis.ReanalyzeDialog
 import app.wend.sea.feature.analysis.formatCount
 import app.wend.sea.feature.nickname.NicknameHelp
@@ -119,6 +123,7 @@ fun SettingsScreen(
             when (it) {
                 SettingsEvent.Rescan -> currentOnRescan()
                 SettingsEvent.Wiped -> currentOnWiped()
+                SettingsEvent.SaveFailed -> Toast.makeText(context, R.string.best_save_error, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -199,6 +204,24 @@ fun SettingsScreen(
                 onClick = { dialog = TAG },
             ) { Chevron() }
 
+            Section(stringResource(R.string.best_save_section))
+            SettingRow(
+                icon = Icons.Outlined.StarOutline,
+                title = stringResource(R.string.best_save_setting),
+                sub = stringResource(when (uiState.bestShotSaveMode) {
+                    BestShotSaveMode.UNSET -> R.string.best_save_unset
+                    BestShotSaveMode.APP_ONLY -> R.string.best_save_app_only
+                    BestShotSaveMode.GALLERY -> R.string.best_save_gallery
+                }),
+                onClick = { dialog = BEST_SAVE },
+            ) { Chevron() }
+            Text(
+                stringResource(R.string.best_save_change_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(start = 58.dp, end = 20.dp, bottom = 4.dp),
+            )
+
             Section(stringResource(R.string.settings_section_find))
             SettingRow(
                 icon = Icons.Outlined.TravelExplore,
@@ -230,6 +253,14 @@ fun SettingsScreen(
     }
 
     when (dialog) {
+        BEST_SAVE -> BestShotModeDialog(
+            current = uiState.bestShotSaveMode,
+            onSelect = {
+                viewModel.setBestShotSaveMode(it)
+                dialog = null
+            },
+            onDismiss = { dialog = null },
+        )
         NAME -> NicknameDialog(current = uiState.nickname, onDismiss = { dialog = null }) {
             viewModel.saveNickname(it)
             dialog = null
@@ -440,6 +471,7 @@ private const val NAME = "name"
 private const val TAG = "tag"
 private const val RESCAN = "rescan"
 private const val WIPE = "wipe"
+private const val BEST_SAVE = "best_save"
 
 /** 시안 #9a2a14 — 섹션 머리·대화상자 글자 버튼(종이색 위 대비 4.5:1 이상) */
 private val Accent = Color(0xFF9A2A14)

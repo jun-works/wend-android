@@ -28,6 +28,15 @@ class UserRepository @Inject constructor(
 
     val nickname: Flow<String?> = dataStore.data.map { it[KEY_NICKNAME] }
 
+    /** 다시 찾기나 앱 재실행으로 초기화하지 않는다. 전체 데이터 삭제 때만 지운다. */
+    val bestShotSaveMode: Flow<BestShotSaveMode> = dataStore.data.map {
+        BestShotSaveMode.fromStored(it[KEY_BEST_SHOT_SAVE_MODE])
+    }
+
+    suspend fun setBestShotSaveMode(mode: BestShotSaveMode) {
+        dataStore.edit { it[KEY_BEST_SHOT_SAVE_MODE] = mode.name }
+    }
+
     suspend fun saveNickname(nickname: String) {
         dataStore.edit { it[KEY_NICKNAME] = nickname }
     }
@@ -93,6 +102,7 @@ class UserRepository @Inject constructor(
     }
 
     private companion object {
+        val KEY_BEST_SHOT_SAVE_MODE = stringPreferencesKey("best_shot_save_mode")
         val KEY_NICKNAME = stringPreferencesKey("nickname")
         val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val KEY_MEDIA_DENIALS = intPreferencesKey("media_denials")

@@ -4,6 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.R
 import app.wend.sea.core.text.AppText
+import app.wend.sea.data.FavoriteRepository
+import app.wend.sea.data.UserRepository
+import app.wend.sea.feature.bestshot.BestShotSaveFlow
+import app.wend.sea.feature.bestshot.BestShotSaveResult
+import app.wend.sea.feature.bestshot.message
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.MediaThumbnail
 import app.wend.sea.data.analysis.AnalysisRepository
@@ -72,7 +77,11 @@ data class ViewerArgs(val trip: Int, val place: Int, val index: Int, val left: B
 class ViewerViewModel @Inject constructor(
     private val analysisRepository: AnalysisRepository,
     private val mediaRepository: MediaRepository,
+    userRepository: UserRepository,
+    favoriteRepository: FavoriteRepository,
 ) : ViewModel() {
+
+    val saveFlow = BestShotSaveFlow(viewModelScope, userRepository.bestShotSaveMode, userRepository::setBestShotSaveMode, favoriteRepository::notFavoriteIds)
 
     /** 지금 열린 곳 — 닫혀 있으면 null */
     private val _args = MutableStateFlow<ViewerArgs?>(null)
@@ -153,12 +162,21 @@ class ViewerViewModel @Inject constructor(
             return
         }
         if (item.media.mediaId in _uiState.value.best) return
-        viewModelScope.launch {
-            analysisRepository.setBestShot(trip, item.media)
-            val best = analysisRepository.bestShots()
-            _uiState.update { it.copy(best = best) }
-            _events.send(ViewerEvent.BestChanged(AppText.string(R.string.viewer_best_picked, _uiState.value.placeName)))
-        }
+        val selectedTrip = trip
+        val placeName = _uiState.value.placeName
+        saveFlow.submit(
+            ids = listOf(item.media.mediaId),
+            save = {
+                analysisRepository.setBestShot(selectedTrip, item.media)
+                val best = analysisRepository.bestShots()
+                _uiState.update { it.copy(best = best) }
+            },
+            onComplete = { result ->
+                val message = result.message(AppText.string(R.string.viewer_best_picked, placeName))
+                if (result == BestShotSaveResult.SAVE_FAILED) _events.send(ViewerEvent.ShowMessage(message))
+                else _events.send(ViewerEvent.BestChanged(message))
+            },
+        )
     }
 
     /** 빠진 사진 한 장을 넣을 여행 — 가까운 여행부터 */

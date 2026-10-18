@@ -1,6 +1,7 @@
 package app.wend.sea.feature.viewer
 
 import androidx.compose.ui.res.stringResource
+import app.wend.sea.feature.bestshot.BestShotSaveDialogs
 import app.wend.sea.R
 import app.wend.sea.core.text.AppText
 import kotlin.math.abs
@@ -149,6 +150,7 @@ fun ViewerScreen(
     val args by viewModel.args.collectAsStateWithLifecycle()
     if (args == null) return
     OpenViewer(viewModel, onBack = viewModel::close, onTripChanged = onTripChanged, onPageChange = onPageChange)
+    BestShotSaveDialogs(viewModel.saveFlow)
 }
 
 /** 연 화면 위에 겹쳐 그린다 — 열고 닫을 때 움직임 없이 바로. 끌어내리는 동안 아래 화면이 비친다 */

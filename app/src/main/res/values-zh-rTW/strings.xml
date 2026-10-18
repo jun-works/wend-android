@@ -369,4 +369,25 @@
     <string name="clean_pick">請選取要移動的相片</string>
     <string name="clean_checked">整理</string>
     <string name="clean_keep">保留</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">精選照片</string>
+    <string name="best_save_setting">精選照片儲存方式</string>
+    <string name="best_save_unset">尚未選擇</string>
+    <string name="best_save_app_only">僅存於 Wend</string>
+    <string name="best_save_gallery">也加入我的最愛</string>
+    <string name="best_save_settings_note">選擇一次後就不再詢問。您隨時可以在設定中變更。</string>
+    <string name="best_save_failed">無法儲存精選照片，請再試一次。</string>
+    <string name="best_favorite_failed">最佳照片已儲存。未能完成加入最愛，已加入的照片會保留。</string>
+    <string name="best_favorite_declined">最佳照片已儲存。已停止加入最愛，已加入的照片會保留。</string>
+    <string name="best_favorite_added">已加入相簿的我的最愛。</string>
+    <string name="best_clear_selection">套用取消選取</string>
+    <string name="best_selection_cleared">已取消精選照片。相簿的我的最愛保持不變。</string>
+    <string name="best_save_title">精選照片要存在哪裡？</string>
+    <string name="best_save_description">也加入相簿的我的最愛，方便在其他應用程式中找到。</string>
+    <string name="best_save_retain">取消精選照片或重新尋找旅程，都不會移除相簿的我的最愛。</string>
+    <string name="best_save_current">目前設定</string>
+    <string name="best_save_error">無法儲存，請再試一次。</string>
+    <string name="best_save_processing">儲存中…</string>
+    <string name="best_save_change_note">變更後選取的照片才會套用。已加入的最愛會保留。</string>
 </resources>

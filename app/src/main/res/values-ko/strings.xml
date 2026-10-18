@@ -369,4 +369,25 @@
     <string name="clean_pick">옮길 사진을 골라 주세요</string>
     <string name="clean_checked">정리하기</string>
     <string name="clean_keep">남기기</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">베스트샷</string>
+    <string name="best_save_setting">베스트샷 저장 방식</string>
+    <string name="best_save_unset">아직 선택하지 않았어요</string>
+    <string name="best_save_app_only">Wend 안에서만</string>
+    <string name="best_save_gallery">즐겨찾기에도 추가</string>
+    <string name="best_save_settings_note">한 번 고르면 다시 묻지 않아요. 설정에서 언제든 바꿀 수 있어요.</string>
+    <string name="best_save_failed">베스트샷을 저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="best_favorite_failed">베스트샷은 저장했어요. 즐겨찾기 추가를 완료하지 못했어요. 이미 추가된 사진은 유지돼요.</string>
+    <string name="best_favorite_declined">베스트샷은 저장했어요. 즐겨찾기 추가를 중단했어요. 이미 추가된 사진은 유지돼요.</string>
+    <string name="best_favorite_added">갤러리 즐겨찾기에 추가했어요.</string>
+    <string name="best_clear_selection">선택 해제 적용</string>
+    <string name="best_selection_cleared">베스트샷을 해제했어요. 갤러리 즐겨찾기는 유지돼요.</string>
+    <string name="best_save_title">베스트샷, 어디에 남길까요?</string>
+    <string name="best_save_description">갤러리 즐겨찾기에도 추가하면 다른 앱에서도 찾기 쉬워요.</string>
+    <string name="best_save_retain">베스트샷을 해제하거나 다시 찾아도 갤러리 즐겨찾기는 남아요.</string>
+    <string name="best_save_current">현재 설정</string>
+    <string name="best_save_error">저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="best_save_processing">저장 중이에요</string>
+    <string name="best_save_change_note">변경 후 고르는 사진부터 적용돼요. 이미 추가한 즐겨찾기는 그대로 남아요.</string>
 </resources>

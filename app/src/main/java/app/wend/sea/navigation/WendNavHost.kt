@@ -349,10 +349,10 @@ fun WendNavHost() {
         composable<BestShotRoute> {
             BestShotScreen(
                 onBack = { navController.popBackStack() },
-                onDone = { count ->
+                onDone = { message ->
                     navController.previousBackStackEntry?.savedStateHandle?.set(
                         TripDetailViewModel.VIEWER_RESULT,
-                        AppText.plural(R.plurals.best_shots_picked, count, count),
+                        message,
                     )
                     navController.popBackStack()
                 },

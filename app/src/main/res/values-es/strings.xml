@@ -395,4 +395,25 @@
     <string name="clean_pick">Selecciona las fotos que quieres mover</string>
     <string name="clean_checked">Ordenar</string>
     <string name="clean_keep">Conservar</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">Mejores fotos</string>
+    <string name="best_save_setting">Dónde guardar las mejores fotos</string>
+    <string name="best_save_unset">Aún sin elegir</string>
+    <string name="best_save_app_only">Solo en Wend</string>
+    <string name="best_save_gallery">Añadir también a favoritos</string>
+    <string name="best_save_settings_note">Elige una vez. Puedes cambiarlo cuando quieras en Ajustes.</string>
+    <string name="best_save_failed">No se pudieron guardar las mejores fotos. Inténtalo de nuevo.</string>
+    <string name="best_favorite_failed">Tus mejores fotos están guardadas. No se pudo completar la adición a favoritos. Las fotos ya añadidas se conservan.</string>
+    <string name="best_favorite_declined">Tus mejores fotos están guardadas. Se detuvo la adición a favoritos. Las fotos ya añadidas se conservan.</string>
+    <string name="best_favorite_added">Añadidas a favoritos de la galería.</string>
+    <string name="best_clear_selection">Aplicar selección eliminada</string>
+    <string name="best_selection_cleared">Selección eliminada. Los favoritos de la galería no cambian.</string>
+    <string name="best_save_title">¿Dónde guardar tus mejores fotos?</string>
+    <string name="best_save_description">Añádelas a favoritos de la galería para encontrarlas más fácilmente en otras apps.</string>
+    <string name="best_save_retain">Quitar mejores fotos o volver a buscar viajes no elimina los favoritos de la galería.</string>
+    <string name="best_save_current">Ajuste actual</string>
+    <string name="best_save_error">No se pudo guardar. Inténtalo de nuevo.</string>
+    <string name="best_save_processing">Guardando…</string>
+    <string name="best_save_change_note">Los cambios se aplican a las fotos que elijas a partir de ahora. Los favoritos existentes se conservan.</string>
 </resources>

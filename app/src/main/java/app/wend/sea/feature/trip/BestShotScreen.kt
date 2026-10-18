@@ -25,6 +25,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import app.wend.sea.feature.bestshot.BestShotSaveDialogs
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -79,10 +83,13 @@ import coil3.compose.AsyncImage
 fun BestShotScreen(
     onBack: () -> Unit,
     /** 정했다 — 고른 장수 */
-    onDone: (count: Int) -> Unit,
+    onDone: (message: String) -> Unit,
     viewModel: BestShotViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    val saveState by viewModel.saveFlow.state.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.errors.collect { snackbar.showSnackbar(it) } }
     val colors = MaterialTheme.colorScheme
     val haptic = LocalHapticFeedback.current
     val currentOnDone by rememberUpdatedState(onDone)
@@ -151,9 +158,9 @@ fun BestShotScreen(
                 val count = uiState.picks.size
                 Box(Modifier.background(colors.surface).navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                     WendPrimaryButton(
-                        text = if (count > 0) pluralStringResource(R.plurals.best_confirm, count, count) else stringResource(R.string.pick_photos),
+                        text = if (count > 0) pluralStringResource(R.plurals.best_confirm, count, count) else stringResource(if (uiState.hadPicks) R.string.best_clear_selection else R.string.pick_photos),
                         onClick = viewModel::save,
-                        enabled = count > 0,
+                        enabled = !saveState.busy && (count > 0 || uiState.hadPicks),
                     )
                 }
             }
@@ -181,6 +188,8 @@ fun BestShotScreen(
                 }
             }
         }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 84.dp))
+        BestShotSaveDialogs(viewModel.saveFlow)
     }
 }
 

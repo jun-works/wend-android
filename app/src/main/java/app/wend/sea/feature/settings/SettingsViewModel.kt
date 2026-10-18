@@ -3,6 +3,7 @@ package app.wend.sea.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.wend.sea.data.DataWiper
+import app.wend.sea.data.BestShotSaveMode
 import app.wend.sea.data.MediaAccess
 import app.wend.sea.data.MediaRepository
 import app.wend.sea.data.UserRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import java.io.IOException
 
 data class SettingsUiState(
     val loaded: Boolean = false,
@@ -27,6 +29,7 @@ data class SettingsUiState(
     /** 볼 수 있는 사진·영상 수 */
     val mediaCount: Int = 0,
     val tripCount: Int = 0,
+    val bestShotSaveMode: BestShotSaveMode = BestShotSaveMode.UNSET,
 )
 
 sealed interface SettingsEvent {
@@ -35,6 +38,8 @@ sealed interface SettingsEvent {
 
     /** Wend 데이터를 지웠다 — 처음 화면으로 */
     data object Wiped : SettingsEvent
+
+    data object SaveFailed : SettingsEvent
 }
 
 /**
@@ -55,18 +60,39 @@ class SettingsViewModel @Inject constructor(
     private val _events = Channel<SettingsEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    init {
+        viewModelScope.launch {
+            userRepository.bestShotSaveMode.collect { mode ->
+                _uiState.update { it.copy(bestShotSaveMode = mode) }
+            }
+        }
+    }
+
     /** 화면에 돌아올 때마다(Android 설정에서 권한을 바꾸고 올 수 있다) 다시 읽는다 */
     fun refresh() {
         viewModelScope.launch {
             val access = mediaRepository.currentAccess()
-            _uiState.value = SettingsUiState(
+            val nickname = userRepository.nickname.first().orEmpty()
+            val mediaCount = if (access == MediaAccess.None) 0 else mediaRepository.visibleCount()
+            val tripCount = analysisRepository.trips().size
+            _uiState.update { it.copy(
                 loaded = true,
-                nickname = userRepository.nickname.first().orEmpty(),
+                nickname = nickname,
                 access = access,
                 location = mediaRepository.canReadLocation(),
-                mediaCount = if (access == MediaAccess.None) 0 else mediaRepository.visibleCount(),
-                tripCount = analysisRepository.trips().size,
-            )
+                mediaCount = mediaCount,
+                tripCount = tripCount,
+            ) }
+        }
+    }
+
+    fun setBestShotSaveMode(mode: BestShotSaveMode) {
+        viewModelScope.launch {
+            try {
+                userRepository.setBestShotSaveMode(mode)
+            } catch (_: IOException) {
+                _events.send(SettingsEvent.SaveFailed)
+            }
         }
     }
 

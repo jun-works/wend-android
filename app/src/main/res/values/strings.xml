@@ -396,4 +396,25 @@
     <string name="clean_pick">Select photos to move</string>
     <string name="clean_checked">Clean up</string>
     <string name="clean_keep">Keep</string>
+
+    <!-- Best shot storage preference and one-way gallery favorites -->
+    <string name="best_save_section">Best shots</string>
+    <string name="best_save_setting">Best shot storage</string>
+    <string name="best_save_unset">Not chosen yet</string>
+    <string name="best_save_app_only">Only in Wend</string>
+    <string name="best_save_gallery">Also add to favorites</string>
+    <string name="best_save_settings_note">Choose once. You can change this anytime in Settings.</string>
+    <string name="best_save_failed">Could not save your best shots. Please try again.</string>
+    <string name="best_favorite_failed">Your best shots are saved. Adding favorites could not be completed. Photos already added stay in favorites.</string>
+    <string name="best_favorite_declined">Your best shots are saved. Adding favorites was stopped. Photos already added stay in favorites.</string>
+    <string name="best_favorite_added">Added to gallery favorites.</string>
+    <string name="best_clear_selection">Apply deselection</string>
+    <string name="best_selection_cleared">Best shot selection cleared. Gallery favorites are unchanged.</string>
+    <string name="best_save_title">Where should your best shots go?</string>
+    <string name="best_save_description">Add them to gallery favorites to find them more easily in other apps.</string>
+    <string name="best_save_retain">Removing best shots or finding trips again does not remove gallery favorites.</string>
+    <string name="best_save_current">Current setting</string>
+    <string name="best_save_error">Could not save. Please try again.</string>
+    <string name="best_save_processing">Saving…</string>
+    <string name="best_save_change_note">Changes apply to photos you choose from now on. Existing gallery favorites stay as they are.</string>
 </resources>
