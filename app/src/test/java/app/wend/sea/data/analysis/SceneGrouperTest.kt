@@ -29,6 +29,12 @@ class SceneGrouperTest {
     }
 
     @Test
+    fun `비슷한 사진 60초61초 차이 테스트`() {
+        val scenes = SceneGrouper().group(listOf(shot(0), shot(60), shot(121)))
+        assertEquals(listOf(2), scenes.map { it.size })
+    }
+
+    @Test
     fun `모양이 다르면 바로 이어 찍어도 다른 장면`() {
         val scenes = SceneGrouper().group(listOf(shot(0, hash = 0L), shot(2, hash = 0L), shot(4, hash = -1L), shot(6, hash = -1L)))
         assertEquals(2, scenes.size)
