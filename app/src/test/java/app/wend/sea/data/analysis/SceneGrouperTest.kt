@@ -35,6 +35,18 @@ class SceneGrouperTest {
     }
 
     @Test
+    fun `사진의 유사도 12비트 경계값 테스트`() {
+        val scenes = SceneGrouper().group(listOf(shot(0,0L), shot(0, hash = 4095L)))
+        assertEquals(listOf(2),scenes.map { it.size })
+    }
+
+    @Test
+    fun `사진의 유사도 13비트 경계값 테스트`() {
+        val scenes = SceneGrouper().group(listOf(shot(0,0L), shot(0, hash = 8191L)))
+        assertEquals(emptyList<Int>(),scenes.map { it.size })
+    }
+
+    @Test
     fun `모양이 다르면 바로 이어 찍어도 다른 장면`() {
         val scenes = SceneGrouper().group(listOf(shot(0, hash = 0L), shot(2, hash = 0L), shot(4, hash = -1L), shot(6, hash = -1L)))
         assertEquals(2, scenes.size)
