@@ -24,6 +24,17 @@ jobs:
       - name: 단위 테스트
         run: ./gradlew testDebugUnitTest
 
+      - name: 테스트 보고서 보관
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-report
+          path: |
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: 디버그 빌드
         run: ./gradlew assembleDebug
 
