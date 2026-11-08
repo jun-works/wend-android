@@ -308,7 +308,8 @@ fun TripGlobe(
     // 멈춰 있는 지구본을 다시 깨우는 신호(누름)
     var wake by remember { mutableIntStateOf(0) }
 
-    remember(trips, partial) { sim.setup(trips, partial) }
+    // 그리기 전에 초기화를 마친다. Unit 반환으로 인한 RememberReturnType 오류를 피하도록 sim을 반환한다.
+    remember(trips, partial) { sim.apply { setup(trips, partial) } }
 
     LaunchedEffect(reducedMotion) {
         if (reducedMotion) return@LaunchedEffect
