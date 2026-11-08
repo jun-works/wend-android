@@ -10,6 +10,7 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.animation.core.animate
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import android.app.Activity
 import android.content.Intent
 import android.provider.MediaStore
@@ -413,7 +414,7 @@ fun PickViewer(
 @Suppress("DEPRECATION")
 @Composable
 private fun DarkSystemBars() {
-    val activity = LocalContext.current as? ComponentActivity ?: return
+    val activity = LocalActivity.current as? ComponentActivity ?: return
     DisposableEffect(activity) {
         val bg = ViewerBg.toArgb()
         activity.enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(bg), navigationBarStyle = SystemBarStyle.dark(bg))
