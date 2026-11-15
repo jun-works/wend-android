@@ -29,12 +29,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = System.getenv("WEND_KEYSTORE_PATH")?.let {
+                file(it)
+            }
+            storePassword = System.getenv("WEND_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("WEND_KEY_ALIAS")
+            keyPassword = System.getenv("WEND_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         debug {
             // 스토어 설치본과 따로 설치되도록 분리한다.
             applicationIdSuffix = if (storeScreenshots) ".screenshots" else ".dev"
         }
         release {
+            if (System.getenv("WEND_KEYSTORE_PATH") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             // R8: 안 쓰는 코드·리소스를 빼고 클래스·메서드 이름을 난독화
             isMinifyEnabled = true
             isShrinkResources = true
