@@ -29,6 +29,7 @@ jobs:
           WEND_KEYSTORE_PASSWORD: ${{ secrets.WEND_KEYSTORE_PASSWORD }}
           WEND_KEY_ALIAS: ${{ secrets.WEND_KEY_ALIAS }}
           WEND_KEY_PASSWORD: ${{ secrets.WEND_KEY_PASSWORD }}
+          WEND_VERSION_TAG: ${{ github.ref_name }}
         run: ./gradlew bundleRelease
 
       - name: 릴리스 AAB 보관
@@ -38,3 +39,14 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           retention-days: 7
           if-no-files-found: error
+
+      - name: Play 내부 테스트 트랙 업로드
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.wend.sea
+          releaseFiles:
+            app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+          mappingFile: app/build/outputs/mapping/release/mapping.txt

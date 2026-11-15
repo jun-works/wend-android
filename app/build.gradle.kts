@@ -23,8 +23,14 @@ android {
         applicationId = "app.wend.sea"
         minSdk = 30
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.0"
+        val tagVersion = System.getenv("WEND_VERSION_TAG")?.removePrefix("v")
+        versionName = tagVersion ?: "1.0.0"
+        versionCode = tagVersion?.let { version ->
+            val (major, minor, patch) = version.split(".").map {
+                it.toInt()
+            }
+            major * 10000 + minor * 100 + patch
+        } ?: 3
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
