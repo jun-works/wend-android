@@ -63,6 +63,14 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("benchmark") {
+            // release 와 같은 최적화로 성능을 잰다. 스토어 앱과 따로 설치된다.
+            initWith(getByName("release"))
+            applicationIdSuffix = ".dev"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
